@@ -1,5 +1,7 @@
 # Richard's Workspace Tools
 
+[Official home page][home]
+
 ## `each` helper
 
 _Run commands in Git-based projects_
@@ -68,4 +70,5 @@ $ pip install --user colorama pyyaml
 
 [MIT License][licence]
 
+[home]: https://github.com/rcook/rws
 [licence]: LICENSE
