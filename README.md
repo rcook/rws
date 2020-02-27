@@ -16,6 +16,10 @@ _Run Git command in each project directory_
 
 _Run PowerShell command in each project directory_
 
+## `info` helper
+
+_Show Git-based workspace information_
+
 ## `topo` helper
 
 _List Git-based projects in topological order_
