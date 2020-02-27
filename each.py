@@ -16,14 +16,6 @@ COMMAND_BUILDER_TYPES = [
 
 TOPO_ARG_VALUE = "topo"
 
-# TBD: Windows version
-#def run_command(project_dir, command):
-#    try:
-#        status = subprocess.call(command, cwd=project_dir)
-#        return None if status == 0 else status
-#    except WindowsError as e:
-#        return e
-
 def run_command(project_dir, command):
     try:
         status = subprocess.call(command, cwd=project_dir)
