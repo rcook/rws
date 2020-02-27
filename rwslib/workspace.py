@@ -5,6 +5,7 @@ from rwslib.scripting import *
 from sets import Set
 
 DEFAULT_CONFIG = {}
+CONFIG_FILE_NAME = "rws-workspace.yaml"
 
 def read_config(config_path):
     with open(config_path, "rt") as f:
@@ -19,6 +20,22 @@ def get_project_dirs(workspace_dir, excluded_project_dirs):
     return [ d for d in all_project_dirs if d not in excluded_project_dirs ]
 
 class Workspace(object):
+    @staticmethod
+    def find(start_dir):
+        current_dir = start_dir
+        while True:
+            config_path = os.path.join(current_dir, CONFIG_FILE_NAME)
+            if os.path.isfile(config_path):
+                return Workspace(current_dir)
+            next_dir = os.path.dirname(current_dir)
+            if next_dir == current_dir:
+                return Workspace(start_dir)
+            current_dir = next_dir
+
+    @property
+    def workspace_dir(self):
+        return self._workspace_dir
+
     @property
     def config_path(self):
         return self._config_path
@@ -33,7 +50,7 @@ class Workspace(object):
 
     def __init__(self, workspace_dir):
         self._workspace_dir = os.path.abspath(workspace_dir)
-        config_path = os.path.join(self._workspace_dir, "rws-workspace.yaml")
+        config_path = os.path.join(self._workspace_dir, CONFIG_FILE_NAME)
         self._config_path = config_path if os.path.isfile(config_path) else None
         config = DEFAULT_CONFIG if self._config_path is None else read_config(self._config_path)
 

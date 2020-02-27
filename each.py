@@ -67,7 +67,7 @@ def main():
     args = parser.parse_args()
     command_builder = args.command_builder_type(args)
 
-    workspace = Workspace(os.getcwd())
+    workspace = Workspace.find(os.getcwd())
     is_success = True
 
     for project_dir in get_project_dirs(workspace, args.order):

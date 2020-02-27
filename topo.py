@@ -10,7 +10,7 @@ def main():
 
     _ = parser.parse_args()
 
-    workspace = Workspace(os.getcwd())
+    workspace = Workspace.find(os.getcwd())
     for project_dir in workspace.project_dirs_topo:
         print(project_dir)
 
