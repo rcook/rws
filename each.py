@@ -42,9 +42,9 @@ def format_result(project_dir, result):
 
 def get_project_dirs(workspace, order):
     if order == "alpha":
-        return workspace.project_dirs
+        return workspace.project_dirs_alpha
     elif order == TOPO_ARG_VALUE:
-        return workspace.ordered_project_dirs
+        return workspace.project_dirs_topo
     else:
         raise ValueError("Invalid order {}".format(order))
 

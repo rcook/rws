@@ -22,12 +22,12 @@ def get_project_dirs(workspace_dir, excluded_project_dirs):
 
 class Workspace(object):
     @property
-    def project_dirs(self):
-        return self._project_dirs
+    def project_dirs_alpha(self):
+        return self._project_dirs_alpha
 
     @property
-    def ordered_project_dirs(self):
-        return self._ordered_project_dirs
+    def project_dirs_topo(self):
+        return self._project_dirs_topo
 
     def __init__(self, workspace_dir):
         self._workspace_dir = os.path.abspath(workspace_dir)
@@ -35,12 +35,12 @@ class Workspace(object):
         dependency_command = config.get("dependency-command")
         excluded_project_dirs = resolve_project_dirs(workspace_dir, config.get("excluded-projects", []))
 
-        self._project_dirs = sorted(get_project_dirs(self._workspace_dir, excluded_project_dirs))
+        self._project_dirs_alpha = sorted(get_project_dirs(self._workspace_dir, excluded_project_dirs))
         g = MappedGraph()
-        for project_dir in reversed(self._project_dirs):
+        for project_dir in reversed(self._project_dirs_alpha):
             g.add_edge(project_dir, project_dir)
             if dependency_command is not None:
                 deps = resolve_project_dirs(workspace_dir, run_user_command(config, dependency_command, project_dir))
                 for dep in deps:
                     g.add_edge(dep, project_dir)
-        self._ordered_project_dirs = g.topo_sort()
+        self._project_dirs_topo = g.topo_sort()
