@@ -8,7 +8,7 @@ from rwslib.workspace import *
 def main():
     parser = argparse.ArgumentParser(description="List Git-based projects")
 
-    args = parser.parse_args()
+    _ = parser.parse_args()
 
     workspace = Workspace(os.getcwd())
     for project_dir in workspace.ordered_project_dirs:
