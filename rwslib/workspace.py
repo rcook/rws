@@ -1,7 +1,7 @@
 import os
 import yaml
+from rwslib.graph import *
 from rwslib.scripting import *
-from rwslib.topo import *
 from sets import Set
 
 def read_config(workspace_dir):
