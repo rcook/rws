@@ -6,7 +6,7 @@ from rwslib.markup import *
 from rwslib.workspace import *
 
 def main():
-    parser = argparse.ArgumentParser(description="List Git-based projects")
+    parser = argparse.ArgumentParser(description="List Git-based projects in topological order")
 
     _ = parser.parse_args()
 

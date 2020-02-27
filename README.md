@@ -16,9 +16,9 @@ _Run Git command in each project directory_
 
 _Run PowerShell command in each project directory_
 
-## `projects` helper
+## `topo` helper
 
-_List Git-based projects_
+_List Git-based projects in topological order_
 
 ## Example `rws-workspace.yaml` configuration
 
