@@ -35,6 +35,7 @@ _List Git-based projects in topological order_
 
 * [Example 1][example-1]: Unix-style shell dependency command
 * [Example 2][example-2]: Python-based dependency command (`DEPENDENCIES` file in each project)
+* [Example 3][example-3]: Dependencies specified in workspace configuration
 
 ## Install dependencies
 
