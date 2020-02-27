@@ -6,8 +6,11 @@ from sets import Set
 
 def read_config(workspace_dir):
     config_path = os.path.join(workspace_dir, "rws-workspace.yaml")
-    with open(config_path, "rt") as f:
-        return yaml.load(f, Loader=yaml.BaseLoader)
+    if os.path.isfile(config_path):
+        with open(config_path, "rt") as f:
+            return yaml.load(f, Loader=yaml.BaseLoader)
+    else:
+        return {}
 
 def resolve_project_dirs(workspace_dir, lines):
     return [ os.path.join(workspace_dir, line) for line in lines ]
@@ -30,7 +33,7 @@ class Workspace(object):
         self._workspace_dir = os.path.abspath(workspace_dir)
         config = read_config(workspace_dir)
         dependency_command = config.get("dependency-command")
-        excluded_project_dirs = resolve_project_dirs(workspace_dir, config["excluded-projects"])
+        excluded_project_dirs = resolve_project_dirs(workspace_dir, config.get("excluded-projects", []))
 
         self._project_dirs = sorted(get_project_dirs(self._workspace_dir, excluded_project_dirs))
         g = MappedGraph()
