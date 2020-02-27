@@ -51,3 +51,4 @@ $ pip install --user colorama pyyaml
 [licence]: LICENSE
 [example-1]: examples/rws-workspace1.yaml
 [example-2]: examples/rws-workspace2.yaml
+[example-3]: examples/rws-workspace3.yaml
