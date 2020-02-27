@@ -54,6 +54,12 @@ excluded-projects:
 * `dependency-command`: shell command run in order to yield a workspace's dependency graph
 * `excluded-projects`: list of projects to exclude from workspace
 
+## Install dependencies
+
+```
+$ pip install --user colorama pyyaml
+```
+
 ## Licence
 
 [MIT License][licence]
