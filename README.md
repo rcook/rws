@@ -26,39 +26,15 @@ _Show Git-based workspace information_
 
 _List Git-based projects in topological order_
 
-## Example `rws-workspace.yaml` configuration
-
-```yaml
-#dependency-command:
-#  language: shell
-#  script: if [ -f Config ]; then cat Config; fi
-
-python-preamble: |
-  from __future__ import print_function
-  import os
-
-  def parse_config_lines(lines):
-    return [ x for x in [ x.strip() for x in lines ] if len(x) > 0 and not x.startswith("#") ]
-
-  def read_config_lines(path, default_value=None):
-    if os.path.isfile(path):
-      with open(path) as f:
-        return parse_config_lines(f.readlines())
-    else:
-      if default_value is None:
-        raise RuntimeError("Configuration file {} was not found".format(path))
-      return default_value
-
-dependency-command:
-  language: python
-  script: read_config_lines("Config", [])
-
-excluded-projects:
-- rws
-```
+## `rws-workspace.yaml` configuration
 
 * `dependency-command`: shell command run in order to yield a workspace's dependency graph
 * `excluded-projects`: list of projects to exclude from workspace
+
+## Example `rws-workspace.yaml` configurations
+
+* [Example 1][example-1]: Unix-style shell dependency command
+* [Example 2][example-2]: Python-based dependency command (`DEPENDENCIES` file in each project)
 
 ## Install dependencies
 
@@ -72,3 +48,5 @@ $ pip install --user colorama pyyaml
 
 [home]: https://github.com/rcook/rws
 [licence]: LICENSE
+[example-1]: examples/rws-workspace1.yaml
+[example-2]: examples/rws-workspace2.yaml
