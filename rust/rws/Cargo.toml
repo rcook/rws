@@ -1,0 +1,14 @@
+[package]
+name = "rws"
+version = "0.1.0"
+authors = ["Richard Cook <rcook@rcook.org>"]
+edition = "2018"
+
+[dependencies]
+Boa = "0.6.0"
+clap = "2.33.0"
+colored = "1.9.3"
+gc = "0.3.3"
+rlua = "0.17.0"
+topological-sort = "0.1.0"
+yaml-rust = "0.4"

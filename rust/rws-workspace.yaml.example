@@ -1,0 +1,82 @@
+#dependency-command:
+#  language: shell
+#  script: if [ -f Config ]; then cat Config; fi
+
+#python-prelude: |
+#  from __future__ import print_function
+#  import os
+#
+#  def parse_config_lines(lines):
+#    return [ x for x in [ x.strip() for x in lines ] if len(x) > 0 and not x.startswith("#") ]
+#
+#  def read_config_lines(path, default_value=None):
+#    if os.path.isfile(path):
+#      with open(path) as f:
+#        return parse_config_lines(f.readlines())
+#    else:
+#      if default_value is None:
+#        raise RuntimeError("Configuration file {} was not found".format(path))
+#      return default_value
+
+#dependency-command:
+#  language: python
+#  script: read_config_lines("Config", [])
+
+lua-prelude: |
+  local function trim(s)
+    return s:gsub("^%s*(.-)%s*$", "%1")
+  end
+
+  local function is_file(name)
+    local f = io.open(name,"r")
+    if f == nil then
+      return false
+    end
+    f:close()
+    return true
+  end
+
+  local function read_file(path)
+    local f = assert(io.open(path, "rb"))
+    local content = assert(f:read("*all"))
+    f:close()
+    return content
+  end
+
+  local function read_file_lines(path)
+    local f = assert(io.open(path, "rb"))
+    local lines = {}
+    local i = 1
+    while true do
+      local line = f:read()
+      if line == nil then break end
+      lines[i] = line
+      i = i + 1
+    end
+    f:close()
+    return lines
+  end
+
+  local function parse_config(lines)
+    local result = {}
+    local line
+    for _, line in ipairs(lines) do
+      local temp = trim(line)
+      if temp:find("#") ~= 1 and temp:len() > 0 then
+        result[#result + 1] = trim(line)
+      end
+    end
+    return result
+  end
+
+dependency-command:
+  language: lua
+  script: |
+    if is_file("Config") then
+      return parse_config(read_file_lines("Config"))
+    else
+      return {}
+    end
+
+excluded-projects:
+- rws
