@@ -11,6 +11,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use clap::{ App, AppSettings, Arg, SubCommand };
 use colored::Colorize;
+use colored::control::set_virtual_terminal;
 
 const CARGO_PKG_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 const CARGO_PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -19,6 +20,7 @@ const INFO_SUBCOMMAND: &str = "info";
 const RUN_SUBCOMMAND: &str = "run";
 
 fn main() -> std::io::Result<()> {
+    set_virtual_terminal(true).unwrap();
     let app = App::new("Richard's Workspace Tool")
         .author(CARGO_PKG_AUTHORS)
         .about("Manages Git-based workspaces")
