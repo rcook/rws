@@ -27,15 +27,33 @@ impl CommandResult for LuaResult {
 
 impl Command {
     pub fn new(root_hash: &ConfigHash, hash: &ConfigHash) -> Command {
-        let language = hash.as_str("language").expect("Language not specified").to_string();
-        let language_config_key = format!("{}-config", language);
-        let language_config = root_hash.as_hash(&language_config_key).unwrap();
-        let use_prelude_global = language_config.as_bool("use-prelude").unwrap_or(true);
-        let preamble = language_config.as_str("preamble");
-        let script = hash.as_str("script").expect("Script not specified").to_string();
-        let full_script = format!("{}\n\n{}", preamble.unwrap_or(""), script);
-        let use_prelude = hash.as_bool("use-prelude").unwrap_or(use_prelude_global);
-        Command { language: language, use_prelude: use_prelude, script: full_script }
+        let language_default = root_hash.as_str("default-language").unwrap_or("lua");
+        let language = hash.as_str("language").unwrap_or(language_default).to_string();
+
+        let language_hash_key = format!("{}-config", language);
+        let language_hash_opt = root_hash.as_hash(&language_hash_key);
+
+        let (preamble, use_prelude) = match language_hash_opt {
+            Some(language_hash) => {
+                let preamble = language_hash.as_str("preamble").unwrap_or("").to_string();
+                let use_prelude_default = language_hash.as_bool("use-prelude").unwrap_or(true);
+                let use_prelude = hash.as_bool("use-prelude").unwrap_or(use_prelude_default);
+                (preamble, use_prelude)
+            },
+            None => {
+                let use_prelude = hash.as_bool("use-prelude").unwrap_or(true);
+                ("".to_string(), use_prelude)
+            }
+        };
+
+        let script = hash.as_str("script").expect("Script not specified");
+        let full_script = format!("{}\n\n{}", preamble, script);
+
+        Command {
+            language: language,
+            use_prelude: use_prelude,
+            script: full_script
+        }
     }
 
     pub fn eval(&self) -> Box<dyn CommandResult> {
