@@ -1,6 +1,6 @@
 use std::path::Path;
 use yaml_rust::{ YamlLoader };
-use yaml_rust::yaml::{ Hash, Yaml };
+use yaml_rust::yaml::{ Array, Hash, Yaml };
 
 pub struct Config {
     doc: Yaml
@@ -48,11 +48,33 @@ impl<'a> ConfigHash<'a> {
         Some(ConfigHash::new(self.get_item(key)?.as_hash()?))
     }
 
+    pub fn as_vec(&self, key: &str) -> Option<ConfigVec<'a>> {
+        Some(ConfigVec::new(self.get_item(key)?.as_vec()?))
+    }
+
     fn new(hash: &Hash) -> ConfigHash {
         ConfigHash { hash: hash }
     }
 
     fn get_item(&self, key: &str) -> Option<&'a Yaml> {
         self.hash.get(&Yaml::String(key.to_string()))
+    }
+}
+
+pub struct ConfigVec<'a> {
+    vec: &'a Array
+}
+
+impl<'a> ConfigVec<'a> {
+    fn new(vec: &Array) -> ConfigVec {
+        ConfigVec { vec: vec }
+    }
+
+    pub fn len(&self) -> usize {
+        self.vec.len()
+    }
+
+    pub fn as_str(&self, index: usize) -> Option<&str> {
+        self.vec[index].as_str()
     }
 }
