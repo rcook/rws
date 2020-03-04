@@ -1,9 +1,9 @@
-use super::{ CommandInterpreter, CommandResult };
+use super::{CommandInterpreter, CommandResult};
 
 use boa::builtins::function::NativeFunctionData;
 use boa::builtins::object::ObjectKind;
-use boa::builtins::value::{ ResultValue, Value, ValueData, to_value };
-use boa::exec::{ Executor, Interpreter };
+use boa::builtins::value::{to_value, ResultValue, Value, ValueData};
+use boa::exec::{Executor, Interpreter};
 use boa::forward_val;
 use boa::realm::Realm;
 use gc::Gc;
@@ -29,7 +29,7 @@ fn read_file_lines(_: &Value, _args: &[Value], _: &mut Interpreter) -> ResultVal
 }
 
 pub struct JavaScriptResult {
-    value: Value
+    value: Value,
 }
 
 impl JavaScriptResult {
@@ -40,14 +40,14 @@ impl JavaScriptResult {
     fn as_i32(value: &ValueData) -> Option<i32> {
         match value {
             ValueData::Integer(x) => Some(*x),
-            _ => None
+            _ => None,
         }
     }
 
     fn as_string(value: &ValueData) -> Option<String> {
         match value {
             ValueData::String(ref x) => Some(x.clone()),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -56,11 +56,11 @@ impl CommandResult for JavaScriptResult {
     fn as_str_vec(&self) -> Option<Vec<String>> {
         let obj = match *self.value {
             ValueData::Object(ref x) => Some(x),
-            _ => None
+            _ => None,
         }?;
 
         if obj.borrow().kind != ObjectKind::Array {
-            return None
+            return None;
         }
 
         (0..JavaScriptResult::as_i32(&self.value.get_field_slice("length"))?)
@@ -70,13 +70,15 @@ impl CommandResult for JavaScriptResult {
 }
 
 pub struct JavaScriptInterpreter {
-    engine: Interpreter
+    engine: Interpreter,
 }
 
 impl JavaScriptInterpreter {
     pub fn new() -> JavaScriptInterpreter {
         let realm = Realm::create();
-        realm.global_obj.set_field_slice("rws", Gc::new(ValueData::Integer(12345)));
+        realm
+            .global_obj
+            .set_field_slice("rws", Gc::new(ValueData::Integer(12345)));
 
         let prelude = ValueData::new_obj(Some(&realm.global_obj));
         make_builtin_fn!(read_file, named "readFile", with length 1, of prelude);
@@ -91,6 +93,8 @@ impl JavaScriptInterpreter {
 
 impl CommandInterpreter<JavaScriptResult> for JavaScriptInterpreter {
     fn eval(&mut self, src: &str) -> Option<JavaScriptResult> {
-        Some(JavaScriptResult::new(forward_val(&mut self.engine, src).ok()?))
+        Some(JavaScriptResult::new(
+            forward_val(&mut self.engine, src).ok()?,
+        ))
     }
 }

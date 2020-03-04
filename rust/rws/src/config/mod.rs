@@ -1,9 +1,9 @@
 use std::path::Path;
-use yaml_rust::{ YamlLoader };
-use yaml_rust::yaml::{ Array, Hash, Yaml };
+use yaml_rust::yaml::{Array, Hash, Yaml};
+use yaml_rust::YamlLoader;
 
 pub struct Config {
-    doc: Yaml
+    doc: Yaml,
 }
 
 impl Config {
@@ -14,7 +14,9 @@ impl Config {
             panic!("Invalid workspace config file");
         }
 
-        Ok(Config { doc: docs.remove(0) })
+        Ok(Config {
+            doc: docs.remove(0),
+        })
     }
 
     pub fn as_hash(&self) -> Option<ConfigHash> {
@@ -24,7 +26,7 @@ impl Config {
 }
 
 pub struct ConfigHash<'a> {
-    hash: &'a Hash
+    hash: &'a Hash,
 }
 
 impl<'a> ConfigHash<'a> {
@@ -62,7 +64,7 @@ impl<'a> ConfigHash<'a> {
 }
 
 pub struct ConfigVec<'a> {
-    vec: &'a Array
+    vec: &'a Array,
 }
 
 impl<'a> ConfigVec<'a> {
