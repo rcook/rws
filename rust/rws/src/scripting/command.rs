@@ -26,9 +26,9 @@ impl CommandResult for LuaResult {
 }
 
 impl Command {
-    pub fn new(root_hash: &ConfigHash, hash: &ConfigHash) -> Command {
+    pub fn new(root_hash: &ConfigHash, command_hash: &ConfigHash) -> Command {
         let language_default = root_hash.as_str("default-language").unwrap_or("lua");
-        let language = hash
+        let language = command_hash
             .as_str("language")
             .unwrap_or(language_default)
             .to_string();
@@ -40,16 +40,18 @@ impl Command {
             Some(language_hash) => {
                 let preamble = language_hash.as_str("preamble").unwrap_or("").to_string();
                 let use_prelude_default = language_hash.as_bool("use-prelude").unwrap_or(true);
-                let use_prelude = hash.as_bool("use-prelude").unwrap_or(use_prelude_default);
+                let use_prelude = command_hash
+                    .as_bool("use-prelude")
+                    .unwrap_or(use_prelude_default);
                 (preamble, use_prelude)
             }
             None => {
-                let use_prelude = hash.as_bool("use-prelude").unwrap_or(true);
+                let use_prelude = command_hash.as_bool("use-prelude").unwrap_or(true);
                 ("".to_string(), use_prelude)
             }
         };
 
-        let script = hash.as_str("script").expect("Script not specified");
+        let script = command_hash.as_str("script").expect("Script not specified");
         let full_script = format!("{}\n\n{}", preamble, script);
 
         Command {
