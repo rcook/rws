@@ -36,7 +36,7 @@ impl Workspace {
         let root_hash = config.as_hash().unwrap();
         let excluded_project_dirs = root_hash
             .as_str_vec("excluded-projects")
-            .unwrap()
+            .unwrap_or_else(|| Vec::new())
             .into_iter()
             .map(|x| root_dir.join(x))
             .collect::<HashSet<_>>();

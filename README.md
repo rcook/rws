@@ -53,6 +53,11 @@ dependency-command:
     else
       return {}
     end
+
+# (Optional)
+excluded-projects:
+- fff
+- ggg
 ```
 
 ## Licence
