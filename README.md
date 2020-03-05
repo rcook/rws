@@ -4,6 +4,8 @@ _Manages Git-based workspaces_
 
 [Official home page][home]
 
+This is intended to be a cross-platform Git workspace management tool. To allow users to extend its functionality via workspace configuration, RWS uses an embedded Lua scripting engine. This is intended to discourage users from writing non-portable shell script extensions. It has been tested on Ubuntu, Windows 10 and macOS 10.14.6.
+
 ## `git` command
 
 _Runs Git command in each project directory_
