@@ -65,53 +65,36 @@ pub fn make_rws_app<'a, 'b>() -> App<'a, 'b> {
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::TrailingVarArg)
         .version(crate_version!())
-        .subcommand(
-            SubCommand::with_name(command::GIT)
-                .about("Runs Git command in each project directory")
-                .bool_switch(BoolSwitch::new(
-                    arg::FAIL_FAST,
-                    "Aborts command on first error (default)",
-                    arg::NO_FAIL_FAST,
-                    "Runs command in all project directories",
-                ))
-                .arg(
-                    Arg::with_name(arg::ORDER)
-                        .help("Order of project traversal")
-                        .long("order")
-                        .possible_values(&[arg_value::ALPHA, arg_value::TOPO])
-                        .takes_value(true)
-                        .default_value(arg_value::TOPO)
-                        .required(true),
-                )
-                .arg(
-                    Arg::with_name(arg::CMD)
-                        .help("Command to pass to Git")
-                        .multiple(true),
-                ),
-        )
+        .subcommand(run_command(
+            command::GIT,
+            "Runs Git command in each project directory",
+            "Command to pass to Git",
+        ))
         .subcommand(SubCommand::with_name(command::INFO).about("Prints workspace information"))
-        .subcommand(
-            SubCommand::with_name(command::RUN)
-                .about("Runs command in each project directory")
-                .bool_switch(BoolSwitch::new(
-                    arg::FAIL_FAST,
-                    "Aborts command on first error (default)",
-                    arg::NO_FAIL_FAST,
-                    "Runs command in all project directories",
-                ))
-                .arg(
-                    Arg::with_name(arg::ORDER)
-                        .help("Order of project traversal")
-                        .long("order")
-                        .possible_values(&[arg_value::ALPHA, arg_value::TOPO])
-                        .takes_value(true)
-                        .default_value(arg_value::TOPO)
-                        .required(true),
-                )
-                .arg(
-                    Arg::with_name(arg::CMD)
-                        .help("Command to pass to shell")
-                        .multiple(true),
-                ),
+        .subcommand(run_command(
+            command::RUN,
+            "Runs command in each project directory",
+            "Command to pass to shell",
+        ))
+}
+
+fn run_command<'a, 'b>(name: &'a str, about: &'a str, cmd_help: &'a str) -> App<'a, 'b> {
+    SubCommand::with_name(name)
+        .about(about)
+        .bool_switch(BoolSwitch::new(
+            arg::FAIL_FAST,
+            "Aborts command on first error (default)",
+            arg::NO_FAIL_FAST,
+            "Runs command in all project directories",
+        ))
+        .arg(
+            Arg::with_name(arg::ORDER)
+                .help("Order of project traversal")
+                .long("order")
+                .possible_values(&[arg_value::ALPHA, arg_value::TOPO])
+                .takes_value(true)
+                .default_value(arg_value::TOPO)
+                .required(true),
         )
+        .arg(Arg::with_name(arg::CMD).help(cmd_help).multiple(true))
 }
