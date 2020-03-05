@@ -34,6 +34,15 @@ fn load_prelude(lua_ctx: &Context) {
 
     prelude
         .set(
+            "read_file",
+            lua_ctx
+                .create_function(|_, arg: String| command_prelude::read_file(arg))
+                .unwrap(),
+        )
+        .unwrap();
+
+    prelude
+        .set(
             "read_file_lines",
             lua_ctx
                 .create_function(|_, arg: String| command_prelude::read_file_lines(arg))

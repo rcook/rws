@@ -4,13 +4,6 @@ function m.trim(s)
   return s:gsub("^%s*(.-)%s*$", "%1")
 end
 
-function m.read_file(path)
-  local f = assert(io.open(path, "rb"))
-  local content = assert(f:read("*all"))
-  f:close()
-  return content
-end
-
 function m.parse_config(lines)
   local result = {}
   local line
