@@ -142,10 +142,22 @@ impl Workspace {
         for project_dir in project_dirs_alpha {
             let deps = f(project_dir);
 
+            // TBD: Figure out how to store PathBuf/Path directly in TopologicalSort
+            for dep in &deps {
+                let p = Path::new(dep);
+                if !p.is_dir() {
+                    // TBD: Do not fail with panic!
+                    panic!(format!(
+                        "Project directory {} does not exist",
+                        p.to_str().unwrap()
+                    ))
+                }
+            }
+
             // TBD: Don't convert to string etc.
             ts.insert(String::from(project_dir.to_str().unwrap()));
 
-            for dep in deps {
+            for dep in &deps {
                 // TBD: Don't convert to string etc.
                 ts.add_dependency(dep, project_dir.to_str().unwrap())
             }
