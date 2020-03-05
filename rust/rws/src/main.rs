@@ -80,6 +80,15 @@ fn main() -> std::io::Result<()> {
                     "Runs command in all project directories",
                 ))
                 .arg(
+                    Arg::with_name("order")
+                        .help("Order of project traversal")
+                        .long("order")
+                        .possible_values(&["alpha", "topo"])
+                        .takes_value(true)
+                        .default_value("topo")
+                        .required(true),
+                )
+                .arg(
                     Arg::with_name("cmd")
                         .help("Command to pass to Git")
                         .multiple(true),
@@ -96,6 +105,15 @@ fn main() -> std::io::Result<()> {
                     "Runs command in all project directories",
                 ))
                 .arg(
+                    Arg::with_name("order")
+                        .help("Order of project traversal")
+                        .long("order")
+                        .possible_values(&["alpha", "topo"])
+                        .takes_value(true)
+                        .default_value("topo")
+                        .required(true),
+                )
+                .arg(
                     Arg::with_name("cmd")
                         .help("Command to pass to shell")
                         .multiple(true),
@@ -108,6 +126,7 @@ fn main() -> std::io::Result<()> {
             let submatches = matches.subcommand_matches(GIT_SUBCOMMAND).unwrap();
             do_git(
                 !submatches.is_present("no-fail-fast"),
+                submatches.value_of("order").unwrap() == "topo",
                 &submatches
                     .values_of("cmd")
                     .map(|x| x.collect())
@@ -119,6 +138,7 @@ fn main() -> std::io::Result<()> {
             let submatches = matches.subcommand_matches(RUN_SUBCOMMAND).unwrap();
             do_run(
                 !submatches.is_present("no-fail-fast"),
+                submatches.value_of("order").unwrap() == "topo",
                 &submatches
                     .values_of("cmd")
                     .map(|x| x.collect())
@@ -129,12 +149,12 @@ fn main() -> std::io::Result<()> {
     }
 }
 
-fn do_git(fail_fast: bool, cmd: &Vec<&str>) -> std::io::Result<()> {
+fn do_git(fail_fast: bool, topo_order: bool, cmd: &Vec<&str>) -> std::io::Result<()> {
     if cmd.len() < 1 {
         panic!("Unimplemented");
     }
 
-    run_helper(fail_fast, || {
+    run_helper(fail_fast, topo_order, || {
         let mut command = Command::new("git");
         for i in 0..(cmd.len()) {
             command.arg(&cmd[i]);
@@ -170,12 +190,12 @@ fn show_project_dirs(order: &str, project_dirs: &Vec<PathBuf>) {
     }
 }
 
-fn do_run(fail_fast: bool, cmd: &Vec<&str>) -> std::io::Result<()> {
+fn do_run(fail_fast: bool, topo_order: bool, cmd: &Vec<&str>) -> std::io::Result<()> {
     if cmd.len() < 1 {
         panic!("Unimplemented");
     }
 
-    run_helper(fail_fast, || {
+    run_helper(fail_fast, topo_order, || {
         let mut command = Command::new(&cmd[0]);
         for i in 1..(cmd.len()) {
             command.arg(&cmd[i]);
@@ -184,14 +204,19 @@ fn do_run(fail_fast: bool, cmd: &Vec<&str>) -> std::io::Result<()> {
     })
 }
 
-fn run_helper<F>(fail_fast: bool, f: F) -> std::io::Result<()>
+fn run_helper<F>(fail_fast: bool, topo_order: bool, f: F) -> std::io::Result<()>
 where
     F: Fn() -> Command,
 {
     let current_dir = env::current_dir()?;
     let workspace = Workspace::find(&current_dir).unwrap();
     let mut failure_count = 0;
-    for project_dir in &workspace.project_dirs_topo {
+    let project_dirs = if topo_order {
+        &workspace.project_dirs_topo
+    } else {
+        &workspace.project_dirs_alpha
+    };
+    for project_dir in project_dirs {
         let d = project_dir.to_str().unwrap();
         println!("{}", d.cyan());
         let exit_status = f()
