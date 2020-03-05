@@ -1,6 +1,0 @@
-dependencies:
-  aaa:
-  - bbb
-
-excluded-projects:
-- rws

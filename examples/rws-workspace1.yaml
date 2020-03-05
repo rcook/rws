@@ -1,6 +1,0 @@
-dependency-command:
-  language: shell
-  script: if [ -f DEPENDENCIES ]; then cat DEPENDENCIES; fi
-
-excluded-projects:
-- rws
