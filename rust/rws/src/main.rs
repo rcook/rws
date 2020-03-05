@@ -6,7 +6,7 @@ mod workspace;
 
 use crate::workspace::Workspace;
 
-use clap::{App, AppSettings, Arg, SubCommand};
+use clap::{crate_authors, crate_version, App, AppSettings, Arg, SubCommand};
 #[cfg(windows)]
 use colored::control::set_virtual_terminal;
 use colored::Colorize;
@@ -14,8 +14,6 @@ use std::env;
 use std::path::PathBuf;
 use std::process::Command;
 
-const CARGO_PKG_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
-const CARGO_PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const GIT_SUBCOMMAND: &str = "git";
 const INFO_SUBCOMMAND: &str = "info";
 const RUN_SUBCOMMAND: &str = "run";
@@ -65,11 +63,11 @@ fn main() -> std::io::Result<()> {
     set_virtual_terminal(true).unwrap();
 
     let app = App::new("Richard's Workspace Tool")
-        .author(CARGO_PKG_AUTHORS)
+        .author(crate_authors!())
         .about("Manages Git-based workspaces")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::TrailingVarArg)
-        .version(CARGO_PKG_VERSION)
+        .version(crate_version!())
         .subcommand(
             SubCommand::with_name(GIT_SUBCOMMAND)
                 .about("Run Git command in each project directory")
