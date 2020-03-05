@@ -9,6 +9,7 @@ use crate::cli::make_rws_app;
 use crate::cli::{arg, arg_value, command};
 use crate::workspace::Workspace;
 
+use clap::ArgMatches;
 #[cfg(windows)]
 use colored::control::set_virtual_terminal;
 use colored::Colorize;
@@ -20,49 +21,24 @@ fn main() -> std::io::Result<()> {
     #[cfg(windows)]
     set_virtual_terminal(true).unwrap();
 
-    let app = make_rws_app();
-    let matches = app.get_matches();
-
-    match matches.subcommand() {
-        (command::GIT, Some(_)) => {
-            let submatches = matches.subcommand_matches(command::GIT).unwrap();
-            do_git(
-                !submatches.is_present(arg::NO_FAIL_FAST),
-                submatches.value_of(arg::ORDER).unwrap() == arg_value::TOPO,
-                &submatches
-                    .values_of(arg::CMD)
-                    .map(|x| x.collect())
-                    .unwrap_or(Vec::new()),
-            )
-        }
+    match make_rws_app().get_matches().subcommand() {
+        (command::GIT, Some(s)) => run_helper(s, |cmd| {
+            let mut command = Command::new("git");
+            for i in 0..(cmd.len()) {
+                command.arg(&cmd[i]);
+            }
+            command
+        }),
         (command::INFO, Some(_)) => do_info(),
-        (command::RUN, Some(_)) => {
-            let submatches = matches.subcommand_matches(command::RUN).unwrap();
-            do_run(
-                !submatches.is_present(arg::NO_FAIL_FAST),
-                submatches.value_of(arg::ORDER).unwrap() == arg_value::TOPO,
-                &submatches
-                    .values_of(arg::CMD)
-                    .map(|x| x.collect())
-                    .unwrap_or(Vec::new()),
-            )
-        }
+        (command::RUN, Some(s)) => run_helper(s, |cmd| {
+            let mut command = Command::new(&cmd[0]);
+            for i in 1..(cmd.len()) {
+                command.arg(&cmd[i]);
+            }
+            command
+        }),
         _ => panic!("Unimplemented"),
     }
-}
-
-fn do_git(fail_fast: bool, topo_order: bool, cmd: &Vec<&str>) -> std::io::Result<()> {
-    if cmd.len() < 1 {
-        panic!("Unimplemented");
-    }
-
-    run_helper(fail_fast, topo_order, || {
-        let mut command = Command::new("git");
-        for i in 0..(cmd.len()) {
-            command.arg(&cmd[i]);
-        }
-        command
-    })
 }
 
 fn do_info() -> std::io::Result<()> {
@@ -92,24 +68,21 @@ fn show_project_dirs(order: &str, project_dirs: &Vec<PathBuf>) {
     }
 }
 
-fn do_run(fail_fast: bool, topo_order: bool, cmd: &Vec<&str>) -> std::io::Result<()> {
+fn run_helper<F>(submatches: &ArgMatches, f: F) -> std::io::Result<()>
+where
+    F: Fn(&Vec<&str>) -> Command,
+{
+    let cmd = &submatches
+        .values_of(arg::CMD)
+        .map(|x| x.collect())
+        .unwrap_or(Vec::new());
     if cmd.len() < 1 {
         panic!("Unimplemented");
     }
 
-    run_helper(fail_fast, topo_order, || {
-        let mut command = Command::new(&cmd[0]);
-        for i in 1..(cmd.len()) {
-            command.arg(&cmd[i]);
-        }
-        command
-    })
-}
+    let fail_fast = !submatches.is_present(arg::NO_FAIL_FAST);
+    let topo_order = submatches.value_of(arg::ORDER).unwrap() == arg_value::TOPO;
 
-fn run_helper<F>(fail_fast: bool, topo_order: bool, f: F) -> std::io::Result<()>
-where
-    F: Fn() -> Command,
-{
     let current_dir = env::current_dir()?;
     let workspace = Workspace::find(&current_dir).unwrap();
     let mut failure_count = 0;
@@ -121,7 +94,7 @@ where
     for project_dir in project_dirs {
         let d = project_dir.to_str().unwrap();
         println!("{}", d.cyan());
-        let exit_status = f()
+        let exit_status = f(cmd)
             .current_dir(&project_dir)
             .spawn()
             .unwrap()
