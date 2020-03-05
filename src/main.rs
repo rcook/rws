@@ -5,7 +5,8 @@ mod os;
 mod scripting;
 mod workspace;
 
-use crate::cli::{make_rws_app, GIT_SUBCOMMAND, INFO_SUBCOMMAND, RUN_SUBCOMMAND};
+use crate::cli::make_rws_app;
+use crate::cli::{arg, arg_value, command};
 use crate::workspace::Workspace;
 
 #[cfg(windows)]
@@ -23,25 +24,25 @@ fn main() -> std::io::Result<()> {
     let matches = app.get_matches();
 
     match matches.subcommand() {
-        (GIT_SUBCOMMAND, Some(_)) => {
-            let submatches = matches.subcommand_matches(GIT_SUBCOMMAND).unwrap();
+        (command::GIT, Some(_)) => {
+            let submatches = matches.subcommand_matches(command::GIT).unwrap();
             do_git(
-                !submatches.is_present("no-fail-fast"),
-                submatches.value_of("order").unwrap() == "topo",
+                !submatches.is_present(arg::NO_FAIL_FAST),
+                submatches.value_of(arg::ORDER).unwrap() == arg_value::TOPO,
                 &submatches
-                    .values_of("cmd")
+                    .values_of(arg::CMD)
                     .map(|x| x.collect())
                     .unwrap_or(Vec::new()),
             )
         }
-        (INFO_SUBCOMMAND, Some(_)) => do_info(),
-        (RUN_SUBCOMMAND, Some(_)) => {
-            let submatches = matches.subcommand_matches(RUN_SUBCOMMAND).unwrap();
+        (command::INFO, Some(_)) => do_info(),
+        (command::RUN, Some(_)) => {
+            let submatches = matches.subcommand_matches(command::RUN).unwrap();
             do_run(
-                !submatches.is_present("no-fail-fast"),
-                submatches.value_of("order").unwrap() == "topo",
+                !submatches.is_present(arg::NO_FAIL_FAST),
+                submatches.value_of(arg::ORDER).unwrap() == arg_value::TOPO,
                 &submatches
-                    .values_of("cmd")
+                    .values_of(arg::CMD)
                     .map(|x| x.collect())
                     .unwrap_or(Vec::new()),
             )
@@ -76,7 +77,7 @@ fn do_info() -> std::io::Result<()> {
         workspace.config_path.to_str().unwrap().cyan()
     );
     show_project_dirs("alpha", &workspace.project_dirs_alpha);
-    show_project_dirs("topo", &workspace.project_dirs_topo);
+    show_project_dirs(arg_value::TOPO, &workspace.project_dirs_topo);
     Ok(())
 }
 

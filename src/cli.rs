@@ -1,8 +1,22 @@
 use clap::{crate_authors, crate_version, App, AppSettings, Arg, SubCommand};
 
-pub const GIT_SUBCOMMAND: &str = "git";
-pub const INFO_SUBCOMMAND: &str = "info";
-pub const RUN_SUBCOMMAND: &str = "run";
+pub mod command {
+    pub const GIT: &str = "git";
+    pub const INFO: &str = "info";
+    pub const RUN: &str = "run";
+}
+
+pub mod arg {
+    pub const CMD: &str = "cmd";
+    pub const FAIL_FAST: &str = "fail-fast";
+    pub const NO_FAIL_FAST: &str = "no-fail-fast";
+    pub const ORDER: &str = "order";
+}
+
+pub mod arg_value {
+    pub const ALPHA: &str = "alpha";
+    pub const TOPO: &str = "topo";
+}
 
 struct BoolSwitch<'a> {
     name: &'a str,
@@ -52,50 +66,50 @@ pub fn make_rws_app<'a, 'b>() -> App<'a, 'b> {
         .setting(AppSettings::TrailingVarArg)
         .version(crate_version!())
         .subcommand(
-            SubCommand::with_name(GIT_SUBCOMMAND)
+            SubCommand::with_name(command::GIT)
                 .about("Runs Git command in each project directory")
                 .bool_switch(BoolSwitch::new(
-                    "fail-fast",
+                    arg::FAIL_FAST,
                     "Aborts command on first error (default)",
-                    "no-fail-fast",
+                    arg::NO_FAIL_FAST,
                     "Runs command in all project directories",
                 ))
                 .arg(
-                    Arg::with_name("order")
+                    Arg::with_name(arg::ORDER)
                         .help("Order of project traversal")
                         .long("order")
-                        .possible_values(&["alpha", "topo"])
+                        .possible_values(&[arg_value::ALPHA, arg_value::TOPO])
                         .takes_value(true)
-                        .default_value("topo")
+                        .default_value(arg_value::TOPO)
                         .required(true),
                 )
                 .arg(
-                    Arg::with_name("cmd")
+                    Arg::with_name(arg::CMD)
                         .help("Command to pass to Git")
                         .multiple(true),
                 ),
         )
-        .subcommand(SubCommand::with_name(INFO_SUBCOMMAND).about("Prints workspace information"))
+        .subcommand(SubCommand::with_name(command::INFO).about("Prints workspace information"))
         .subcommand(
-            SubCommand::with_name(RUN_SUBCOMMAND)
+            SubCommand::with_name(command::RUN)
                 .about("Runs command in each project directory")
                 .bool_switch(BoolSwitch::new(
-                    "fail-fast",
+                    arg::FAIL_FAST,
                     "Aborts command on first error (default)",
-                    "no-fail-fast",
+                    arg::NO_FAIL_FAST,
                     "Runs command in all project directories",
                 ))
                 .arg(
-                    Arg::with_name("order")
+                    Arg::with_name(arg::ORDER)
                         .help("Order of project traversal")
                         .long("order")
-                        .possible_values(&["alpha", "topo"])
+                        .possible_values(&[arg_value::ALPHA, arg_value::TOPO])
                         .takes_value(true)
-                        .default_value("topo")
+                        .default_value(arg_value::TOPO)
                         .required(true),
                 )
                 .arg(
-                    Arg::with_name("cmd")
+                    Arg::with_name(arg::CMD)
                         .help("Command to pass to shell")
                         .multiple(true),
                 ),
