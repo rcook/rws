@@ -27,7 +27,19 @@ default-language: lua
 # (Optional)
 lua-config:
   # (Optional)
-  preamble: dofile("../my-shared-script.lua")
+  preamble: |
+    #dofile("shared.lua")
+    local DEPS_FILE_NAME = "_DEPS"
+    local function parse_config_lines(lines)
+      local result = {}
+      for _, line in ipairs(lines) do
+        local temp = prelude.trim_string(line)
+        if string.len(temp:len()) > 0 and string.find(temp, "#") ~= 1 then
+          result[#result + 1] = temp
+        end
+      end
+      return result
+    end
   # (Optional)
   use-prelude: true
 
@@ -48,10 +60,10 @@ dependency-command:
   use-prelude: true
   # (Required)
   script: |
-    if prelude.is_file("Config") then
-      return prelude.parse_config(prelude.read_file_lines("Config"))
+    if prelude.is_file(DEPS_FILE_NAME) then
+      return parse_config_lines(prelude.read_file_lines(DEPS_FILE_NAME))
     else
-      return {}
+      return { }
     end
 
 # (Optional)
