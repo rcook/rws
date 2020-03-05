@@ -7,6 +7,7 @@ mod workspace;
 use crate::workspace::Workspace;
 
 use clap::{App, AppSettings, Arg, SubCommand};
+#[cfg(windows)]
 use colored::control::set_virtual_terminal;
 use colored::Colorize;
 use std::env;
@@ -20,7 +21,9 @@ const INFO_SUBCOMMAND: &str = "info";
 const RUN_SUBCOMMAND: &str = "run";
 
 fn main() -> std::io::Result<()> {
+    #[cfg(windows)]
     set_virtual_terminal(true).unwrap();
+
     let app = App::new("Richard's Workspace Tool")
         .author(CARGO_PKG_AUTHORS)
         .about("Manages Git-based workspaces")
