@@ -14,15 +14,23 @@ fn load_prelude(lua_ctx: &Context) {
     let prelude_script = String::from_utf8(include_bytes!("command_prelude.lua").to_vec()).unwrap();
     let prelude = lua_ctx.load(&prelude_script).eval::<Table>().unwrap();
 
-    let current_dir = lua_ctx
-        .create_function(|_, ()| command_prelude::current_dir())
+    prelude
+        .set(
+            "current_dir",
+            lua_ctx
+                .create_function(|_, ()| command_prelude::current_dir())
+                .unwrap(),
+        )
         .unwrap();
-    prelude.set("current_dir", current_dir).unwrap();
 
-    let is_file = lua_ctx
-        .create_function(|_, arg: String| command_prelude::is_file(arg))
+    prelude
+        .set(
+            "is_file",
+            lua_ctx
+                .create_function(|_, arg: String| command_prelude::is_file(arg))
+                .unwrap(),
+        )
         .unwrap();
-    prelude.set("is_file", is_file).unwrap();
 
     lua_ctx.globals().set("prelude", prelude).unwrap();
 }
