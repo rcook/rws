@@ -4,15 +4,6 @@ function m.trim(s)
   return s:gsub("^%s*(.-)%s*$", "%1")
 end
 
-function m.is_file(name)
-  local f = io.open(name,"r")
-  if f == nil then
-    return false
-  end
-  f:close()
-  return true
-end
-
 function m.read_file(path)
   local f = assert(io.open(path, "rb"))
   local content = assert(f:read("*all"))
