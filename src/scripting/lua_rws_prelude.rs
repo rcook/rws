@@ -12,8 +12,3 @@ pub fn current_dir() -> LuaResult<String> {
         .unwrap()
         .to_string())
 }
-
-pub fn greet(name: String) -> LuaResult<()> {
-    println!("Hello {}!", name);
-    Ok(())
-}
