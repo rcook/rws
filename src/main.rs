@@ -70,7 +70,7 @@ fn main() -> std::io::Result<()> {
         .version(crate_version!())
         .subcommand(
             SubCommand::with_name(GIT_SUBCOMMAND)
-                .about("Run Git command in each project directory")
+                .about("Runs Git command in each project directory")
                 .bool_switch(BoolSwitch::new(
                     "fail-fast",
                     "Aborts command on first error (default)",
@@ -95,7 +95,7 @@ fn main() -> std::io::Result<()> {
         .subcommand(SubCommand::with_name(INFO_SUBCOMMAND).about("Prints workspace information"))
         .subcommand(
             SubCommand::with_name(RUN_SUBCOMMAND)
-                .about("Run command in each project directory")
+                .about("Runs command in each project directory")
                 .bool_switch(BoolSwitch::new(
                     "fail-fast",
                     "Aborts command on first error (default)",

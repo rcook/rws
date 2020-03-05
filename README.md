@@ -1,46 +1,58 @@
-# Richard's Workspace Tools
+# Richard's Workspace Tool
+
+_Manages Git-based workspaces_
 
 [Official home page][home]
 
-## `each` helper
+## `git` command
 
-_Run commands in Git-based projects_
+_Runs Git command in each project directory_
 
-### `exec` subcommand
+## `info` command
 
-_Run command in each project directory_
+_Prints workspace information_
 
-### `git` subcommand
+## `run` command
 
-_Run Git command in each project directory_
-
-### `ps` subcommand
-
-_Run PowerShell command in each project directory_
-
-## `info` helper
-
-_Show Git-based workspace information_
-
-## `topo` helper
-
-_List Git-based projects in topological order_
+_Runs command in each project directory_
 
 ## `rws-workspace.yaml` configuration
 
-* `dependency-command`: shell command run in order to yield a workspace's dependency graph
-* `excluded-projects`: list of projects to exclude from workspace
+Schema:
 
-## Example `rws-workspace.yaml` configurations
+```yaml
+# (Optional)
+default-language: lua
 
-* [Example 1][example-1]: Unix-style shell dependency command
-* [Example 2][example-2]: Python-based dependency command (`DEPENDENCIES` file in each project)
-* [Example 3][example-3]: Dependencies specified in workspace configuration
+# (Optional)
+lua-config:
+  # (Optional)
+  preamble: dofile("../my-shared-script.lua")
+  # (Optional)
+  use-prelude: true
 
-## Install dependencies
+# (Optional) (or specify "dependency-command")
+dependencies:
+  aaa:
+  - bbb
+  - ccc
+  ccc:
+  - ddd
+  - eee
 
-```
-$ pip install --user colorama pyyaml
+# (Optional) (or specify "dependencies")
+dependency-command:
+  # (Optional)
+  language: lua
+  # (Optional)
+  use-prelude: true
+  # (Required)
+  script: |
+    if prelude.is_file("Config") then
+      return prelude.parse_config(prelude.read_file_lines("Config"))
+    else
+      return {}
+    end
 ```
 
 ## Licence
@@ -49,6 +61,3 @@ $ pip install --user colorama pyyaml
 
 [home]: https://github.com/rcook/rws
 [licence]: LICENSE
-[example-1]: examples/rws-workspace1.yaml
-[example-2]: examples/rws-workspace2.yaml
-[example-3]: examples/rws-workspace3.yaml
