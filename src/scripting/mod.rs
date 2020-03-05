@@ -1,6 +1,6 @@
 pub mod command;
+mod command_prelude;
 mod lua;
-mod lua_rws_prelude;
 
 pub trait CommandResult {
     fn as_str_vec(&self) -> Option<Vec<String>>;
