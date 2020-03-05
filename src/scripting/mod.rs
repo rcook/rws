@@ -1,5 +1,4 @@
 pub mod command;
-mod javascript;
 mod lua;
 mod lua_rws_prelude;
 

@@ -1,7 +1,6 @@
 use crate::config::ConfigHash;
-use crate::scripting::javascript;
 use crate::scripting::lua;
-use crate::scripting::{CommandInterpreter, CommandResult};
+use crate::scripting::CommandResult;
 
 pub struct Command {
     language: String,
@@ -63,11 +62,6 @@ impl Command {
 
     pub fn eval(&self) -> Box<dyn CommandResult> {
         match self.language.as_str() {
-            "javascript" => Box::new(
-                javascript::JavaScriptInterpreter::new()
-                    .eval(&self.script)
-                    .unwrap(),
-            ),
             "lua" => Box::new(LuaResult::new(lua::eval(&self.script, self.use_prelude))),
             _ => panic!("Unsupported language"),
         }

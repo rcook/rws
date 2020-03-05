@@ -5,7 +5,6 @@ authors = ["Richard Cook <rcook@rcook.org>"]
 edition = "2018"
 
 [dependencies]
-Boa = "0.6.0"
 clap = "2.33.0"
 colored = "1.9.3"
 gc = "0.3.3"
