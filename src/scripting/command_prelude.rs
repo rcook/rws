@@ -1,4 +1,6 @@
-use rlua::prelude::LuaResult;
+use rlua::prelude::{LuaError, LuaResult};
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 use std::path::Path;
 
 pub fn current_dir() -> LuaResult<String> {
@@ -11,4 +13,13 @@ pub fn current_dir() -> LuaResult<String> {
 
 pub fn is_file(path: String) -> LuaResult<bool> {
     Ok(Path::new(&path).is_file())
+}
+
+pub fn read_file_lines(path: String) -> LuaResult<Vec<String>> {
+    let f = File::open(&path)
+        .map_err(|_| LuaError::RuntimeError(format!("Failed to open {}", path)))?;
+    BufReader::new(f)
+        .lines()
+        .collect::<std::io::Result<_>>()
+        .map_err(|_| LuaError::RuntimeError(format!("Failed while reading from {}", path)))
 }

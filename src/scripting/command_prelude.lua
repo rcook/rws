@@ -11,20 +11,6 @@ function m.read_file(path)
   return content
 end
 
-function m.read_file_lines(path)
-  local f = assert(io.open(path, "rb"))
-  local lines = {}
-  local i = 1
-  while true do
-    local line = f:read()
-    if line == nil then break end
-    lines[i] = line
-    i = i + 1
-  end
-  f:close()
-  return lines
-end
-
 function m.parse_config(lines)
   local result = {}
   local line
