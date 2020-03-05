@@ -49,8 +49,13 @@ fn do_info() -> std::io::Result<()> {
         workspace.root_dir.to_str().unwrap().cyan()
     );
     println!(
-        "Workspace configuration: file {}",
-        workspace.config_path.to_str().unwrap().cyan()
+        "Workspace configuration file: {}",
+        workspace
+            .config_path
+            .as_ref()
+            .map(|x| x.to_str().unwrap())
+            .unwrap_or("(none)")
+            .cyan()
     );
     show_project_dirs("alpha", &workspace.project_dirs_alpha);
     show_project_dirs(arg_value::TOPO, &workspace.project_dirs_topo);

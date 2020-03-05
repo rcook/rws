@@ -4,14 +4,13 @@ use crate::scripting::command::Command;
 
 use std::collections::HashSet;
 use std::fs;
-use std::io::{Error, ErrorKind};
 use std::path::{Component, Path, PathBuf};
 use topological_sort::TopologicalSort;
 
 const WORKSPACE_CONFIG_FILE_NAME: &str = "rws-workspace.yaml";
 
 pub struct Workspace {
-    pub config_path: PathBuf,
+    pub config_path: Option<PathBuf>,
     pub root_dir: PathBuf,
     pub project_dirs_alpha: Vec<PathBuf>,
     pub project_dirs_topo: Vec<PathBuf>,
@@ -19,15 +18,29 @@ pub struct Workspace {
 
 impl Workspace {
     pub fn find(search_dir: &Path) -> std::io::Result<Workspace> {
+        let result = Self::find_impl(search_dir)?;
+        Ok(result.unwrap_or_else(|| {
+            let project_dirs_alpha = vec![search_dir.to_path_buf()];
+            let project_dirs_topo = vec![search_dir.to_path_buf()];
+            Workspace {
+                config_path: None,
+                root_dir: search_dir.to_path_buf(),
+                project_dirs_alpha: project_dirs_alpha,
+                project_dirs_topo: project_dirs_topo,
+            }
+        }))
+    }
+
+    fn find_impl(search_dir: &Path) -> std::io::Result<Option<Workspace>> {
         let x = search_dir.join(WORKSPACE_CONFIG_FILE_NAME);
         if x.exists() {
-            let root_dir = x.parent().unwrap().to_path_buf();
-            return Workspace::traverse(x, root_dir);
+            let workspace = Self::traverse(x, search_dir.to_path_buf())?;
+            return Ok(Some(workspace));
         }
 
         match search_dir.parent() {
-            Some(p) => Self::find(p),
-            None => Err(Error::new(ErrorKind::Other, "Could not find workspace")),
+            Some(p) => Self::find_impl(p),
+            None => Ok(None),
         }
     }
 
@@ -46,13 +59,13 @@ impl Workspace {
             (Some(_), Some(_)) => {
                 panic!("Invalid: cannot specify both dependencies and dependency-command")
             }
-            (Some(dependencies_hash), None) => Workspace::traverse_with_dependencies(
+            (Some(dependencies_hash), None) => Self::traverse_with_dependencies(
                 config_path,
                 root_dir,
                 &excluded_project_dirs,
                 &dependencies_hash,
             ),
-            (None, Some(dependency_command_hash)) => Workspace::traverse_with_dependency_command(
+            (None, Some(dependency_command_hash)) => Self::traverse_with_dependency_command(
                 config_path,
                 root_dir,
                 &excluded_project_dirs,
@@ -71,7 +84,7 @@ impl Workspace {
         excluded_project_dirs: &HashSet<PathBuf>,
         dependency_command_hash: &ConfigHash,
     ) -> std::io::Result<Workspace> {
-        Workspace::traverse_helper(
+        Self::traverse_helper(
             config_path,
             &root_dir,
             excluded_project_dirs,
@@ -101,7 +114,7 @@ impl Workspace {
         dependency_command_hash: &ConfigHash,
     ) -> std::io::Result<Workspace> {
         let dependency_command = Command::new(root_hash, dependency_command_hash);
-        Workspace::traverse_helper(
+        Self::traverse_helper(
             config_path,
             &root_dir,
             excluded_project_dirs,
@@ -185,11 +198,11 @@ impl Workspace {
         F: Fn(&Path) -> Vec<String>,
     {
         let project_dirs_alpha =
-            Workspace::get_project_dirs_alpha(&root_dir, &excluded_project_dirs).unwrap();
-        let project_dirs_topo = Workspace::topo_sort_project_dirs(&project_dirs_alpha, f);
+            Self::get_project_dirs_alpha(&root_dir, &excluded_project_dirs).unwrap();
+        let project_dirs_topo = Self::topo_sort_project_dirs(&project_dirs_alpha, f);
 
         Ok(Workspace {
-            config_path: config_path,
+            config_path: Some(config_path),
             root_dir: root_dir.to_path_buf(),
             project_dirs_alpha: project_dirs_alpha,
             project_dirs_topo: project_dirs_topo,
