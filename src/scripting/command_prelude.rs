@@ -27,3 +27,7 @@ pub fn read_file_lines(path: String) -> LuaResult<Vec<String>> {
         .collect::<std::io::Result<_>>()
         .map_err(|_| LuaError::RuntimeError(format!("Failed while reading from {}", path)))
 }
+
+pub fn trim_string(str: String) -> LuaResult<String> {
+    Ok(str.trim().to_string())
+}

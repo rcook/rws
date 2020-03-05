@@ -1,5 +1,5 @@
 use crate::scripting::command_prelude;
-use rlua::{Context, Lua, Table};
+use rlua::{Context, Lua};
 
 pub fn eval(script: &str, use_prelude: bool) -> Vec<String> {
     Lua::new().context(|lua_ctx| {
@@ -11,8 +11,7 @@ pub fn eval(script: &str, use_prelude: bool) -> Vec<String> {
 }
 
 fn load_prelude(lua_ctx: &Context) {
-    let prelude_script = String::from_utf8(include_bytes!("command_prelude.lua").to_vec()).unwrap();
-    let prelude = lua_ctx.load(&prelude_script).eval::<Table>().unwrap();
+    let prelude = lua_ctx.create_table().unwrap();
 
     prelude
         .set(
@@ -46,6 +45,15 @@ fn load_prelude(lua_ctx: &Context) {
             "read_file_lines",
             lua_ctx
                 .create_function(|_, arg: String| command_prelude::read_file_lines(arg))
+                .unwrap(),
+        )
+        .unwrap();
+
+    prelude
+        .set(
+            "trim_string",
+            lua_ctx
+                .create_function(|_, arg: String| command_prelude::trim_string(arg))
                 .unwrap(),
         )
         .unwrap();
