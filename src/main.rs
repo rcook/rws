@@ -17,9 +17,13 @@ use std::env;
 use std::path::PathBuf;
 use std::process::Command;
 
-fn main() -> std::io::Result<()> {
+fn reset_terminal() -> () {
     #[cfg(windows)]
     set_virtual_terminal(true).unwrap();
+}
+
+fn main() -> std::io::Result<()> {
+    reset_terminal();
 
     match make_rws_app().get_matches().subcommand() {
         (command::GIT, Some(s)) => run_helper(s, |cmd| {
@@ -105,6 +109,7 @@ where
             .unwrap()
             .wait()
             .unwrap();
+        reset_terminal();
         if exit_status.success() {
             println!("{}", format!("Command succeeded in {}", d).green())
         } else {
