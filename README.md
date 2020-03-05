@@ -34,7 +34,7 @@ lua-config:
       local result = {}
       for _, line in ipairs(lines) do
         local temp = prelude.trim_string(line)
-        if string.len(temp:len()) > 0 and string.find(temp, "#") ~= 1 then
+        if temp:len() > 0 and temp:find("#") ~= 1 then
           result[#result + 1] = temp
         end
       end
