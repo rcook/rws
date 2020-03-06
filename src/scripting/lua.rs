@@ -1,12 +1,20 @@
+use crate::error::{AppError, Result};
 use crate::scripting::command_prelude;
 use rlua::{Context, Lua};
 
-pub fn eval(script: &str, use_prelude: bool) -> Vec<String> {
+impl std::convert::From<rlua::Error> for AppError {
+    fn from(error: rlua::Error) -> Self {
+        AppError::System("Lua", error.to_string())
+    }
+}
+
+pub fn eval(script: &str, use_prelude: bool) -> Result<Vec<String>> {
     Lua::new().context(|lua_ctx| {
         if use_prelude {
             load_prelude(&lua_ctx)
         }
-        lua_ctx.load(script).eval().unwrap()
+        let result = lua_ctx.load(script).eval()?;
+        Ok(result)
     })
 }
 

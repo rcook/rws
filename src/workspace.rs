@@ -1,5 +1,6 @@
 use crate::config::{Config, ConfigHash};
 use crate::deps::get_deps;
+use crate::error::Result;
 use crate::scripting::command::Command;
 
 use std::collections::HashSet;
@@ -17,7 +18,7 @@ pub struct Workspace {
 }
 
 impl Workspace {
-    pub fn find(search_dir: &Path) -> std::io::Result<Workspace> {
+    pub fn find(search_dir: &Path) -> Result<Workspace> {
         let result = Self::find_impl(search_dir)?;
         Ok(result.unwrap_or_else(|| {
             let project_dirs_alpha = vec![search_dir.to_path_buf()];
@@ -31,7 +32,7 @@ impl Workspace {
         }))
     }
 
-    fn find_impl(search_dir: &Path) -> std::io::Result<Option<Workspace>> {
+    fn find_impl(search_dir: &Path) -> Result<Option<Workspace>> {
         let x = search_dir.join(WORKSPACE_CONFIG_FILE_NAME);
         if x.exists() {
             let workspace = Self::traverse(x, search_dir.to_path_buf())?;
@@ -44,7 +45,7 @@ impl Workspace {
         }
     }
 
-    fn traverse(config_path: PathBuf, root_dir: PathBuf) -> std::io::Result<Workspace> {
+    fn traverse(config_path: PathBuf, root_dir: PathBuf) -> Result<Workspace> {
         let config = Config::read_yaml_file(&config_path)?;
         let root_hash = config.as_hash().unwrap();
         let excluded_project_dirs = root_hash
@@ -83,7 +84,7 @@ impl Workspace {
         root_dir: PathBuf,
         excluded_project_dirs: &HashSet<PathBuf>,
         dependency_command_hash: &ConfigHash,
-    ) -> std::io::Result<Workspace> {
+    ) -> Result<Workspace> {
         Self::traverse_helper(
             config_path,
             &root_dir,
@@ -94,13 +95,13 @@ impl Workspace {
                     _ => panic!("Unimplemented"),
                 };
                 match dependency_command_hash.as_vec(project_name.to_str().unwrap()) {
-                    Some(v) => (0..v.len())
+                    Some(v) => Ok((0..v.len())
                         .into_iter()
                         .map(|i| {
                             String::from(root_dir.join(v.as_str(i).unwrap()).to_str().unwrap())
                         })
-                        .collect(),
-                    None => Vec::new(),
+                        .collect()),
+                    None => Ok(Vec::new()),
                 }
             },
         )
@@ -112,18 +113,18 @@ impl Workspace {
         excluded_project_dirs: &HashSet<PathBuf>,
         root_hash: &ConfigHash,
         dependency_command_hash: &ConfigHash,
-    ) -> std::io::Result<Workspace> {
+    ) -> Result<Workspace> {
         let dependency_command = Command::new(root_hash, dependency_command_hash);
         Self::traverse_helper(
             config_path,
             &root_dir,
             excluded_project_dirs,
             |project_dir| {
-                get_deps(&project_dir, &dependency_command)
-                    .unwrap()
-                    .into_iter()
-                    .map(|x| String::from(root_dir.join(x).to_str().unwrap()))
-                    .collect::<Vec<_>>()
+                get_deps(&project_dir, &dependency_command).map(|x| {
+                    x.into_iter()
+                        .map(|x| String::from(root_dir.join(x).to_str().unwrap()))
+                        .collect::<Vec<_>>()
+                })
             },
         )
     }
@@ -147,13 +148,13 @@ impl Workspace {
         Ok(project_dirs_alpha)
     }
 
-    fn topo_sort_project_dirs<F>(project_dirs_alpha: &Vec<PathBuf>, f: F) -> Vec<PathBuf>
+    fn topo_sort_project_dirs<F>(project_dirs_alpha: &Vec<PathBuf>, f: F) -> Result<Vec<PathBuf>>
     where
-        F: Fn(&Path) -> Vec<String>,
+        F: Fn(&Path) -> Result<Vec<String>>,
     {
         let mut ts = TopologicalSort::<String>::new();
         for project_dir in project_dirs_alpha {
-            let deps = f(project_dir);
+            let deps = f(project_dir)?;
 
             // TBD: Figure out how to store PathBuf/Path directly in TopologicalSort
             for dep in &deps {
@@ -185,7 +186,7 @@ impl Workspace {
             }
         }
 
-        project_dirs_topo
+        Ok(project_dirs_topo)
     }
 
     fn traverse_helper<F>(
@@ -193,13 +194,13 @@ impl Workspace {
         root_dir: &PathBuf,
         excluded_project_dirs: &HashSet<PathBuf>,
         f: F,
-    ) -> std::io::Result<Workspace>
+    ) -> Result<Workspace>
     where
-        F: Fn(&Path) -> Vec<String>,
+        F: Fn(&Path) -> Result<Vec<String>>,
     {
         let project_dirs_alpha =
             Self::get_project_dirs_alpha(&root_dir, &excluded_project_dirs).unwrap();
-        let project_dirs_topo = Self::topo_sort_project_dirs(&project_dirs_alpha, f);
+        let project_dirs_topo = Self::topo_sort_project_dirs(&project_dirs_alpha, f)?;
 
         Ok(Workspace {
             config_path: Some(config_path),

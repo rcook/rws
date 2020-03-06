@@ -1,12 +1,14 @@
 mod cli;
 mod config;
 mod deps;
+mod error;
 mod os;
 mod scripting;
 mod workspace;
 
 use crate::cli::make_rws_app;
 use crate::cli::{arg, arg_value, command};
+use crate::error::{AppError, Result};
 use crate::workspace::Workspace;
 
 use clap::ArgMatches;
@@ -15,14 +17,28 @@ use colored::control::set_virtual_terminal;
 use colored::Colorize;
 use std::env;
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{exit, Command};
 
 fn reset_terminal() -> () {
     #[cfg(windows)]
-    set_virtual_terminal(true).unwrap();
+    set_virtual_terminal(true).expect("set_virtual_terminal failed");
 }
 
-fn main() -> std::io::Result<()> {
+fn main() {
+    exit(match main_inner() {
+        Ok(()) => 0,
+        Err(AppError::User(message)) => {
+            println!("{}", format!("User error: {}", message).bright_red());
+            1
+        }
+        Err(e) => {
+            println!("{}", format!("Other error: {}", e).red().bold());
+            2
+        }
+    })
+}
+
+fn main_inner() -> Result<()> {
     reset_terminal();
 
     match make_rws_app().get_matches().subcommand() {
@@ -33,6 +49,7 @@ fn main() -> std::io::Result<()> {
             }
             command
         }),
+
         (command::INFO, Some(_)) => do_info(),
         (command::RUN, Some(s)) => run_helper(s, |cmd| {
             let mut command = Command::new(&cmd[0]);
@@ -45,9 +62,9 @@ fn main() -> std::io::Result<()> {
     }
 }
 
-fn do_info() -> std::io::Result<()> {
+fn do_info() -> Result<()> {
     let current_dir = env::current_dir()?;
-    let workspace = Workspace::find(&current_dir).unwrap();
+    let workspace = Workspace::find(&current_dir)?;
     println!(
         "Workspace directory: {}",
         workspace.root_dir.to_str().unwrap().cyan()
@@ -77,7 +94,7 @@ fn show_project_dirs(order: &str, project_dirs: &Vec<PathBuf>) {
     }
 }
 
-fn run_helper<F>(submatches: &ArgMatches, f: F) -> std::io::Result<()>
+fn run_helper<F>(submatches: &ArgMatches, f: F) -> Result<()>
 where
     F: Fn(&Vec<&str>) -> Command,
 {

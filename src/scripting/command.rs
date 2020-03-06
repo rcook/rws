@@ -1,4 +1,5 @@
 use crate::config::ConfigHash;
+use crate::error::{user_error_result, Result};
 use crate::scripting::lua;
 use crate::scripting::CommandResult;
 
@@ -60,10 +61,13 @@ impl Command {
         }
     }
 
-    pub fn eval(&self) -> Box<dyn CommandResult> {
+    pub fn eval(&self) -> Result<Box<dyn CommandResult>> {
         match self.language.as_str() {
-            "lua" => Box::new(LuaResult::new(lua::eval(&self.script, self.use_prelude))),
-            _ => panic!("Unsupported language"),
+            "lua" => {
+                let x = lua::eval(&self.script, self.use_prelude)?;
+                Ok(Box::new(LuaResult::new(x)))
+            }
+            x => user_error_result(format!("Unsupported language \"{}\"", x)),
         }
     }
 }
