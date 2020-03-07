@@ -13,8 +13,7 @@ pub fn eval(script: &str, use_prelude: bool) -> Result<Vec<String>> {
         if use_prelude {
             load_prelude(&lua_ctx)?;
         }
-        let result = lua_ctx.load(script).eval()?;
-        Ok(result)
+        Ok(lua_ctx.load(script).eval()?)
     })
 }
 
