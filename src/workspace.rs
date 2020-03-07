@@ -1,12 +1,12 @@
 use crate::config::{Config, ConfigHash};
 use crate::deps::get_deps;
 use crate::error::{user_error, user_error_result, Result};
-use crate::os::{os_str_to_str, path_to_str};
+use crate::os::{get_base_name, path_to_str};
 use crate::scripting::command::Command;
 
 use std::collections::HashSet;
 use std::fs;
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 use topological_sort::TopologicalSort;
 
 const WORKSPACE_CONFIG_FILE_NAME: &str = "rws-workspace.yaml";
@@ -93,11 +93,8 @@ impl Workspace {
             &root_dir,
             excluded_project_dirs,
             |project_dir| {
-                let project_name = match project_dir.components().last().unwrap() {
-                    Component::Normal(s) => s,
-                    _ => panic!("Unimplemented"),
-                };
-                match dependency_command_hash.as_vec(project_name.to_str().unwrap()) {
+                let project_name = get_base_name(project_dir);
+                match dependency_command_hash.as_vec(project_name) {
                     Some(v) => (0..v.len())
                         .into_iter()
                         .map(|i| {
@@ -106,7 +103,7 @@ impl Workspace {
                                     user_error(format!(
                                         "Invalid dependency {} for project {}",
                                         v.as_display(i),
-                                        os_str_to_str(project_name)
+                                        project_name
                                     ))
                                 })
                                 .map(|s| String::from(path_to_str(&root_dir.join(s))))
