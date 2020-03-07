@@ -1,4 +1,4 @@
-use crate::error::{AppError, Result};
+use crate::error::{user_error_result, AppError, Result};
 use std::path::Path;
 use yaml_rust::yaml::{Array, Hash, Yaml};
 use yaml_rust::{ScanError, YamlLoader};
@@ -18,7 +18,7 @@ impl Config {
         let yaml = std::fs::read_to_string(path)?;
         let mut docs = YamlLoader::load_from_str(&yaml)?;
         if docs.len() != 1 {
-            panic!("Invalid workspace config file");
+            return user_error_result(format!("Invalid workspace config file {}", path.display()));
         }
 
         Ok(Config {

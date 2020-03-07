@@ -60,9 +60,7 @@ impl Workspace {
         let dependencies_hash_opt = root_hash.as_hash("dependencies");
         let dependency_command_hash_opt = root_hash.as_hash("dependency-command");
         match (&dependencies_hash_opt, &dependency_command_hash_opt) {
-            (Some(_), Some(_)) => {
-                panic!("Invalid: cannot specify both dependencies and dependency-command")
-            }
+            (Some(_), Some(_)) => user_error_result("Must specify at most one of \"dependencies\" and \"dependency-command\" in workspace configuration"),
             (Some(dependencies_hash), None) => Self::traverse_with_dependencies(
                 config_path,
                 root_dir,
@@ -76,9 +74,7 @@ impl Workspace {
                 &root_hash,
                 &dependency_command_hash,
             ),
-            (None, None) => {
-                panic!("Invalid: must specify one of dependencies or dependency-command")
-            }
+            (None, None) => user_error_result("Must specify at most one of \"dependencies\" and \"dependency-command\" in workspace configuration"),
         }
     }
 

@@ -8,7 +8,7 @@ mod workspace;
 
 use crate::cli::make_rws_app;
 use crate::cli::{arg, arg_value, command};
-use crate::error::{AppError, Result};
+use crate::error::{user_error_result, AppError, Result};
 use crate::os::path_to_str;
 use crate::workspace::Workspace;
 
@@ -62,7 +62,7 @@ fn main_inner() -> Result<()> {
             }
             command
         }),
-        _ => panic!("Unimplemented"),
+        _ => panic!("Unreachable"),
     }
 }
 
@@ -107,7 +107,7 @@ where
         .map(|x| x.collect())
         .unwrap_or(Vec::new());
     if cmd.len() < 1 {
-        panic!("Unimplemented");
+        return user_error_result("Command requires at least one command argument");
     }
 
     let fail_fast = !submatches.is_present(arg::NO_FAIL_FAST);
