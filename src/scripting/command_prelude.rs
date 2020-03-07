@@ -1,14 +1,15 @@
+use crate::os::path_to_str;
 use rlua::prelude::{LuaError, LuaResult};
 use std::fs::{read_to_string, File};
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
+fn guard_io<R>(result: std::io::Result<R>) -> LuaResult<R> {
+    result.map_err(|e| rlua::Error::ExternalError(std::sync::Arc::new(e)))
+}
+
 pub fn current_dir() -> LuaResult<String> {
-    Ok(std::env::current_dir()
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_string())
+    Ok(path_to_str(&guard_io(std::env::current_dir())?).to_string())
 }
 
 pub fn is_file(path: String) -> LuaResult<bool> {

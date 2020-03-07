@@ -11,3 +11,7 @@ where
     set_current_dir(saved_dir)?;
     Ok(result)
 }
+
+pub fn path_to_str(path: &Path) -> &str {
+    path.to_str().expect("Path contains non-Unicode characters")
+}
