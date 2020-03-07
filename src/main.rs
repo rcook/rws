@@ -9,6 +9,7 @@ mod workspace;
 use crate::cli::make_rws_app;
 use crate::cli::{arg, arg_value, command};
 use crate::error::{AppError, Result};
+use crate::os::path_to_str;
 use crate::workspace::Workspace;
 
 use clap::ArgMatches;
@@ -70,14 +71,14 @@ fn do_info() -> Result<()> {
     let workspace = Workspace::find(&current_dir)?;
     println!(
         "Workspace directory: {}",
-        workspace.root_dir.to_str().unwrap().cyan()
+        path_to_str(&workspace.root_dir).cyan()
     );
     println!(
         "Workspace configuration file: {}",
         workspace
             .config_path
             .as_ref()
-            .map(|x| x.to_str().unwrap())
+            .map(|x| path_to_str(x))
             .unwrap_or("(none)")
             .cyan()
     );
@@ -90,7 +91,7 @@ fn show_project_dirs(order: &str, project_dirs: &Vec<PathBuf>) {
     if project_dirs.len() > 0 {
         println!("Project directories ({} order)", order);
         for project_dir in project_dirs {
-            println!("  {}", project_dir.to_str().unwrap().cyan())
+            println!("  {}", path_to_str(project_dir).cyan())
         }
     } else {
         println!("Project directories ({} order): {}", order, "(none)".cyan());
@@ -121,7 +122,7 @@ where
         &workspace.project_dirs_alpha
     };
     for project_dir in project_dirs {
-        let d = project_dir.to_str().unwrap();
+        let d = path_to_str(project_dir);
         println!("{}", d.cyan());
         let exit_status = f(cmd)
             .current_dir(&project_dir)
