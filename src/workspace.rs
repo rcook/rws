@@ -130,8 +130,8 @@ impl Workspace {
             |project_dir| {
                 get_deps(&project_dir, &dependency_command).map(|x| {
                     x.into_iter()
-                        .map(|x| String::from(root_dir.join(x).to_str().unwrap()))
-                        .collect::<Vec<_>>()
+                        .map(|x| String::from(path_to_str(&root_dir.join(x))))
+                        .collect()
                 })
             },
         )
@@ -176,11 +176,11 @@ impl Workspace {
             }
 
             // TBD: Don't convert to string etc.
-            ts.insert(String::from(project_dir.to_str().unwrap()));
+            ts.insert(String::from(path_to_str(project_dir)));
 
             for dep in &deps {
                 // TBD: Don't convert to string etc.
-                ts.add_dependency(dep, project_dir.to_str().unwrap())
+                ts.add_dependency(dep, path_to_str(project_dir))
             }
         }
 
