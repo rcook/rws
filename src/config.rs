@@ -1,15 +1,22 @@
+use crate::error::{AppError, Result};
 use std::path::Path;
 use yaml_rust::yaml::{Array, Hash, Yaml};
-use yaml_rust::YamlLoader;
+use yaml_rust::{ScanError, YamlLoader};
 
 pub struct Config {
     doc: Yaml,
 }
 
+impl std::convert::From<ScanError> for AppError {
+    fn from(error: ScanError) -> Self {
+        AppError::System("Yaml", error.to_string())
+    }
+}
+
 impl Config {
-    pub fn read_yaml_file(path: &Path) -> std::io::Result<Config> {
+    pub fn read_config_file(path: &Path) -> Result<Config> {
         let yaml = std::fs::read_to_string(path)?;
-        let mut docs = YamlLoader::load_from_str(&yaml).unwrap();
+        let mut docs = YamlLoader::load_from_str(&yaml)?;
         if docs.len() != 1 {
             panic!("Invalid workspace config file");
         }

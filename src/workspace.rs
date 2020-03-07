@@ -1,6 +1,6 @@
 use crate::config::{Config, ConfigHash};
 use crate::deps::get_deps;
-use crate::error::Result;
+use crate::error::{user_error, Result};
 use crate::scripting::command::Command;
 
 use std::collections::HashSet;
@@ -46,8 +46,10 @@ impl Workspace {
     }
 
     fn traverse(config_path: PathBuf, root_dir: PathBuf) -> Result<Workspace> {
-        let config = Config::read_yaml_file(&config_path)?;
-        let root_hash = config.as_hash().unwrap();
+        let config = Config::read_config_file(&config_path)?;
+        let root_hash = config
+            .as_hash()
+            .ok_or_else(|| user_error("Invalid config hash"))?;
         let excluded_project_dirs = root_hash
             .as_str_vec("excluded-projects")
             .unwrap_or_else(|| Vec::new())
