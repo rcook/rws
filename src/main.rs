@@ -28,11 +28,14 @@ fn main() {
     exit(match main_inner() {
         Ok(()) => 0,
         Err(AppError::User(message)) => {
-            println!("{}", format!("User error: {}", message).bright_red());
+            println!("{}", format!("Error: {}", message).bright_red());
             1
         }
-        Err(e) => {
-            println!("{}", format!("Other error: {}", e).red().bold());
+        Err(AppError::System(facility, message)) => {
+            println!(
+                "{}",
+                format!("System ({}): {}", facility, message).red().bold()
+            );
             2
         }
     })

@@ -1,6 +1,7 @@
 use crate::config::{Config, ConfigHash};
 use crate::deps::get_deps;
-use crate::error::{user_error, Result};
+use crate::error::{user_error, user_error_result, Result};
+use crate::os::path_to_str;
 use crate::scripting::command::Command;
 
 use std::collections::HashSet;
@@ -162,11 +163,10 @@ impl Workspace {
             for dep in &deps {
                 let p = Path::new(dep);
                 if !p.is_dir() {
-                    // TBD: Do not fail with panic!
-                    panic!(format!(
+                    return user_error_result(format!(
                         "Project directory {} does not exist",
-                        p.to_str().unwrap()
-                    ))
+                        path_to_str(p)
+                    ));
                 }
             }
 
