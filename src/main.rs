@@ -111,10 +111,13 @@ where
     }
 
     let fail_fast = !submatches.is_present(arg::NO_FAIL_FAST);
-    let topo_order = submatches.value_of(arg::ORDER).unwrap() == arg_value::TOPO;
+    let topo_order = submatches
+        .value_of(arg::ORDER)
+        .expect("--order is required")
+        == arg_value::TOPO;
 
     let current_dir = env::current_dir()?;
-    let workspace = Workspace::find(&current_dir).unwrap();
+    let workspace = Workspace::find(&current_dir)?;
     let mut failure_count = 0;
     let project_dirs = if topo_order {
         &workspace.project_dirs_topo
@@ -124,12 +127,7 @@ where
     for project_dir in project_dirs {
         let d = path_to_str(project_dir);
         println!("{}", d.cyan());
-        let exit_status = f(cmd)
-            .current_dir(&project_dir)
-            .spawn()
-            .unwrap()
-            .wait()
-            .unwrap();
+        let exit_status = f(cmd).current_dir(&project_dir).spawn()?.wait()?;
         reset_terminal();
         if exit_status.success() {
             println!("{}", format!("Command succeeded in {}", d).green())
