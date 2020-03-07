@@ -1,7 +1,7 @@
 use crate::config::{Config, ConfigHash};
 use crate::deps::get_deps;
 use crate::error::{user_error, user_error_result, Result};
-use crate::os::path_to_str;
+use crate::os::{os_str_to_str, path_to_str};
 use crate::scripting::command::Command;
 
 use std::collections::HashSet;
@@ -98,12 +98,20 @@ impl Workspace {
                     _ => panic!("Unimplemented"),
                 };
                 match dependency_command_hash.as_vec(project_name.to_str().unwrap()) {
-                    Some(v) => Ok((0..v.len())
+                    Some(v) => (0..v.len())
                         .into_iter()
                         .map(|i| {
-                            String::from(root_dir.join(v.as_str(i).unwrap()).to_str().unwrap())
+                            v.as_str(i)
+                                .ok_or_else(|| {
+                                    user_error(format!(
+                                        "Invalid dependency {} for project {}",
+                                        v.as_display(i),
+                                        os_str_to_str(project_name)
+                                    ))
+                                })
+                                .map(|s| String::from(path_to_str(&root_dir.join(s))))
                         })
-                        .collect()),
+                        .collect(),
                     None => Ok(Vec::new()),
                 }
             },

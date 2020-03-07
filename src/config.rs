@@ -86,4 +86,12 @@ impl<'a> ConfigVec<'a> {
     pub fn as_str(&self, index: usize) -> Option<&str> {
         self.vec[index].as_str()
     }
+
+    pub fn as_display(&self, index: usize) -> String {
+        let obj = &self.vec[index];
+        match obj {
+            Yaml::Null => String::from("(null)"),
+            _ => format!("{:?}", obj),
+        }
+    }
 }

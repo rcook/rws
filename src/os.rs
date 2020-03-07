@@ -13,5 +13,12 @@ where
 }
 
 pub fn path_to_str(path: &Path) -> &str {
-    path.to_str().expect("Path contains non-Unicode characters")
+    path.to_str()
+        .expect("Path contains invalid Unicode characters")
+}
+
+pub fn os_str_to_str(os_str: &std::ffi::OsStr) -> &str {
+    os_str
+        .to_str()
+        .expect("Path contains invalid Unicode characters")
 }
