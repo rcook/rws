@@ -1,12 +1,9 @@
 use crate::os::path_to_str;
+use crate::scripting::helpers::guard_io;
 use rlua::prelude::{LuaError, LuaResult};
 use std::fs::{read_to_string, File};
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-
-fn guard_io<R>(result: std::io::Result<R>) -> LuaResult<R> {
-    result.map_err(|e| rlua::Error::ExternalError(std::sync::Arc::new(e)))
-}
 
 pub fn current_dir() -> LuaResult<String> {
     Ok(path_to_str(&guard_io(std::env::current_dir())?).to_string())
