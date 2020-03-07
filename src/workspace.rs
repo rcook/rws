@@ -205,8 +205,7 @@ impl Workspace {
     where
         F: Fn(&Path) -> Result<Vec<String>>,
     {
-        let project_dirs_alpha =
-            Self::get_project_dirs_alpha(&root_dir, &excluded_project_dirs).unwrap();
+        let project_dirs_alpha = Self::get_project_dirs_alpha(&root_dir, &excluded_project_dirs)?;
         let project_dirs_topo = Self::topo_sort_project_dirs(&project_dirs_alpha, f)?;
 
         Ok(Workspace {
