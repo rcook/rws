@@ -118,7 +118,7 @@ impl Workspace {
         root_hash: &ConfigHash,
         dependency_command_hash: &ConfigHash,
     ) -> Result<Workspace> {
-        let dependency_command = Command::new(root_hash, dependency_command_hash);
+        let dependency_command = Command::new(root_hash, dependency_command_hash)?;
         Self::traverse_helper(
             config_path,
             &root_dir,

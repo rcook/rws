@@ -1,5 +1,5 @@
 use crate::config::ConfigHash;
-use crate::error::{user_error_result, Result};
+use crate::error::{user_error, user_error_result, Result};
 use crate::scripting::lua;
 use crate::scripting::CommandResult;
 
@@ -26,7 +26,7 @@ impl CommandResult for LuaResult {
 }
 
 impl Command {
-    pub fn new(root_hash: &ConfigHash, command_hash: &ConfigHash) -> Command {
+    pub fn new(root_hash: &ConfigHash, command_hash: &ConfigHash) -> Result<Command> {
         let language_default = root_hash.as_str("default-language").unwrap_or("lua");
         let language = command_hash
             .as_str("language")
@@ -51,14 +51,14 @@ impl Command {
             }
         };
 
-        let script = command_hash.as_str("script").expect("Script not specified");
+        let script = command_hash.as_str("script").ok_or_else(|| user_error("\"dependency-command\" missing required \"script\" field in workspace configuration"))?;
         let full_script = format!("{}\n\n{}", preamble, script);
 
-        Command {
+        Ok(Command {
             language: language,
             use_prelude: use_prelude,
             script: full_script,
-        }
+        })
     }
 
     pub fn eval(&self) -> Result<Box<dyn CommandResult>> {
