@@ -6,7 +6,13 @@ variables:
 before_script:
   - curl https://gitlab.com/rcook/rbbt/-/raw/v0.1/rbbt-cargo | bash
 
+.shared: &shared
+  except:
+    refs:
+      - /^.+-no-ci$/
+
 build:cargo:
+  <<: *shared
   script:
     - rustc --version && cargo --version
     - cargo clean
@@ -18,6 +24,7 @@ build:cargo:
       - target/release/rws
 
 test:cargo:
+  <<: *shared
   script:
     - rustc --version && cargo --version
     - cargo clean
