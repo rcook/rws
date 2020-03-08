@@ -1,0 +1,24 @@
+image: "rust:latest"
+
+variables:
+  GIT_DEPTH: 100
+
+before_script:
+  - curl https://gitlab.com/rcook/rbbt/-/raw/v0.1/rbbt-cargo | bash
+
+build:cargo:
+  script:
+    - rustc --version && cargo --version
+    - cargo clean
+    - cargo build
+    - cargo build --release
+  artifacts:
+    paths:
+      - target/debug/rws
+      - target/release/rws
+
+test:cargo:
+  script:
+    - rustc --version && cargo --version
+    - cargo clean
+    - cargo test --all --verbose
