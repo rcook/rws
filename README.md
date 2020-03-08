@@ -74,6 +74,10 @@ excluded-projects:
 - ggg
 ```
 
+## CI/CD
+
+* [AppVeyor][appveyor-rws]
+
 ## Building
 
 ### Install Rust
@@ -96,6 +100,8 @@ cargo build
 
 [MIT License][licence]
 
+[appveyor-rws]: https://ci.appveyor.com/project/rcook/rws
+[gitlab-rws]: https://gitlab.com/rcook/rws/pipelines
 [home]: https://github.com/rcook/rws
 [licence]: LICENSE
 [rustup]: https://rustup.rs/
