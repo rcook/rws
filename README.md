@@ -74,9 +74,28 @@ excluded-projects:
 - ggg
 ```
 
+## Building
+
+### Install Rust
+
+* [rustup][rustup] is recommended
+
+### Generate `Cargo.toml`
+
+```bash
+curl https://gitlab.com/rcook/rbbt/-/raw/v0.1/rbbt-cargo | bash
+```
+
+### Build
+
+```bash
+cargo build
+```
+
 ## Licence
 
 [MIT License][licence]
 
 [home]: https://github.com/rcook/rws
 [licence]: LICENSE
+[rustup]: https://rustup.rs/

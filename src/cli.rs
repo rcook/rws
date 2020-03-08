@@ -1,4 +1,4 @@
-use clap::{crate_authors, crate_version, App, AppSettings, Arg, SubCommand};
+use clap::{crate_authors, App, AppSettings, Arg, SubCommand};
 
 pub mod command {
     pub const GIT: &str = "git";
@@ -64,7 +64,7 @@ pub fn make_rws_app<'a, 'b>() -> App<'a, 'b> {
         .about("Manages Git-based workspaces")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::TrailingVarArg)
-        .version(crate_version!())
+        .version(env!("CARGO_PKG_DESCRIPTION"))
         .subcommand(run_command(
             command::GIT,
             "Runs Git command in each project directory",

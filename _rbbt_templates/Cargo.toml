@@ -1,6 +1,7 @@
 [package]
 name = "rws"
-version = "0.1.0"
+version = "$cargo_version"
+description = "$full_version"
 authors = ["Richard Cook <rcook@rcook.org>"]
 edition = "2018"
 
