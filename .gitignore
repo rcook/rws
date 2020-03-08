@@ -1,3 +1,4 @@
+/.rbbt_version
 /Cargo.lock
 /Cargo.toml
 **/*.rs.bk
