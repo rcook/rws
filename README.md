@@ -20,7 +20,7 @@ _Runs command in each project directory_
 
 ## `rws-workspace.yaml` configuration
 
-Schema:
+This is the schema for the optional `rws-workspace.yaml` configuration file that should be placed in the root directory of your multi-repo workspace:
 
 ```yaml
 # (Optional)
@@ -77,22 +77,42 @@ excluded-projects:
 ## CI/CD
 
 * [AppVeyor][appveyor-rws]
+* [GitLab][gitlab-rws]
 
-## Building
+## Building locally
 
 ### Install Rust
 
 * [rustup][rustup] is recommended
+* Building with rustup has been tested on Linux, Windows and macOS
 
-### Generate `Cargo.toml`
+### Clone workspace
 
 ```bash
-curl https://gitlab.com/rcook/rbbt/-/raw/v0.1/rbbt-cargo | bash
+cd /path/to/repos
+git clone https://gitlab.com/rcook/rws.git
+```
+
+### Create `Cargo.toml`
+
+Create a `Cargo.toml` file using sed or equivalent:
+
+```bash
+cd /path/to/repos/rws
+sed _rbbt_templates/Cargo.toml -e 's/$cargo_version\|$full_version/0.1.0/g' > Cargo.toml
+```
+
+Or use [RBBT][rbbt] to generate it for you:
+
+```bash
+cd /path/to/repos/rws
+curl https://gitlab.com/rcook/rbbt/-/raw/v0.3/rbbt | bash
 ```
 
 ### Build
 
 ```bash
+cd /path/to/repos/rws
 cargo build
 ```
 
@@ -102,6 +122,7 @@ cargo build
 
 [appveyor-rws]: https://ci.appveyor.com/project/rcook/rws
 [gitlab-rws]: https://gitlab.com/rcook/rws/pipelines
-[home]: https://github.com/rcook/rws
+[home]: https://gitlab.com/rcook/rws
 [licence]: LICENSE
+[rbbt]: https://gitlab.com/rcook/rbbt
 [rustup]: https://rustup.rs/
