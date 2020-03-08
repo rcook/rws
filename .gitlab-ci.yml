@@ -2,11 +2,11 @@ image: "rust:latest"
 
 variables:
   GIT_DEPTH: 100
-  RBBT_URL: https://gitlab.com/rcook/rbbt/-/raw/v0.2.1/rbbt-cargo
+  RBBT_URL: https://gitlab.com/rcook/rbbt/-/raw/v0.3/rbbt
 
 before_script:
   - echo $RBBT_URL
-  - curl $RBBT_URL | bash
+  - curl $RBBT_URL | bash -s -- --remote origin --branch $CI_COMMIT_REF_NAME
 
 .shared: &shared
   except:

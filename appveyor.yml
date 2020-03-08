@@ -8,7 +8,7 @@ branches:
     - /^.+-no-appveyor-ci$/
 
 environment:
-  RBBT_URL: https://gitlab.com/rcook/rbbt/-/raw/v0.2.1/rbbt-cargo.ps1
+  RBBT_URL: https://gitlab.com/rcook/rbbt/-/raw/v0.3/rbbt.ps1
   global:
     PROJECT_NAME: rws
   matrix:
@@ -43,7 +43,7 @@ environment:
 install:
   - echo %RBBT_URL%
   - appveyor-retry appveyor DownloadFile %RBBT_URL%
-  - ps: .\rbbt-cargo.ps1
+  - ps: .\rbbt.ps1 -Branch $env:APPVEYOR_REPO_BRANCH
   - ps: Update-AppveyorBuild -Version (Get-Content -Path .rbbt_version -Raw).Trim()
   - appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
   - if "%TARGET%" == "i686-pc-windows-gnu" set PATH=%PATH%;C:\msys64\mingw32\bin
