@@ -2,7 +2,7 @@ image: "rust:latest"
 
 variables:
   GIT_DEPTH: 100
-  RBBT_URL: https://gitlab.com/rcook/rbbt/-/raw/v0.4.1/rbbt
+  RBBT_URL: https://gitlab.com/rcook/rbbt/-/raw/v0.4.2/rbbt
 
 before_script:
   - echo $RBBT_URL
