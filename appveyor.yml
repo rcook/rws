@@ -1,5 +1,5 @@
 environment:
-  RBBT_URL: https://gitlab.com/rcook/rbbt/-/raw/v0.3/rbbt
+  RBBT_URL: https://gitlab.com/rcook/rbbt/-/raw/v0.4/rbbt
   CHANNEL: nightly
   global:
     PROJECT_NAME: rws
@@ -12,7 +12,7 @@ environment:
 
 install:
   - sh: echo $RBBT_URL
-  - sh: curl $RBBT_URL | bash -s -- --branch $APPVEYOR_REPO_BRANCH
+  - sh: curl $RBBT_URL | bash -s -- --ref $APPVEYOR_REPO_BRANCH
   - sh: cat .rbbt_version
   - ps: if ($env:CI_WINDOWS -ne 'true') { Update-AppveyorBuild -Version (Get-Content -Path .rbbt_version -Raw).Trim() }
   - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-host $TARGET --default-toolchain $CHANNEL --profile minimal -y
@@ -21,7 +21,7 @@ install:
   - sh: cargo --version
   - cmd: echo %RBBT_URL%
   - cmd: appveyor-retry appveyor DownloadFile %RBBT_URL%.ps1
-  - ps: if ($env:CI_WINDOWS -eq 'true') { .\rbbt.ps1 -Branch $env:APPVEYOR_REPO_BRANCH }
+  - ps: if ($env:CI_WINDOWS -eq 'true') { .\rbbt.ps1 -Ref $env:APPVEYOR_REPO_BRANCH }
   - ps: if ($env:CI_WINDOWS -eq 'true') { Get-Content -Path .rbbt_version }
   - ps: if ($env:CI_WINDOWS -eq 'true') { Update-AppveyorBuild -Version (Get-Content -Path .rbbt_version -Raw).Trim() }
   - cmd: appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
