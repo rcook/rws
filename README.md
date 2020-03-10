@@ -1,5 +1,7 @@
 # Richard's Workspace Tool
 
+[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/w2nmlj9ljfkp10kh/branch/master?svg=true)](https://ci.appveyor.com/project/rcook/rws/branch/master)
+
 _Manages Git-based workspaces_
 
 [Official home page][home]

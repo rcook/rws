@@ -1,71 +1,52 @@
-# https://github.com/japaric/rust-everywhere/blob/master/appveyor.yml
-# https://github.com/rust-lang/libc/blob/master/appveyor.yml
-# https://github.com/rust-lang/rustfmt/blob/master/appveyor.yml
-
-branches:
-  except:
-    - /^.+-no-ci$/
-    - /^.+-no-appveyor-ci$/
-
 environment:
-  RBBT_URL: https://gitlab.com/rcook/rbbt/-/raw/v0.3/rbbt.ps1
+  RBBT_URL: https://gitlab.com/rcook/rbbt/-/raw/v0.3/rbbt
+  CHANNEL: nightly
   global:
     PROJECT_NAME: rws
   matrix:
-    # Stable channel
-    # - TARGET: i686-pc-windows-gnu
-    #   CHANNEL: stable
-    # - TARGET: i686-pc-windows-msvc
-    #   CHANNEL: stable
-    # - TARGET: x86_64-pc-windows-gnu
-    #   CHANNEL: stable
-    # - TARGET: x86_64-pc-windows-msvc
-    #   CHANNEL: stable
-    # Beta channel
-    # - TARGET: i686-pc-windows-gnu
-    #   CHANNEL: beta
-    # - TARGET: i686-pc-windows-msvc
-    #   CHANNEL: beta
-    # - TARGET: x86_64-pc-windows-gnu
-    #   CHANNEL: beta
-    # - TARGET: x86_64-pc-windows-msvc
-    #   CHANNEL: beta
-    # Nightly channel
-#    - TARGET: i686-pc-windows-gnu
-#      CHANNEL: nightly
-#    - TARGET: i686-pc-windows-msvc
-#      CHANNEL: nightly
-#    - TARGET: x86_64-pc-windows-gnu
-#      CHANNEL: nightly
     - TARGET: x86_64-pc-windows-msvc
-      CHANNEL: nightly
+    - APPVEYOR_BUILD_WORKER_IMAGE: macOS
+      TARGET: x86_64-apple-darwin
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      TARGET: x86_64-unknown-linux-gnu
 
 install:
-  - echo %RBBT_URL%
-  - appveyor-retry appveyor DownloadFile %RBBT_URL%
-  - ps: .\rbbt.ps1 -Branch $env:APPVEYOR_REPO_BRANCH
-  - ps: Update-AppveyorBuild -Version (Get-Content -Path .rbbt_version -Raw).Trim()
-  - appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-  - if "%TARGET%" == "i686-pc-windows-gnu" set PATH=%PATH%;C:\msys64\mingw32\bin
-  - if "%TARGET%" == "x86_64-pc-windows-gnu" set PATH=%PATH%;C:\msys64\mingw64\bin
-  - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
-  - rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% --profile minimal -y
-  - rustc -Vv
-  - cargo -V
+  - sh: echo $RBBT_URL
+  - sh: curl $RBBT_URL | bash -s -- --branch $APPVEYOR_REPO_BRANCH
+  - sh: cat .rbbt_version
+  - ps: if ($env:CI_WINDOWS -ne 'true') { Update-AppveyorBuild -Version (Get-Content -Path .rbbt_version -Raw).Trim() }
+  - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-host $TARGET --default-toolchain $CHANNEL --profile minimal -y
+  - sh: source $HOME/.cargo/env
+  - sh: rustc -Vv
+  - sh: cargo --version
+  - cmd: echo %RBBT_URL%
+  - cmd: appveyor-retry appveyor DownloadFile %RBBT_URL%.ps1
+  - ps: if ($env:CI_WINDOWS -eq 'true') { .\rbbt.ps1 -Branch $env:APPVEYOR_REPO_BRANCH }
+  - ps: if ($env:CI_WINDOWS -eq 'true') { Get-Content -Path .rbbt_version }
+  - ps: if ($env:CI_WINDOWS -eq 'true') { Update-AppveyorBuild -Version (Get-Content -Path .rbbt_version -Raw).Trim() }
+  - cmd: appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+  - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+  - cmd: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% --profile minimal -y
+  - cmd: rustc -Vv
+  - cmd: cargo --version
 
-# ???
 build: false
 
 build_script:
-  - rustc --version && cargo --version
   - cargo clean
   - cargo build
   - cargo build --release
 
 test_script:
-  - rustc --version && cargo --version
   - cargo test --all --verbose
 
 artifacts:
+  - path: target/debug/rws
   - path: target/debug/rws.exe
+  - path: target/release/rws
   - path: target/release/rws.exe
+
+branches:
+  except:
+    - /^.+-no-ci$/
+    - /^.+-no-appveyor-ci$/
