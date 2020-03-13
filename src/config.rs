@@ -14,16 +14,16 @@ impl std::convert::From<ScanError> for AppError {
 }
 
 impl Config {
-    pub fn read_config_file(path: &Path) -> Result<Config> {
+    pub fn read_config_file(path: &Path) -> Result<Option<Config>> {
         let yaml = std::fs::read_to_string(path)?;
         let mut docs = YamlLoader::load_from_str(&yaml)?;
-        if docs.len() != 1 {
-            return user_error_result(format!("Invalid workspace config file {}", path.display()));
+        match docs.len() {
+            0 => Ok(None),
+            1 => Ok(Some(Config {
+                doc: docs.remove(0),
+            })),
+            _ => user_error_result(format!("Invalid workspace config file {}", path.display())),
         }
-
-        Ok(Config {
-            doc: docs.remove(0),
-        })
     }
 
     pub fn as_hash(&self) -> Option<ConfigHash> {

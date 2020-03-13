@@ -20,34 +20,46 @@ pub struct Workspace {
 
 impl Workspace {
     pub fn find(search_dir: &Path) -> Result<Workspace> {
-        let result = Self::find_impl(search_dir)?;
-        Ok(result.unwrap_or_else(|| {
-            let project_dirs_alpha = vec![search_dir.to_path_buf()];
-            let project_dirs_topo = vec![search_dir.to_path_buf()];
-            Workspace {
-                config_path: None,
-                root_dir: search_dir.to_path_buf(),
-                project_dirs_alpha: project_dirs_alpha,
-                project_dirs_topo: project_dirs_topo,
-            }
-        }))
+        match Self::find_helper(search_dir)? {
+            Some(w) => Ok(w),
+            None => Self::traverse_no_dependencies_or_dependency_command(
+                search_dir.to_path_buf(),
+                None,
+                &HashSet::new(),
+            ),
+        }
     }
 
-    fn find_impl(search_dir: &Path) -> Result<Option<Workspace>> {
-        let x = search_dir.join(WORKSPACE_CONFIG_FILE_NAME);
-        if x.exists() {
-            let workspace = Self::traverse(x, search_dir.to_path_buf())?;
-            return Ok(Some(workspace));
+    fn find_helper(search_dir: &Path) -> Result<Option<Workspace>> {
+        let config_path = search_dir.join(WORKSPACE_CONFIG_FILE_NAME);
+        if config_path.exists() {
+            match Config::read_config_file(&config_path)? {
+                Some(config) => {
+                    return Self::traverse_config(search_dir.to_path_buf(), config_path, &config)
+                        .map(|w| Some(w))
+                }
+                None => {
+                    return Self::traverse_no_dependencies_or_dependency_command(
+                        search_dir.to_path_buf(),
+                        Some(config_path),
+                        &HashSet::new(),
+                    )
+                    .map(|w| Some(w))
+                }
+            }
         }
 
         match search_dir.parent() {
-            Some(p) => Self::find_impl(p),
+            Some(p) => Self::find_helper(p),
             None => Ok(None),
         }
     }
 
-    fn traverse(config_path: PathBuf, root_dir: PathBuf) -> Result<Workspace> {
-        let config = Config::read_config_file(&config_path)?;
+    fn traverse_config(
+        root_dir: PathBuf,
+        config_path: PathBuf,
+        config: &Config,
+    ) -> Result<Workspace> {
         let root_hash = config
             .as_hash()
             .ok_or_else(|| user_error("Invalid config hash"))?;
@@ -62,31 +74,41 @@ impl Workspace {
         match (&dependencies_hash_opt, &dependency_command_hash_opt) {
             (Some(_), Some(_)) => user_error_result("Must specify at most one of \"dependencies\" and \"dependency-command\" in workspace configuration"),
             (Some(dependencies_hash), None) => Self::traverse_with_dependencies(
-                config_path,
                 root_dir,
+                config_path,
                 &excluded_project_dirs,
                 &dependencies_hash,
             ),
             (None, Some(dependency_command_hash)) => Self::traverse_with_dependency_command(
-                config_path,
                 root_dir,
+                config_path,
                 &excluded_project_dirs,
                 &root_hash,
                 &dependency_command_hash,
             ),
-            (None, None) => user_error_result("Must specify at most one of \"dependencies\" and \"dependency-command\" in workspace configuration"),
+            (None, None) => Self::traverse_no_dependencies_or_dependency_command(root_dir, Some(config_path),  &excluded_project_dirs)
         }
     }
 
-    fn traverse_with_dependencies(
-        config_path: PathBuf,
+    fn traverse_no_dependencies_or_dependency_command(
         root_dir: PathBuf,
+        config_path: Option<PathBuf>,
+        excluded_project_dirs: &HashSet<PathBuf>,
+    ) -> Result<Workspace> {
+        Self::traverse_helper(&root_dir, config_path, excluded_project_dirs, |_| {
+            Ok(Vec::new())
+        })
+    }
+
+    fn traverse_with_dependencies(
+        root_dir: PathBuf,
+        config_path: PathBuf,
         excluded_project_dirs: &HashSet<PathBuf>,
         dependency_command_hash: &ConfigHash,
     ) -> Result<Workspace> {
         Self::traverse_helper(
-            config_path,
             &root_dir,
+            Some(config_path),
             excluded_project_dirs,
             |project_dir| {
                 let project_name = get_base_name(project_dir);
@@ -112,16 +134,16 @@ impl Workspace {
     }
 
     fn traverse_with_dependency_command(
-        config_path: PathBuf,
         root_dir: PathBuf,
+        config_path: PathBuf,
         excluded_project_dirs: &HashSet<PathBuf>,
         root_hash: &ConfigHash,
         dependency_command_hash: &ConfigHash,
     ) -> Result<Workspace> {
         let dependency_command = Command::new(root_hash, dependency_command_hash)?;
         Self::traverse_helper(
-            config_path,
             &root_dir,
+            Some(config_path),
             excluded_project_dirs,
             |project_dir| {
                 get_deps(&project_dir, &dependency_command).map(|x| {
@@ -149,6 +171,7 @@ impl Workspace {
             }
         }
 
+        project_dirs_alpha.sort();
         Ok(project_dirs_alpha)
     }
 
@@ -193,8 +216,8 @@ impl Workspace {
     }
 
     fn traverse_helper<F>(
-        config_path: PathBuf,
         root_dir: &PathBuf,
+        config_path: Option<PathBuf>,
         excluded_project_dirs: &HashSet<PathBuf>,
         f: F,
     ) -> Result<Workspace>
@@ -205,7 +228,7 @@ impl Workspace {
         let project_dirs_topo = Self::topo_sort_project_dirs(&project_dirs_alpha, f)?;
 
         Ok(Workspace {
-            config_path: Some(config_path),
+            config_path: config_path,
             root_dir: root_dir.to_path_buf(),
             project_dirs_alpha: project_dirs_alpha,
             project_dirs_topo: project_dirs_topo,
