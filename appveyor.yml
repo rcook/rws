@@ -1,5 +1,5 @@
 environment:
-  RBBT_URL: https://gitlab.com/rcook/rbbt/-/raw/v0.4.2/rbbt
+  RBBT_URL: https://gitlab.com/rcook/rbbt/-/raw/v0.4.3/rbbt
   CHANNEL: nightly
   global:
     PROJECT_NAME: rws
