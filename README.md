@@ -97,18 +97,36 @@ git clone https://gitlab.com/rcook/rws.git
 
 ### Create `Cargo.toml`
 
-Create a `Cargo.toml` file using sed or equivalent:
+Create a `Cargo.toml` file using sed, PowerShell or my [rbbt][rbbt] tool.
+
+#### sed
 
 ```bash
 cd /path/to/repos/rws
 sed -e 's/$cargo_version/0.1.0/g' -e 's/$full_version/0.1.0/g' _rbbt_templates/Cargo.toml > Cargo.toml
 ```
 
-Or use [RBBT][rbbt] to generate it for you:
+#### PowerShell
+
+```ps
+cd C:\path\to\repos\rws
+(Get-Content -Path .\_rbbt_templates\Cargo.toml) -replace '\$cargo_version|\$full_version', '0.1.0' | Out-File -Path Cargo.toml -Encoding ASCII
+```
+
+#### Using rbbt
+
+From Bash etc.:
 
 ```bash
 cd /path/to/repos/rws
-curl https://gitlab.com/rcook/rbbt/-/raw/v0.3/rbbt | bash
+curl https://gitlab.com/rcook/rbbt/-/raw/v0.4.2/rbbt | bash
+```
+
+From PowerShell:
+
+```ps
+cd C:\path\to\repos\rws
+Invoke-WebRequest -Uri https://gitlab.com/rcook/rbbt/-/raw/v0.4.2/rbbt.ps1 | Invoke-Expression
 ```
 
 ### Build
