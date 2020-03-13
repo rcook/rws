@@ -20,38 +20,33 @@ pub struct Workspace {
 
 impl Workspace {
     pub fn find(search_dir: &Path) -> Result<Workspace> {
-        match Self::find_helper(search_dir)? {
-            Some(w) => Ok(w),
-            None => Self::traverse_no_dependencies_or_dependency_command(
-                search_dir.to_path_buf(),
-                None,
-                &HashSet::new(),
-            ),
-        }
-    }
-
-    fn find_helper(search_dir: &Path) -> Result<Option<Workspace>> {
-        let config_path = search_dir.join(WORKSPACE_CONFIG_FILE_NAME);
-        if config_path.exists() {
-            match Config::read_config_file(&config_path)? {
-                Some(config) => {
-                    return Self::traverse_config(search_dir.to_path_buf(), config_path, &config)
-                        .map(|w| Some(w))
+        let mut p = search_dir;
+        loop {
+            let config_path = p.join(WORKSPACE_CONFIG_FILE_NAME);
+            if config_path.exists() {
+                match Config::read_config_file(&config_path)? {
+                    Some(config) => {
+                        return Self::traverse_config(p.to_path_buf(), config_path, &config)
+                    }
+                    None => {
+                        return Self::traverse_no_dependencies_or_dependency_command(
+                            p.to_path_buf(),
+                            Some(config_path),
+                            &HashSet::new(),
+                        )
+                    }
                 }
+            }
+            match p.parent() {
+                Some(parent) => p = parent,
                 None => {
                     return Self::traverse_no_dependencies_or_dependency_command(
                         search_dir.to_path_buf(),
-                        Some(config_path),
+                        None,
                         &HashSet::new(),
                     )
-                    .map(|w| Some(w))
                 }
             }
-        }
-
-        match search_dir.parent() {
-            Some(p) => Self::find_helper(p),
-            None => Ok(None),
         }
     }
 
