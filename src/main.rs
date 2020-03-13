@@ -92,7 +92,7 @@ fn do_info() -> Result<()> {
 
 fn show_project_dirs(order: &str, project_dirs: &Vec<PathBuf>) {
     if project_dirs.len() > 0 {
-        println!("Project directories ({} order)", order);
+        println!("Project directories ({} order):", order);
         for project_dir in project_dirs {
             println!("  {}", path_to_str(project_dir).cyan())
         }
