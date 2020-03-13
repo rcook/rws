@@ -12,10 +12,10 @@ use topological_sort::TopologicalSort;
 const WORKSPACE_CONFIG_FILE_NAME: &str = "rws-workspace.yaml";
 
 pub struct Workspace {
-    pub config_path: Option<PathBuf>,
     pub root_dir: PathBuf,
+    pub config_path: Option<PathBuf>,
     pub project_dirs_alpha: Vec<PathBuf>,
-    pub project_dirs_topo: Vec<PathBuf>,
+    pub project_dirs_topo: Option<Vec<PathBuf>>,
 }
 
 impl Workspace {
@@ -90,8 +90,11 @@ impl Workspace {
         config_path: Option<PathBuf>,
         excluded_project_dirs: &HashSet<PathBuf>,
     ) -> Result<Workspace> {
-        Self::traverse_helper(&root_dir, config_path, excluded_project_dirs, |_| {
-            Ok(Vec::new())
+        Ok(Workspace {
+            root_dir: root_dir.to_path_buf(),
+            config_path: config_path,
+            project_dirs_alpha: Self::get_project_dirs_alpha(&root_dir, &excluded_project_dirs)?,
+            project_dirs_topo: None,
         })
     }
 
@@ -221,12 +224,11 @@ impl Workspace {
     {
         let project_dirs_alpha = Self::get_project_dirs_alpha(&root_dir, &excluded_project_dirs)?;
         let project_dirs_topo = Self::topo_sort_project_dirs(&project_dirs_alpha, f)?;
-
         Ok(Workspace {
-            config_path: config_path,
             root_dir: root_dir.to_path_buf(),
+            config_path: config_path,
             project_dirs_alpha: project_dirs_alpha,
-            project_dirs_topo: project_dirs_topo,
+            project_dirs_topo: Some(project_dirs_topo),
         })
     }
 }

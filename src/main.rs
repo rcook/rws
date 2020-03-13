@@ -83,7 +83,10 @@ fn do_info() -> Result<()> {
             .cyan()
     );
     show_project_dirs("alpha", &workspace.project_dirs_alpha);
-    show_project_dirs(arg_value::TOPO, &workspace.project_dirs_topo);
+    match workspace.project_dirs_topo {
+        Some(ds) => show_project_dirs(arg_value::TOPO, &ds),
+        None => {}
+    }
     Ok(())
 }
 
@@ -119,10 +122,9 @@ where
     let current_dir = env::current_dir()?;
     let workspace = Workspace::find(&current_dir)?;
     let mut failure_count = 0;
-    let project_dirs = if topo_order {
-        &workspace.project_dirs_topo
-    } else {
-        &workspace.project_dirs_alpha
+    let project_dirs = match (topo_order, &workspace.project_dirs_topo) {
+        (true, Some(ds)) => ds,
+        _ => &workspace.project_dirs_alpha,
     };
     for project_dir in project_dirs {
         let d = path_to_str(project_dir);
