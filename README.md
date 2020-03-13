@@ -101,7 +101,7 @@ Create a `Cargo.toml` file using sed or equivalent:
 
 ```bash
 cd /path/to/repos/rws
-sed _rbbt_templates/Cargo.toml -e 's/$cargo_version\|$full_version/0.1.0/g' > Cargo.toml
+sed -e 's/$cargo_version/0.1.0/g' -e 's/$full_version/0.1.0/g' _rbbt_templates/Cargo.toml > Cargo.toml
 ```
 
 Or use [RBBT][rbbt] to generate it for you:
