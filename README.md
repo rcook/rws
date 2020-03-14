@@ -119,14 +119,14 @@ From Bash etc.:
 
 ```bash
 cd /path/to/repos/rws
-curl https://gitlab.com/rcook/rbbt/-/raw/v0.4.3/rbbt | bash
+curl https://gitlab.com/rcook/rbbt/-/raw/v0.4.4/rbbt | bash
 ```
 
 From PowerShell:
 
 ```ps
 cd C:\path\to\repos\rws
-Invoke-WebRequest -Uri https://gitlab.com/rcook/rbbt/-/raw/v0.4.3/rbbt.ps1 | Invoke-Expression
+Invoke-WebRequest -Uri https://gitlab.com/rcook/rbbt/-/raw/v0.4.4/rbbt.ps1 | Invoke-Expression
 ```
 
 ### Build
