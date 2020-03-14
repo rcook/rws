@@ -19,6 +19,25 @@ pub struct Workspace {
 }
 
 impl Workspace {
+    pub fn new(root_dir: &Path, config_path: &Path) -> Result<Workspace> {
+        match Config::read_config_file(&config_path)? {
+            Some(config) => {
+                return Self::traverse_config(
+                    root_dir.to_path_buf(),
+                    config_path.to_path_buf(),
+                    &config,
+                )
+            }
+            None => {
+                return Self::traverse_no_dependencies_or_dependency_command(
+                    root_dir.to_path_buf(),
+                    Some(config_path.to_path_buf()),
+                    &HashSet::new(),
+                )
+            }
+        }
+    }
+
     pub fn find(search_dir: &Path) -> Result<Workspace> {
         let mut p = search_dir;
         loop {

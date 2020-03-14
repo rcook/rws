@@ -64,6 +64,13 @@ pub fn make_rws_app<'a, 'b>() -> App<'a, 'b> {
         .about("Manages Git-based workspaces")
         .setting(AppSettings::TrailingVarArg)
         .version(env!("CARGO_PKG_DESCRIPTION"))
+        .arg(
+            Arg::with_name("config")
+                .help("Path to configuration file")
+                .long("config")
+                .value_name("CONFIG-PATH")
+                .takes_value(true),
+        )
         .subcommand(run_command(
             command::GIT,
             "Runs Git command in each project directory",

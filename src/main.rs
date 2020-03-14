@@ -8,7 +8,7 @@ mod workspace;
 
 use crate::cli::make_rws_app;
 use crate::cli::{arg, arg_value, command};
-use crate::error::{user_error_result, AppError, Result};
+use crate::error::{user_error, user_error_result, AppError, Result};
 use crate::os::path_to_str;
 use crate::workspace::Workspace;
 
@@ -17,12 +17,23 @@ use clap::ArgMatches;
 use colored::control::set_virtual_terminal;
 use colored::Colorize;
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{exit, Command};
 
 fn reset_terminal() -> () {
     #[cfg(windows)]
     set_virtual_terminal(true).expect("set_virtual_terminal failed");
+}
+
+fn get_workspace(config_path: Option<PathBuf>) -> Result<Workspace> {
+    match config_path {
+        Some(c) => Workspace::new(
+            c.parent()
+                .ok_or_else(|| user_error("Invalid config path"))?,
+            &c,
+        ),
+        None => Workspace::find(&env::current_dir()?),
+    }
 }
 
 fn main() {
@@ -45,8 +56,15 @@ fn main() {
 fn main_inner() -> Result<()> {
     reset_terminal();
 
-    match make_rws_app().get_matches().subcommand() {
-        (command::GIT, Some(s)) => run_helper(s, |cmd| {
+    let matches = make_rws_app().get_matches();
+
+    let config_path = match matches.value_of("config") {
+        Some(c) => Some(Path::new(c).canonicalize()?),
+        None => None,
+    };
+
+    match matches.subcommand() {
+        (command::GIT, Some(s)) => run_helper(config_path, s, |cmd| {
             let mut command = Command::new("git");
             for i in 0..(cmd.len()) {
                 command.arg(&cmd[i]);
@@ -54,21 +72,20 @@ fn main_inner() -> Result<()> {
             command
         }),
 
-        (command::INFO, Some(_)) => do_info(),
-        (command::RUN, Some(s)) => run_helper(s, |cmd| {
+        (command::INFO, Some(_)) => do_info(config_path),
+        (command::RUN, Some(s)) => run_helper(config_path, s, |cmd| {
             let mut command = Command::new(&cmd[0]);
             for i in 1..(cmd.len()) {
                 command.arg(&cmd[i]);
             }
             command
         }),
-        _ => do_info(),
+        _ => do_info(config_path),
     }
 }
 
-fn do_info() -> Result<()> {
-    let current_dir = env::current_dir()?;
-    let workspace = Workspace::find(&current_dir)?;
+fn do_info(config_path: Option<PathBuf>) -> Result<()> {
+    let workspace = get_workspace(config_path)?;
     println!(
         "Workspace directory: {}",
         path_to_str(&workspace.root_dir).cyan()
@@ -101,7 +118,7 @@ fn show_project_dirs(order: &str, project_dirs: &Vec<PathBuf>) {
     }
 }
 
-fn run_helper<F>(submatches: &ArgMatches, f: F) -> Result<()>
+fn run_helper<F>(config_path: Option<PathBuf>, submatches: &ArgMatches, f: F) -> Result<()>
 where
     F: Fn(&Vec<&str>) -> Command,
 {
@@ -119,8 +136,7 @@ where
         .expect("--order is required")
         == arg_value::TOPO;
 
-    let current_dir = env::current_dir()?;
-    let workspace = Workspace::find(&current_dir)?;
+    let workspace = get_workspace(config_path)?;
     let mut failure_count = 0;
     let project_dirs = match (topo_order, &workspace.project_dirs_topo) {
         (true, Some(ds)) => ds,
