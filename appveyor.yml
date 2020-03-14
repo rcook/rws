@@ -13,7 +13,7 @@ environment:
 install:
   - ps: $ErrorActionPreference = 'Stop'
   - sh: echo $RBBT_URL
-  - sh: curl $RBBT_URL | bash -s -- --ref $APPVEYOR_REPO_BRANCH
+  - sh: curl -sS $RBBT_URL | bash -s -- --ref $APPVEYOR_REPO_BRANCH
   - sh: cat .rbbt_version
   - ps: if (-not $IsWindows) { Update-AppveyorBuild -Version (Get-Content -Path .rbbt_version -Raw).Trim() }
   - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-host $TARGET --default-toolchain $CHANNEL --profile minimal -y

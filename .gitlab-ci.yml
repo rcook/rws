@@ -6,7 +6,7 @@ variables:
 
 before_script:
   - echo $RBBT_URL
-  - curl $RBBT_URL | bash -s -- --remote origin --ref $CI_COMMIT_REF_NAME
+  - curl -sS $RBBT_URL | bash -s -- --remote origin --ref $CI_COMMIT_REF_NAME
 
 .shared: &shared
   except:
