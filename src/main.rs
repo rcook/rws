@@ -62,7 +62,7 @@ fn main_inner() -> Result<()> {
             }
             command
         }),
-        _ => panic!("Unreachable"),
+        _ => do_info(),
     }
 }
 

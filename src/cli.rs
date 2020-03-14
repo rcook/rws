@@ -62,7 +62,6 @@ pub fn make_rws_app<'a, 'b>() -> App<'a, 'b> {
     App::new("Richard's Workspace Tool")
         .author(crate_authors!())
         .about("Manages Git-based workspaces")
-        .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::TrailingVarArg)
         .version(env!("CARGO_PKG_DESCRIPTION"))
         .subcommand(run_command(
