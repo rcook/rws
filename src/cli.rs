@@ -71,6 +71,13 @@ pub fn make_rws_app<'a, 'b>() -> App<'a, 'b> {
                 .value_name("CONFIG-PATH")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("dir")
+                .help("Path to workspace directory")
+                .long("dir")
+                .value_name("WORKSPACE-DIR")
+                .takes_value(true),
+        )
         .subcommand(run_command(
             command::GIT,
             "Runs Git command in each project directory",

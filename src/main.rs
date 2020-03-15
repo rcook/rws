@@ -8,7 +8,7 @@ mod workspace;
 
 use crate::cli::make_rws_app;
 use crate::cli::{arg, arg_value, command};
-use crate::error::{user_error, user_error_result, AppError, Result};
+use crate::error::{user_error_result, AppError, Result};
 use crate::os::path_to_str;
 use crate::workspace::Workspace;
 
@@ -16,24 +16,12 @@ use clap::ArgMatches;
 #[cfg(windows)]
 use colored::control::set_virtual_terminal;
 use colored::Colorize;
-use std::env;
 use std::path::{Path, PathBuf};
 use std::process::{exit, Command};
 
 fn reset_terminal() -> () {
     #[cfg(windows)]
     set_virtual_terminal(true).expect("set_virtual_terminal failed");
-}
-
-fn get_workspace(config_path: Option<PathBuf>) -> Result<Workspace> {
-    match config_path {
-        Some(c) => Workspace::new(
-            c.parent()
-                .ok_or_else(|| user_error("Invalid config path"))?,
-            &c,
-        ),
-        None => Workspace::find(&env::current_dir()?),
-    }
 }
 
 fn main() {
@@ -53,18 +41,37 @@ fn main() {
     })
 }
 
+fn get_workspace(matches: &ArgMatches) -> Result<Workspace> {
+    match matches.value_of("config") {
+        Some(c) => {
+            let config_path = Path::new(c).canonicalize()?;
+            match matches.value_of("dir") {
+                Some(d) => {
+                    let workspace_dir = Path::new(d).canonicalize()?;
+                    Workspace::get(Some(workspace_dir), Some(config_path))
+                }
+                None => Workspace::get(None, Some(config_path)),
+            }
+        }
+        None => match matches.value_of("dir") {
+            Some(d) => {
+                let workspace_dir = Path::new(d).canonicalize()?;
+                Workspace::get(Some(workspace_dir), None)
+            }
+            None => Workspace::get(None, None),
+        },
+    }
+}
+
 fn main_inner() -> Result<()> {
     reset_terminal();
 
     let matches = make_rws_app().get_matches();
 
-    let config_path = match matches.value_of("config") {
-        Some(c) => Some(Path::new(c).canonicalize()?),
-        None => None,
-    };
+    let workspace = get_workspace(&matches)?;
 
     match matches.subcommand() {
-        (command::GIT, Some(s)) => run_helper(config_path, s, |cmd| {
+        (command::GIT, Some(s)) => run_helper(&workspace, s, |cmd| {
             let mut command = Command::new("git");
             for i in 0..(cmd.len()) {
                 command.arg(&cmd[i]);
@@ -72,23 +79,24 @@ fn main_inner() -> Result<()> {
             command
         }),
 
-        (command::INFO, Some(_)) => do_info(config_path),
-        (command::RUN, Some(s)) => run_helper(config_path, s, |cmd| {
+        (command::INFO, Some(_)) => do_info(&workspace),
+
+        (command::RUN, Some(s)) => run_helper(&workspace, s, |cmd| {
             let mut command = Command::new(&cmd[0]);
             for i in 1..(cmd.len()) {
                 command.arg(&cmd[i]);
             }
             command
         }),
-        _ => do_info(config_path),
+
+        _ => do_info(&workspace),
     }
 }
 
-fn do_info(config_path: Option<PathBuf>) -> Result<()> {
-    let workspace = get_workspace(config_path)?;
+fn do_info(workspace: &Workspace) -> Result<()> {
     println!(
         "Workspace directory: {}",
-        path_to_str(&workspace.root_dir).cyan()
+        path_to_str(&workspace.workspace_dir).cyan()
     );
     println!(
         "Workspace configuration file: {}",
@@ -100,7 +108,7 @@ fn do_info(config_path: Option<PathBuf>) -> Result<()> {
             .cyan()
     );
     show_project_dirs("alpha", &workspace.project_dirs_alpha);
-    match workspace.project_dirs_topo {
+    match &workspace.project_dirs_topo {
         Some(ds) => show_project_dirs(arg_value::TOPO, &ds),
         None => {}
     }
@@ -118,7 +126,7 @@ fn show_project_dirs(order: &str, project_dirs: &Vec<PathBuf>) {
     }
 }
 
-fn run_helper<F>(config_path: Option<PathBuf>, submatches: &ArgMatches, f: F) -> Result<()>
+fn run_helper<F>(workspace: &Workspace, submatches: &ArgMatches, f: F) -> Result<()>
 where
     F: Fn(&Vec<&str>) -> Command,
 {
@@ -136,7 +144,6 @@ where
         .expect("--order is required")
         == arg_value::TOPO;
 
-    let workspace = get_workspace(config_path)?;
     let mut failure_count = 0;
     let project_dirs = match (topo_order, &workspace.project_dirs_topo) {
         (true, Some(ds)) => ds,

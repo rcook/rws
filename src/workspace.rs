@@ -5,6 +5,7 @@ use crate::os::{get_base_name, path_to_str};
 use crate::scripting::command::Command;
 
 use std::collections::HashSet;
+use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 use topological_sort::TopologicalSort;
@@ -12,29 +13,45 @@ use topological_sort::TopologicalSort;
 const WORKSPACE_CONFIG_FILE_NAME: &str = "rws-workspace.yaml";
 
 pub struct Workspace {
-    pub root_dir: PathBuf,
+    pub workspace_dir: PathBuf,
     pub config_path: Option<PathBuf>,
     pub project_dirs_alpha: Vec<PathBuf>,
     pub project_dirs_topo: Option<Vec<PathBuf>>,
 }
 
 impl Workspace {
-    pub fn new(root_dir: &Path, config_path: &Path) -> Result<Workspace> {
-        match Config::read_config_file(&config_path)? {
-            Some(config) => {
-                return Self::traverse_config(
-                    root_dir.to_path_buf(),
-                    config_path.to_path_buf(),
-                    &config,
-                )
-            }
-            None => {
-                return Self::traverse_no_dependencies_or_dependency_command(
-                    root_dir.to_path_buf(),
-                    Some(config_path.to_path_buf()),
+    pub fn new(workspace_dir: PathBuf, config_path: Option<PathBuf>) -> Result<Workspace> {
+        match config_path {
+            Some(c) => match Config::read_config_file(&c)? {
+                Some(config) => Self::traverse_config(workspace_dir.to_path_buf(), c, &config),
+                None => Self::traverse_no_dependencies_or_dependency_command(
+                    workspace_dir.to_path_buf(),
+                    Some(c),
                     &HashSet::new(),
-                )
+                ),
+            },
+            None => Self::traverse_no_dependencies_or_dependency_command(
+                workspace_dir.to_path_buf(),
+                None,
+                &HashSet::new(),
+            ),
+        }
+    }
+
+    pub fn get(workspace_dir: Option<PathBuf>, config_path: Option<PathBuf>) -> Result<Workspace> {
+        match (workspace_dir, config_path) {
+            (Some(d), Some(c)) => Workspace::new(d, Some(c)),
+            (Some(d), None) => {
+                let p = d.join(WORKSPACE_CONFIG_FILE_NAME);
+                Workspace::new(d, if p.exists() { Some(p) } else { None })
             }
+            (None, Some(c)) => Workspace::new(
+                c.parent()
+                    .ok_or_else(|| user_error("Invalid config path"))?
+                    .to_path_buf(),
+                Some(c),
+            ),
+            (None, None) => Self::find(&env::current_dir()?),
         }
     }
 
@@ -70,7 +87,7 @@ impl Workspace {
     }
 
     fn traverse_config(
-        root_dir: PathBuf,
+        workspace_dir: PathBuf,
         config_path: PathBuf,
         config: &Config,
     ) -> Result<Workspace> {
@@ -81,50 +98,53 @@ impl Workspace {
             .as_str_vec("excluded-projects")
             .unwrap_or_else(|| Vec::new())
             .into_iter()
-            .map(|x| root_dir.join(x))
+            .map(|x| workspace_dir.join(x))
             .collect::<HashSet<_>>();
         let dependencies_hash_opt = root_hash.as_hash("dependencies");
         let dependency_command_hash_opt = root_hash.as_hash("dependency-command");
         match (&dependencies_hash_opt, &dependency_command_hash_opt) {
             (Some(_), Some(_)) => user_error_result("Must specify at most one of \"dependencies\" and \"dependency-command\" in workspace configuration"),
             (Some(dependencies_hash), None) => Self::traverse_with_dependencies(
-                root_dir,
+                workspace_dir,
                 config_path,
                 &excluded_project_dirs,
                 &dependencies_hash,
             ),
             (None, Some(dependency_command_hash)) => Self::traverse_with_dependency_command(
-                root_dir,
+                workspace_dir,
                 config_path,
                 &excluded_project_dirs,
                 &root_hash,
                 &dependency_command_hash,
             ),
-            (None, None) => Self::traverse_no_dependencies_or_dependency_command(root_dir, Some(config_path),  &excluded_project_dirs)
+            (None, None) => Self::traverse_no_dependencies_or_dependency_command(workspace_dir, Some(config_path),  &excluded_project_dirs)
         }
     }
 
     fn traverse_no_dependencies_or_dependency_command(
-        root_dir: PathBuf,
+        workspace_dir: PathBuf,
         config_path: Option<PathBuf>,
         excluded_project_dirs: &HashSet<PathBuf>,
     ) -> Result<Workspace> {
         Ok(Workspace {
-            root_dir: root_dir.to_path_buf(),
+            workspace_dir: workspace_dir.to_path_buf(),
             config_path: config_path,
-            project_dirs_alpha: Self::get_project_dirs_alpha(&root_dir, &excluded_project_dirs)?,
+            project_dirs_alpha: Self::get_project_dirs_alpha(
+                &workspace_dir,
+                &excluded_project_dirs,
+            )?,
             project_dirs_topo: None,
         })
     }
 
     fn traverse_with_dependencies(
-        root_dir: PathBuf,
+        workspace_dir: PathBuf,
         config_path: PathBuf,
         excluded_project_dirs: &HashSet<PathBuf>,
         dependency_command_hash: &ConfigHash,
     ) -> Result<Workspace> {
         Self::traverse_helper(
-            &root_dir,
+            &workspace_dir,
             Some(config_path),
             excluded_project_dirs,
             |project_dir| {
@@ -141,7 +161,7 @@ impl Workspace {
                                         project_name
                                     ))
                                 })
-                                .map(|s| String::from(path_to_str(&root_dir.join(s))))
+                                .map(|s| String::from(path_to_str(&workspace_dir.join(s))))
                         })
                         .collect(),
                     None => Ok(Vec::new()),
@@ -151,7 +171,7 @@ impl Workspace {
     }
 
     fn traverse_with_dependency_command(
-        root_dir: PathBuf,
+        workspace_dir: PathBuf,
         config_path: PathBuf,
         excluded_project_dirs: &HashSet<PathBuf>,
         root_hash: &ConfigHash,
@@ -159,13 +179,13 @@ impl Workspace {
     ) -> Result<Workspace> {
         let dependency_command = Command::new(root_hash, dependency_command_hash)?;
         Self::traverse_helper(
-            &root_dir,
+            &workspace_dir,
             Some(config_path),
             excluded_project_dirs,
             |project_dir| {
                 get_deps(&project_dir, &dependency_command).map(|x| {
                     x.into_iter()
-                        .map(|x| String::from(path_to_str(&root_dir.join(x))))
+                        .map(|x| String::from(path_to_str(&workspace_dir.join(x))))
                         .collect()
                 })
             },
@@ -173,11 +193,11 @@ impl Workspace {
     }
 
     fn get_project_dirs_alpha(
-        root_dir: &Path,
+        workspace_dir: &Path,
         excluded_project_dirs: &HashSet<PathBuf>,
     ) -> std::io::Result<Vec<PathBuf>> {
         let mut project_dirs_alpha = Vec::new();
-        for entry in fs::read_dir(&root_dir)? {
+        for entry in fs::read_dir(&workspace_dir)? {
             let e = entry?;
             let project_dir = e.path();
             if !excluded_project_dirs.contains(&project_dir) && project_dir.is_dir() {
@@ -233,7 +253,7 @@ impl Workspace {
     }
 
     fn traverse_helper<F>(
-        root_dir: &PathBuf,
+        workspace_dir: &PathBuf,
         config_path: Option<PathBuf>,
         excluded_project_dirs: &HashSet<PathBuf>,
         f: F,
@@ -241,10 +261,11 @@ impl Workspace {
     where
         F: Fn(&Path) -> Result<Vec<String>>,
     {
-        let project_dirs_alpha = Self::get_project_dirs_alpha(&root_dir, &excluded_project_dirs)?;
+        let project_dirs_alpha =
+            Self::get_project_dirs_alpha(&workspace_dir, &excluded_project_dirs)?;
         let project_dirs_topo = Self::topo_sort_project_dirs(&project_dirs_alpha, f)?;
         Ok(Workspace {
-            root_dir: root_dir.to_path_buf(),
+            workspace_dir: workspace_dir.to_path_buf(),
             config_path: config_path,
             project_dirs_alpha: project_dirs_alpha,
             project_dirs_topo: Some(project_dirs_topo),
