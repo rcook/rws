@@ -15,7 +15,6 @@ install:
   - sh: echo $RBBT_URL
   - sh: curl -sS $RBBT_URL | bash -s -- --ref $APPVEYOR_REPO_BRANCH
   - sh: cat .rbbt_version
-  - ps: if (-not $IsWindows) { Update-AppveyorBuild -Version (Get-Content -Path .rbbt_version -Raw).Trim() }
   - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-host $TARGET --default-toolchain $CHANNEL --profile minimal -y
   - sh: source $HOME/.cargo/env
   - sh: rustc -Vv
@@ -24,7 +23,6 @@ install:
   - cmd: appveyor-retry appveyor DownloadFile %RBBT_URL%.ps1
   - ps: if ($IsWindows) { .\rbbt.ps1 -Ref $env:APPVEYOR_REPO_BRANCH }
   - ps: if ($IsWindows) { Get-Content -Path .rbbt_version -Raw }
-  - ps: if ($IsWindows) { Update-AppveyorBuild -Version (Get-Content -Path .rbbt_version -Raw).Trim() }
   - cmd: appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - cmd: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% --profile minimal -y
