@@ -33,6 +33,25 @@ impl Command {
             .unwrap_or(language_default)
             .to_string();
 
+        let variables_opt = root_hash.as_hash("variables");
+        let variables_source = match variables_opt {
+            Some(v) => match v.as_pairs() {
+                Some(pairs) => pairs
+                    .iter()
+                    .map(|p| {
+                        format!(
+                            "local {} = \"{}\"",
+                            Self::encode_lua_identifier(&p.0),
+                            Self::encode_lua_string_literal(&p.1)
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+                None => String::from(""),
+            },
+            None => String::from(""),
+        };
+
         let language_hash_key = format!("{}-config", language);
         let language_hash_opt = root_hash.as_hash(&language_hash_key);
 
@@ -43,11 +62,11 @@ impl Command {
                 let use_prelude = command_hash
                     .as_bool("use-prelude")
                     .unwrap_or(use_prelude_default);
-                (preamble, use_prelude)
+                (variables_source + "\n" + &preamble, use_prelude)
             }
             None => {
                 let use_prelude = command_hash.as_bool("use-prelude").unwrap_or(true);
-                ("".to_string(), use_prelude)
+                (variables_source, use_prelude)
             }
         };
 
@@ -61,13 +80,30 @@ impl Command {
         })
     }
 
-    pub fn eval(&self) -> Result<Box<dyn CommandResult>> {
+    pub fn eval0(&self) -> Result<Box<dyn CommandResult>> {
         match self.language.as_str() {
             "lua" => {
-                let x = lua::eval(&self.script, self.use_prelude)?;
+                let x = lua::eval0(&self.script, self.use_prelude)?;
                 Ok(Box::new(LuaResult::new(x)))
             }
             x => user_error_result(format!("Unsupported language \"{}\"", x)),
         }
+    }
+
+    pub fn eval1(&self) -> Result<()> {
+        match self.language.as_str() {
+            "lua" => lua::eval1(&self.script, self.use_prelude),
+            x => user_error_result(format!("Unsupported language \"{}\"", x)),
+        }
+    }
+
+    fn encode_lua_identifier(str: &str) -> String {
+        // TBD: Encode identifier here!
+        str.to_string()
+    }
+
+    fn encode_lua_string_literal(str: &str) -> String {
+        // TBD: Encode string literal here!
+        str.to_string()
     }
 }

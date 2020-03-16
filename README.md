@@ -26,6 +26,13 @@ This is the schema for the optional `rws-workspace.yaml` configuration file that
 
 ```yaml
 # (Optional)
+variables:
+  # (Optional)
+  VARIABLE0: VALUE0
+  # (Optional)
+  VARIABLE1: VALUE1
+
+# (Optional)
 default-language: lua
 
 # (Optional)
@@ -74,6 +81,16 @@ dependency-command:
 excluded-projects:
 - fff
 - ggg
+
+# (Optional)
+init-command:
+  # (Optional)
+  language: lua
+  # (Optional)
+  use-prelude: true
+  # (Required)
+  script: |
+    print("Hello from init-command")
 ```
 
 ## CI/CD

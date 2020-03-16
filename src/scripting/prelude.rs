@@ -2,9 +2,12 @@ use crate::os::path_to_str;
 use crate::scripting::helpers::guard_io;
 
 use rlua::prelude::{LuaError, LuaResult};
+use rlua::Variadic;
 use std::fs::{read_to_string, File};
 use std::io::{BufRead, BufReader};
 use std::path::Path;
+use std::process::Command;
+use std::sync::Arc;
 
 pub fn current_dir() -> LuaResult<String> {
     Ok(path_to_str(&guard_io(std::env::current_dir())?).to_string())
@@ -12,6 +15,10 @@ pub fn current_dir() -> LuaResult<String> {
 
 pub fn is_file(path: String) -> LuaResult<bool> {
     Ok(Path::new(&path).is_file())
+}
+
+pub fn is_dir(path: String) -> LuaResult<bool> {
+    Ok(Path::new(&path).is_dir())
 }
 
 pub fn read_file(path: String) -> LuaResult<String> {
@@ -53,4 +60,20 @@ pub mod xpath {
         }
         Ok(namespaces)
     }
+}
+
+pub fn git_clone(args: Variadic<String>) -> LuaResult<()> {
+    let mut git_command = Command::new("git");
+    git_command.arg("clone");
+    for arg in args {
+        git_command.arg(arg);
+    }
+
+    let mut child: std::process::Child = git_command
+        .spawn()
+        .map_err(|e| rlua::Error::ExternalError(Arc::new(e)))?;
+    let _ = child
+        .wait()
+        .map_err(|e| rlua::Error::ExternalError(Arc::new(e)))?;
+    Ok(())
 }

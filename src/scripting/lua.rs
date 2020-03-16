@@ -1,7 +1,7 @@
 use crate::error::{AppError, Result};
 use crate::scripting::prelude;
 
-use rlua::{Context, Lua};
+use rlua::{Context, Lua, Variadic};
 use std::sync::Arc;
 
 impl std::convert::From<rlua::Error> for AppError {
@@ -16,7 +16,16 @@ impl std::convert::From<AppError> for rlua::Error {
     }
 }
 
-pub fn eval(script: &str, use_prelude: bool) -> Result<Vec<String>> {
+pub fn eval0(script: &str, use_prelude: bool) -> Result<Vec<String>> {
+    Lua::new().context(|lua_ctx| {
+        if use_prelude {
+            load_prelude(&lua_ctx)?;
+        }
+        Ok(lua_ctx.load(script).eval()?)
+    })
+}
+
+pub fn eval1(script: &str, use_prelude: bool) -> Result<()> {
     Lua::new().context(|lua_ctx| {
         if use_prelude {
             load_prelude(&lua_ctx)?;
@@ -39,6 +48,11 @@ fn load_prelude(lua_ctx: &Context) -> rlua::Result<()> {
     )?;
 
     prelude.set(
+        "is_dir",
+        lua_ctx.create_function(|_, path: String| prelude::is_dir(path))?,
+    )?;
+
+    prelude.set(
         "read_file",
         lua_ctx.create_function(|_, path: String| prelude::read_file(path))?,
     )?;
@@ -58,6 +72,11 @@ fn load_prelude(lua_ctx: &Context) -> rlua::Result<()> {
         lua_ctx.create_function(|_, (namespaces_table, query, xml)| {
             prelude::xpath::main(namespaces_table, query, xml)
         })?,
+    )?;
+
+    prelude.set(
+        "git_clone",
+        lua_ctx.create_function(|_, args: Variadic<String>| prelude::git_clone(args))?,
     )?;
 
     lua_ctx.globals().set("prelude", prelude)

@@ -3,6 +3,7 @@ use clap::{crate_authors, App, AppSettings, Arg, SubCommand};
 pub mod command {
     pub const GIT: &str = "git";
     pub const INFO: &str = "info";
+    pub const INIT: &str = "init";
     pub const RUN: &str = "run";
 }
 
@@ -84,6 +85,7 @@ pub fn make_rws_app<'a, 'b>() -> App<'a, 'b> {
             "Command to pass to Git",
         ))
         .subcommand(SubCommand::with_name(command::INFO).about("Prints workspace information"))
+        .subcommand(SubCommand::with_name(command::INIT).about("Initialize workspace"))
         .subcommand(run_command(
             command::RUN,
             "Runs command in each project directory",

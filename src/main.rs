@@ -10,7 +10,7 @@ use crate::cli::make_rws_app;
 use crate::cli::{arg, arg_value, command};
 use crate::error::{user_error_result, AppError, Result};
 use crate::os::path_to_str;
-use crate::workspace::Workspace;
+use crate::workspace::{ConfigCache, Plan, Workspace};
 
 use clap::ArgMatches;
 #[cfg(windows)]
@@ -41,24 +41,27 @@ fn main() {
     })
 }
 
-fn get_workspace(matches: &ArgMatches) -> Result<Workspace> {
+fn get_workspace<'a>(
+    config_cache: &'a mut ConfigCache,
+    matches: &ArgMatches,
+) -> Result<Workspace<'a>> {
     match matches.value_of("config") {
         Some(c) => {
             let config_path = Path::new(c).canonicalize()?;
             match matches.value_of("dir") {
                 Some(d) => {
                     let workspace_dir = Path::new(d).canonicalize()?;
-                    Workspace::get(Some(workspace_dir), Some(config_path))
+                    Workspace::new(config_cache, Some(workspace_dir), Some(config_path))
                 }
-                None => Workspace::get(None, Some(config_path)),
+                None => Workspace::new(config_cache, None, Some(config_path)),
             }
         }
         None => match matches.value_of("dir") {
             Some(d) => {
                 let workspace_dir = Path::new(d).canonicalize()?;
-                Workspace::get(Some(workspace_dir), None)
+                Workspace::new(config_cache, Some(workspace_dir), None)
             }
-            None => Workspace::get(None, None),
+            None => Workspace::new(config_cache, None, None),
         },
     }
 }
@@ -68,10 +71,11 @@ fn main_inner() -> Result<()> {
 
     let matches = make_rws_app().get_matches();
 
-    let workspace = get_workspace(&matches)?;
+    let mut config_cache = ConfigCache::new();
+    let workspace = get_workspace(&mut config_cache, &matches)?;
 
     match matches.subcommand() {
-        (command::GIT, Some(s)) => run_helper(&workspace, s, |cmd| {
+        (command::GIT, Some(s)) => run_helper(&Plan::resolve(workspace)?, s, |cmd| {
             let mut command = Command::new("git");
             for i in 0..(cmd.len()) {
                 command.arg(&cmd[i]);
@@ -79,9 +83,11 @@ fn main_inner() -> Result<()> {
             command
         }),
 
-        (command::INFO, Some(_)) => do_info(&workspace),
+        (command::INFO, Some(_)) => do_info(&Plan::resolve(workspace)?),
 
-        (command::RUN, Some(s)) => run_helper(&workspace, s, |cmd| {
+        (command::INIT, _) => do_init(&workspace),
+
+        (command::RUN, Some(s)) => run_helper(&Plan::resolve(workspace)?, s, |cmd| {
             let mut command = Command::new(&cmd[0]);
             for i in 1..(cmd.len()) {
                 command.arg(&cmd[i]);
@@ -89,26 +95,26 @@ fn main_inner() -> Result<()> {
             command
         }),
 
-        _ => do_info(&workspace),
+        _ => do_info(&Plan::resolve(workspace)?),
     }
 }
 
-fn do_info(workspace: &Workspace) -> Result<()> {
+fn do_info(plan: &Plan) -> Result<()> {
     println!(
         "Workspace directory: {}",
-        path_to_str(&workspace.workspace_dir).cyan()
+        path_to_str(&plan.workspace.workspace_dir).cyan()
     );
     println!(
         "Workspace configuration file: {}",
-        workspace
+        plan.workspace
             .config_path
             .as_ref()
             .map(|x| path_to_str(x))
             .unwrap_or("(none)")
             .cyan()
     );
-    show_project_dirs("alpha", &workspace.project_dirs_alpha);
-    match &workspace.project_dirs_topo {
+    show_project_dirs("alpha", &plan.project_dirs_alpha);
+    match &plan.project_dirs_topo {
         Some(ds) => show_project_dirs(arg_value::TOPO, &ds),
         None => {}
     }
@@ -126,7 +132,7 @@ fn show_project_dirs(order: &str, project_dirs: &Vec<PathBuf>) {
     }
 }
 
-fn run_helper<F>(workspace: &Workspace, submatches: &ArgMatches, f: F) -> Result<()>
+fn run_helper<F>(plan: &Plan, submatches: &ArgMatches, f: F) -> Result<()>
 where
     F: Fn(&Vec<&str>) -> Command,
 {
@@ -145,9 +151,9 @@ where
         == arg_value::TOPO;
 
     let mut failure_count = 0;
-    let project_dirs = match (topo_order, &workspace.project_dirs_topo) {
+    let project_dirs = match (topo_order, &plan.project_dirs_topo) {
         (true, Some(ds)) => ds,
-        _ => &workspace.project_dirs_alpha,
+        _ => &plan.project_dirs_alpha,
     };
     for project_dir in project_dirs {
         let d = path_to_str(project_dir);
@@ -178,5 +184,13 @@ where
         )
     }
 
+    Ok(())
+}
+
+fn do_init(workspace: &Workspace) -> Result<()> {
+    match &workspace.init_command {
+        Some(c) => c.eval1()?,
+        None => {}
+    }
     Ok(())
 }

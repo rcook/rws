@@ -61,6 +61,21 @@ impl<'a> ConfigHash<'a> {
         Some(ConfigVec::new(self.get_item(key)?.as_vec()?))
     }
 
+    pub fn as_pairs(&self) -> Option<Vec<(String, String)>> {
+        let mut pairs = Vec::new();
+        // TBD: Iterate over entries
+        for k in self.hash.keys() {
+            match k.as_str() {
+                Some(k_str) => match self.hash.get(k).and_then(|x| x.as_str()) {
+                    Some(v_str) => pairs.push((k_str.to_string(), v_str.to_string())),
+                    None => return None,
+                },
+                None => return None,
+            }
+        }
+        Some(pairs)
+    }
+
     fn new(hash: &Hash) -> ConfigHash {
         ConfigHash { hash: hash }
     }
