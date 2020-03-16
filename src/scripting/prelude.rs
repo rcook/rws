@@ -1,5 +1,6 @@
 use crate::os::path_to_str;
 use crate::scripting::helpers::guard_io;
+
 use rlua::prelude::{LuaError, LuaResult};
 use std::fs::{read_to_string, File};
 use std::io::{BufRead, BufReader};
@@ -28,4 +29,28 @@ pub fn read_file_lines(path: String) -> LuaResult<Vec<String>> {
 
 pub fn trim_string(str: String) -> LuaResult<String> {
     Ok(str.trim().to_string())
+}
+
+pub mod xpath {
+    use crate::error::Result;
+    use crate::scripting::xml::{query_xpath_as_string, XmlNamespace};
+
+    use rlua::prelude::LuaResult;
+    use rlua::Table;
+
+    pub fn main(namespaces_table: Table, query: String, xml: String) -> LuaResult<String> {
+        let namespaces = decode_namespaces(namespaces_table)?;
+        Ok(query_xpath_as_string(&namespaces, &query, &xml)?)
+    }
+
+    fn decode_namespaces(namespaces_table: Table) -> Result<Vec<XmlNamespace>> {
+        let mut namespaces = Vec::new();
+        for result in namespaces_table.sequence_values::<Table>() {
+            let namespace_table = result?;
+            let prefix: String = namespace_table.get("prefix")?;
+            let uri: String = namespace_table.get("uri")?;
+            namespaces.push(XmlNamespace::new(prefix, uri))
+        }
+        Ok(namespaces)
+    }
 }

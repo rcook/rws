@@ -1,10 +1,18 @@
 use crate::error::{AppError, Result};
 use crate::scripting::prelude;
+
 use rlua::{Context, Lua};
+use std::sync::Arc;
 
 impl std::convert::From<rlua::Error> for AppError {
     fn from(error: rlua::Error) -> Self {
         AppError::System("Lua", error.to_string())
+    }
+}
+
+impl std::convert::From<AppError> for rlua::Error {
+    fn from(error: AppError) -> Self {
+        rlua::Error::ExternalError(Arc::new(error))
     }
 }
 
@@ -27,22 +35,29 @@ fn load_prelude(lua_ctx: &Context) -> rlua::Result<()> {
 
     prelude.set(
         "is_file",
-        lua_ctx.create_function(|_, arg: String| prelude::is_file(arg))?,
+        lua_ctx.create_function(|_, path: String| prelude::is_file(path))?,
     )?;
 
     prelude.set(
         "read_file",
-        lua_ctx.create_function(|_, arg: String| prelude::read_file(arg))?,
+        lua_ctx.create_function(|_, path: String| prelude::read_file(path))?,
     )?;
 
     prelude.set(
         "read_file_lines",
-        lua_ctx.create_function(|_, arg: String| prelude::read_file_lines(arg))?,
+        lua_ctx.create_function(|_, path: String| prelude::read_file_lines(path))?,
     )?;
 
     prelude.set(
         "trim_string",
-        lua_ctx.create_function(|_, arg: String| prelude::trim_string(arg))?,
+        lua_ctx.create_function(|_, str: String| prelude::trim_string(str))?,
+    )?;
+
+    prelude.set(
+        "xpath",
+        lua_ctx.create_function(|_, (namespaces_table, query, xml)| {
+            prelude::xpath::main(namespaces_table, query, xml)
+        })?,
     )?;
 
     lua_ctx.globals().set("prelude", prelude)
