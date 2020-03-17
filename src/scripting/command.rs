@@ -3,6 +3,10 @@ use crate::error::{user_error, user_error_result, Result};
 use crate::scripting::lua;
 use crate::scripting::CommandResult;
 
+use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
+
+const LUA_SPECIAL_CHARACTERS: &AsciiSet = &CONTROLS.add(b'"').add(b'\'').add(b'\\');
+
 pub struct Command {
     language: String,
     use_prelude: bool,
@@ -40,7 +44,7 @@ impl Command {
                     .iter()
                     .map(|p| {
                         format!(
-                            "local {} = \"{}\"",
+                            "local {} = prelude.percent_decode(\"{}\")",
                             Self::encode_lua_identifier(&p.0),
                             Self::encode_lua_string_literal(&p.1)
                         )
@@ -103,7 +107,6 @@ impl Command {
     }
 
     fn encode_lua_string_literal(str: &str) -> String {
-        // TBD: Encode string literal here!
-        str.to_string()
+        utf8_percent_encode(str, LUA_SPECIAL_CHARACTERS).to_string()
     }
 }

@@ -89,5 +89,10 @@ fn load_prelude(lua_ctx: &Context) -> rlua::Result<()> {
         lua_ctx.create_function(|_, args| prelude::git_clone(args))?,
     )?;
 
+    prelude.set(
+        "percent_decode",
+        lua_ctx.create_function(|_, str| prelude::percent_decode(str))?,
+    )?;
+
     lua_ctx.globals().set("prelude", prelude)
 }

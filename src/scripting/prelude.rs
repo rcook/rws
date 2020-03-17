@@ -2,6 +2,7 @@ use crate::os::path_to_str;
 
 use super::helpers::guard_io;
 
+use percent_encoding::percent_decode_str;
 use rlua::prelude::LuaResult;
 use rlua::Variadic;
 use std::fs::{copy, read_to_string, File};
@@ -100,4 +101,8 @@ pub fn git_clone(args: Variadic<String>) -> LuaResult<()> {
     let mut child: std::process::Child = guard_io(git_command.spawn())?;
     let _ = guard_io(child.wait())?;
     Ok(())
+}
+
+pub fn percent_decode(str: String) -> LuaResult<String> {
+    Ok(percent_decode_str(&str).decode_utf8_lossy().to_string())
 }
