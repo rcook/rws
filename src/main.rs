@@ -9,7 +9,7 @@ mod workspace;
 use crate::cli::make_rws_app;
 use crate::cli::{arg, arg_value, command};
 use crate::error::{user_error_result, AppError, Result};
-use crate::os::path_to_str;
+use crate::os::{path_to_str, with_working_dir};
 use crate::workspace::{ConfigCache, Plan, Workspace};
 
 use clap::ArgMatches;
@@ -189,7 +189,7 @@ where
 
 fn do_init(workspace: &Workspace) -> Result<()> {
     match &workspace.init_command {
-        Some(c) => c.eval1()?,
+        Some(c) => with_working_dir(&workspace.workspace_dir, || c.eval1())??,
         None => {}
     }
     Ok(())
