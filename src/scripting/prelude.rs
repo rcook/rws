@@ -1,13 +1,13 @@
 use crate::os::path_to_str;
-use crate::scripting::helpers::guard_io;
 
-use rlua::prelude::{LuaError, LuaResult};
+use super::helpers::guard_io;
+
+use rlua::prelude::LuaResult;
 use rlua::Variadic;
 use std::fs::{read_to_string, File};
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::Command;
-use std::sync::Arc;
 
 pub fn current_dir() -> LuaResult<String> {
     Ok(path_to_str(&guard_io(std::env::current_dir())?).to_string())
@@ -22,16 +22,12 @@ pub fn is_dir(path: String) -> LuaResult<bool> {
 }
 
 pub fn read_file(path: String) -> LuaResult<String> {
-    read_to_string(&path).map_err(|_| LuaError::RuntimeError(format!("Failed to read {}", path)))
+    guard_io(read_to_string(&path))
 }
 
 pub fn read_file_lines(path: String) -> LuaResult<Vec<String>> {
-    let f = File::open(&path)
-        .map_err(|_| LuaError::RuntimeError(format!("Failed to open {}", path)))?;
-    BufReader::new(f)
-        .lines()
-        .collect::<std::io::Result<_>>()
-        .map_err(|_| LuaError::RuntimeError(format!("Failed while reading from {}", path)))
+    let f = guard_io(File::open(&path))?;
+    guard_io(BufReader::new(f).lines().collect::<std::io::Result<_>>())
 }
 
 pub fn trim_string(str: String) -> LuaResult<String> {
@@ -69,11 +65,7 @@ pub fn git_clone(args: Variadic<String>) -> LuaResult<()> {
         git_command.arg(arg);
     }
 
-    let mut child: std::process::Child = git_command
-        .spawn()
-        .map_err(|e| rlua::Error::ExternalError(Arc::new(e)))?;
-    let _ = child
-        .wait()
-        .map_err(|e| rlua::Error::ExternalError(Arc::new(e)))?;
+    let mut child: std::process::Child = guard_io(git_command.spawn())?;
+    let _ = guard_io(child.wait())?;
     Ok(())
 }
