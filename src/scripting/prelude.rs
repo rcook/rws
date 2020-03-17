@@ -4,7 +4,7 @@ use super::helpers::guard_io;
 
 use rlua::prelude::LuaResult;
 use rlua::Variadic;
-use std::fs::{read_to_string, File};
+use std::fs::{copy, read_to_string, File};
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::Command;
@@ -19,6 +19,38 @@ pub fn is_file(path: String) -> LuaResult<bool> {
 
 pub fn is_dir(path: String) -> LuaResult<bool> {
     Ok(Path::new(&path).is_dir())
+}
+
+pub fn copy_file(from: String, to: String) -> LuaResult<()> {
+    guard_io(copy(from, to))?;
+    Ok(())
+}
+
+pub mod copy_file_if_unchanged {
+    use super::super::helpers::guard_io;
+
+    use rlua::prelude::LuaResult;
+    use std::fs::{copy, File};
+    use std::io::Read;
+    use std::path::Path;
+
+    pub fn main(from: String, to: String) -> LuaResult<bool> {
+        let from_path = Path::new(&from);
+        let to_path = Path::new(&to);
+        let perform_copy = !to_path.is_file()
+            || guard_io(read_bytes(&from_path))? != guard_io(read_bytes(&to_path))?;
+        if perform_copy {
+            guard_io(copy(from_path, to_path))?;
+        }
+        Ok(perform_copy)
+    }
+
+    fn read_bytes(path: &Path) -> std::io::Result<Vec<u8>> {
+        let mut f = File::open(path)?;
+        let mut data = Vec::new();
+        let _ = f.read_to_end(&mut data)?;
+        Ok(data)
+    }
 }
 
 pub fn read_file(path: String) -> LuaResult<String> {

@@ -1,7 +1,7 @@
 use crate::error::{AppError, Result};
 use crate::scripting::prelude;
 
-use rlua::{Context, Lua, Variadic};
+use rlua::{Context, Lua};
 use std::sync::Arc;
 
 impl std::convert::From<rlua::Error> for AppError {
@@ -44,27 +44,37 @@ fn load_prelude(lua_ctx: &Context) -> rlua::Result<()> {
 
     prelude.set(
         "is_file",
-        lua_ctx.create_function(|_, path: String| prelude::is_file(path))?,
+        lua_ctx.create_function(|_, path| prelude::is_file(path))?,
     )?;
 
     prelude.set(
         "is_dir",
-        lua_ctx.create_function(|_, path: String| prelude::is_dir(path))?,
+        lua_ctx.create_function(|_, path| prelude::is_dir(path))?,
+    )?;
+
+    prelude.set(
+        "copy_file",
+        lua_ctx.create_function(|_, (from, to)| prelude::copy_file(from, to))?,
+    )?;
+
+    prelude.set(
+        "copy_file_if_unchanged",
+        lua_ctx.create_function(|_, (from, to)| prelude::copy_file_if_unchanged::main(from, to))?,
     )?;
 
     prelude.set(
         "read_file",
-        lua_ctx.create_function(|_, path: String| prelude::read_file(path))?,
+        lua_ctx.create_function(|_, path| prelude::read_file(path))?,
     )?;
 
     prelude.set(
         "read_file_lines",
-        lua_ctx.create_function(|_, path: String| prelude::read_file_lines(path))?,
+        lua_ctx.create_function(|_, path| prelude::read_file_lines(path))?,
     )?;
 
     prelude.set(
         "trim_string",
-        lua_ctx.create_function(|_, str: String| prelude::trim_string(str))?,
+        lua_ctx.create_function(|_, str| prelude::trim_string(str))?,
     )?;
 
     prelude.set(
@@ -76,7 +86,7 @@ fn load_prelude(lua_ctx: &Context) -> rlua::Result<()> {
 
     prelude.set(
         "git_clone",
-        lua_ctx.create_function(|_, args: Variadic<String>| prelude::git_clone(args))?,
+        lua_ctx.create_function(|_, args| prelude::git_clone(args))?,
     )?;
 
     lua_ctx.globals().set("prelude", prelude)
