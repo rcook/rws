@@ -1,18 +1,12 @@
-use crate::error::{user_error_result, AppError, Result};
+use crate::error::{user_error_result, Result};
 
 use rlua::{Context, Value};
 use std::path::Path;
 use yaml_rust::yaml::{Array, Hash, Yaml};
-use yaml_rust::{ScanError, YamlLoader};
+use yaml_rust::YamlLoader;
 
 pub struct ConfigObject {
     yaml: Yaml,
-}
-
-impl std::convert::From<ScanError> for AppError {
-    fn from(error: ScanError) -> Self {
-        AppError::System("Yaml", error.to_string())
-    }
 }
 
 impl ConfigObject {

@@ -1,21 +1,8 @@
 use crate::config::ConfigObject;
-use crate::error::{AppError, Result};
+use crate::error::Result;
 use crate::scripting::prelude;
 
 use rlua::{Context, FromLuaMulti, Lua};
-use std::sync::Arc;
-
-impl std::convert::From<rlua::Error> for AppError {
-    fn from(error: rlua::Error) -> Self {
-        AppError::System("Lua", error.to_string())
-    }
-}
-
-impl std::convert::From<AppError> for rlua::Error {
-    fn from(error: AppError) -> Self {
-        rlua::Error::ExternalError(Arc::new(error))
-    }
-}
 
 fn create_variables(lua_ctx: Context, variables: &Vec<(String, ConfigObject)>) -> Result<()> {
     let globals_table = lua_ctx.globals();

@@ -1,25 +1,7 @@
-use crate::error::{user_error, AppError, Result};
+use crate::error::{user_error, Result};
 
 use sxd_document::parser;
 use sxd_xpath::{Context, Factory};
-
-impl std::convert::From<parser::Error> for AppError {
-    fn from(error: parser::Error) -> Self {
-        AppError::System("Xml", error.to_string())
-    }
-}
-
-impl std::convert::From<sxd_xpath::ExecutionError> for AppError {
-    fn from(error: sxd_xpath::ExecutionError) -> Self {
-        AppError::System("Xml", error.to_string())
-    }
-}
-
-impl std::convert::From<sxd_xpath::ParserError> for AppError {
-    fn from(error: sxd_xpath::ParserError) -> Self {
-        AppError::System("Xml", error.to_string())
-    }
-}
 
 pub struct XmlNamespace {
     prefix: String,
