@@ -1,5 +1,5 @@
-use crate::deps::get_deps;
 use crate::error::{user_error, user_error_result, Result};
+use crate::os::with_working_dir;
 use crate::os::{get_base_name, path_to_str};
 
 use super::workspace::{DependencySource, Workspace};
@@ -56,7 +56,7 @@ impl Plan {
             DependencySource::Command(command) => Some(Self::topo_sort_project_dirs(
                 &project_dirs_alpha,
                 |project_dir| {
-                    get_deps(&project_dir, command).map(|x| {
+                    with_working_dir(project_dir, || command.eval())?.map(|x: Vec<String>| {
                         x.into_iter()
                             .map(|x| String::from(path_to_str(&workspace.workspace_dir.join(x))))
                             .collect()

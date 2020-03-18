@@ -1,29 +1,14 @@
 use crate::config::{ConfigHash, ConfigObject};
 use crate::error::{user_error, user_error_result, Result};
 use crate::scripting::lua;
-use crate::scripting::CommandResult;
+
+use rlua::FromLuaMulti;
 
 pub struct Command {
     language: String,
     use_prelude: bool,
     script: String,
     variables: Vec<(String, ConfigObject)>,
-}
-
-struct LuaResult {
-    strs: Vec<String>,
-}
-
-impl LuaResult {
-    fn new(strs: Vec<String>) -> LuaResult {
-        LuaResult { strs: strs }
-    }
-}
-
-impl CommandResult for LuaResult {
-    fn as_str_vec(&self) -> Option<Vec<String>> {
-        Some(self.strs.clone())
-    }
 }
 
 impl Command {
@@ -91,20 +76,11 @@ impl Command {
         })
     }
 
-    pub fn eval0(&self) -> Result<Box<dyn CommandResult>> {
-        match self.language.as_str() {
-            "lua" => {
-                let x = lua::eval(&self.script, self.use_prelude, &self.variables)?;
-                Ok(Box::new(LuaResult::new(x)))
-            }
-            x => user_error_result(format!("Unsupported language \"{}\"", x)),
-        }
-    }
-
-    pub fn eval1(&self) -> Result<()> {
+    // TBD: Figure out how to prevent `FromLuaMulti` from leaking!
+    pub fn eval<R: for<'lua> FromLuaMulti<'lua>>(&self) -> Result<R> {
         match self.language.as_str() {
             "lua" => lua::eval(&self.script, self.use_prelude, &self.variables),
-            x => user_error_result(format!("Unsupported language \"{}\"", x)),
+            language => user_error_result(format!("Unsupported language \"{}\"", language)),
         }
     }
 }

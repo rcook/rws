@@ -1,6 +1,5 @@
 mod cli;
 mod config;
-mod deps;
 mod error;
 mod os;
 mod scripting;
@@ -185,7 +184,7 @@ where
 
 fn do_init(workspace: &Workspace) -> Result<()> {
     match &workspace.init_command {
-        Some(c) => with_working_dir(&workspace.workspace_dir, || c.eval1())??,
+        Some(c) => with_working_dir(&workspace.workspace_dir, || c.eval())??,
         None => {}
     }
     Ok(())
