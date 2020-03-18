@@ -5,14 +5,14 @@ pub type Result<T> = std::result::Result<T, AppError>;
 #[derive(Debug, Clone)]
 pub enum AppError {
     User(String),
-    System(&'static str, String),
+    Internal(&'static str, String),
 }
 
 impl std::fmt::Display for AppError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             AppError::User(message) => write!(f, "User({})", message),
-            AppError::System(kind, message) => write!(f, "System.{}({})", kind, message),
+            AppError::Internal(kind, message) => write!(f, "Internal.{}({})", kind, message),
         }
     }
 }
@@ -31,37 +31,37 @@ impl std::convert::From<AppError> for rlua::Error {
 
 impl std::convert::From<rlua::Error> for AppError {
     fn from(error: rlua::Error) -> Self {
-        AppError::System("Lua", error.to_string())
+        AppError::Internal("Lua", error.to_string())
     }
 }
 
 impl std::convert::From<std::io::Error> for AppError {
     fn from(error: std::io::Error) -> Self {
-        AppError::System("IO", error.to_string())
+        AppError::Internal("IO", error.to_string())
     }
 }
 
 impl std::convert::From<sxd_document::parser::Error> for AppError {
     fn from(error: sxd_document::parser::Error) -> Self {
-        AppError::System("Xml", error.to_string())
+        AppError::Internal("Xml", error.to_string())
     }
 }
 
 impl std::convert::From<sxd_xpath::ExecutionError> for AppError {
     fn from(error: sxd_xpath::ExecutionError) -> Self {
-        AppError::System("Xml", error.to_string())
+        AppError::Internal("Xml", error.to_string())
     }
 }
 
 impl std::convert::From<sxd_xpath::ParserError> for AppError {
     fn from(error: sxd_xpath::ParserError) -> Self {
-        AppError::System("Xml", error.to_string())
+        AppError::Internal("Xml", error.to_string())
     }
 }
 
 impl std::convert::From<yaml_rust::ScanError> for AppError {
     fn from(error: yaml_rust::ScanError) -> Self {
-        AppError::System("Yaml", error.to_string())
+        AppError::Internal("Yaml", error.to_string())
     }
 }
 

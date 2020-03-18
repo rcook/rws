@@ -30,10 +30,10 @@ fn main() {
             println!("{}", format!("Error: {}", message).bright_red());
             1
         }
-        Err(AppError::System(facility, message)) => {
+        Err(AppError::Internal(facility, message)) => {
             println!(
                 "{}",
-                format!("System ({}): {}", facility, message).red().bold()
+                format!("Internal ({}): {}", facility, message).red().bold()
             );
             2
         }
