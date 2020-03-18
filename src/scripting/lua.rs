@@ -2,7 +2,7 @@ use crate::config::ConfigObject;
 use crate::error::{AppError, Result};
 use crate::scripting::prelude;
 
-use rlua::{Context, Lua};
+use rlua::{Context, FromLuaMulti, Lua};
 use std::sync::Arc;
 
 impl std::convert::From<rlua::Error> for AppError {
@@ -28,25 +28,11 @@ fn create_variables(lua_ctx: Context, variables: &Vec<(String, ConfigObject)>) -
     Ok(())
 }
 
-pub fn eval0(
+pub fn eval<R: for<'lua> FromLuaMulti<'lua>>(
     script: &str,
     use_prelude: bool,
     variables: &Vec<(String, ConfigObject)>,
-) -> Result<Vec<String>> {
-    Lua::new().context(|lua_ctx| {
-        create_variables(lua_ctx, variables)?;
-        if use_prelude {
-            load_prelude(&lua_ctx)?;
-        }
-        Ok(lua_ctx.load(script).eval()?)
-    })
-}
-
-pub fn eval1(
-    script: &str,
-    use_prelude: bool,
-    variables: &Vec<(String, ConfigObject)>,
-) -> Result<()> {
+) -> Result<R> {
     Lua::new().context(|lua_ctx| {
         create_variables(lua_ctx, variables)?;
         if use_prelude {

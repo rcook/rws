@@ -94,7 +94,7 @@ impl Command {
     pub fn eval0(&self) -> Result<Box<dyn CommandResult>> {
         match self.language.as_str() {
             "lua" => {
-                let x = lua::eval0(&self.script, self.use_prelude, &self.variables)?;
+                let x = lua::eval(&self.script, self.use_prelude, &self.variables)?;
                 Ok(Box::new(LuaResult::new(x)))
             }
             x => user_error_result(format!("Unsupported language \"{}\"", x)),
@@ -103,7 +103,7 @@ impl Command {
 
     pub fn eval1(&self) -> Result<()> {
         match self.language.as_str() {
-            "lua" => lua::eval1(&self.script, self.use_prelude, &self.variables),
+            "lua" => lua::eval(&self.script, self.use_prelude, &self.variables),
             x => user_error_result(format!("Unsupported language \"{}\"", x)),
         }
     }
