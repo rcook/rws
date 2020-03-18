@@ -10,18 +10,18 @@ use std::path::{Path, PathBuf};
 use topological_sort::TopologicalSort;
 
 /// A build plan for a workspace
-pub struct Plan<'a> {
+pub struct Plan {
     /// Workspace
-    pub workspace: Workspace<'a>,
+    pub workspace: Workspace,
     /// Project directories in alphabetical order
     pub project_dirs_alpha: Vec<PathBuf>,
     /// Project directories in topological order
     pub project_dirs_topo: Option<Vec<PathBuf>>,
 }
 
-impl<'a> Plan<'a> {
+impl Plan {
     /// Create a plan from a workspace
-    pub fn resolve(workspace: Workspace<'a>) -> Result<Self> {
+    pub fn resolve(workspace: Workspace) -> Result<Self> {
         let project_dirs_alpha = Self::get_project_dirs_alpha(
             &workspace.workspace_dir,
             &workspace.excluded_project_dirs,
@@ -32,15 +32,15 @@ impl<'a> Plan<'a> {
                 &project_dirs_alpha,
                 |project_dir| {
                     let project_name = get_base_name(project_dir);
-                    match hash.as_vec(project_name) {
+                    match hash.get(project_name).and_then(|x| x.into_vec()) {
                         Some(v) => (0..v.len())
                             .into_iter()
                             .map(|i| {
-                                v.as_str(i)
+                                v.get(i)
+                                    .into_string()
                                     .ok_or_else(|| {
                                         user_error(format!(
-                                            "Invalid dependency {} for project {}",
-                                            v.as_display(i),
+                                            "Invalid dependency for project {}",
                                             project_name
                                         ))
                                     })

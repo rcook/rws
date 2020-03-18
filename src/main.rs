@@ -10,7 +10,7 @@ use crate::cli::make_rws_app;
 use crate::cli::{arg, arg_value, command};
 use crate::error::{user_error_result, AppError, Result};
 use crate::os::{path_to_str, with_working_dir};
-use crate::workspace::{ConfigCache, Plan, Workspace};
+use crate::workspace::{Plan, Workspace};
 
 use clap::ArgMatches;
 #[cfg(windows)]
@@ -41,27 +41,24 @@ fn main() {
     })
 }
 
-fn get_workspace<'a>(
-    config_cache: &'a mut ConfigCache,
-    matches: &ArgMatches,
-) -> Result<Workspace<'a>> {
+fn get_workspace(matches: &ArgMatches) -> Result<Workspace> {
     match matches.value_of("config") {
         Some(c) => {
             let config_path = Path::new(c).canonicalize()?;
             match matches.value_of("dir") {
                 Some(d) => {
                     let workspace_dir = Path::new(d).canonicalize()?;
-                    Workspace::new(config_cache, Some(workspace_dir), Some(config_path))
+                    Workspace::new(Some(workspace_dir), Some(config_path))
                 }
-                None => Workspace::new(config_cache, None, Some(config_path)),
+                None => Workspace::new(None, Some(config_path)),
             }
         }
         None => match matches.value_of("dir") {
             Some(d) => {
                 let workspace_dir = Path::new(d).canonicalize()?;
-                Workspace::new(config_cache, Some(workspace_dir), None)
+                Workspace::new(Some(workspace_dir), None)
             }
-            None => Workspace::new(config_cache, None, None),
+            None => Workspace::new(None, None),
         },
     }
 }
@@ -71,8 +68,7 @@ fn main_inner() -> Result<()> {
 
     let matches = make_rws_app().get_matches();
 
-    let mut config_cache = ConfigCache::new();
-    let workspace = get_workspace(&mut config_cache, &matches)?;
+    let workspace = get_workspace(&matches)?;
 
     match matches.subcommand() {
         (command::GIT, Some(s)) => run_helper(&Plan::resolve(workspace)?, s, |cmd| {

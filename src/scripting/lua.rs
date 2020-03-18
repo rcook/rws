@@ -1,3 +1,4 @@
+use crate::config::ConfigObject;
 use crate::error::{AppError, Result};
 use crate::scripting::prelude;
 
@@ -16,8 +17,24 @@ impl std::convert::From<AppError> for rlua::Error {
     }
 }
 
-pub fn eval0(script: &str, use_prelude: bool) -> Result<Vec<String>> {
+fn create_variables(lua_ctx: Context, variables: &Vec<(String, ConfigObject)>) -> Result<()> {
+    let globals_table = lua_ctx.globals();
+    for (name, config_object) in variables {
+        let value = config_object.to_lua(lua_ctx)?;
+        let key = lua_ctx.create_string(name).expect("create_string failed");
+        globals_table.set(key, value).expect("set failed");
+    }
+
+    Ok(())
+}
+
+pub fn eval0(
+    script: &str,
+    use_prelude: bool,
+    variables: &Vec<(String, ConfigObject)>,
+) -> Result<Vec<String>> {
     Lua::new().context(|lua_ctx| {
+        create_variables(lua_ctx, variables)?;
         if use_prelude {
             load_prelude(&lua_ctx)?;
         }
@@ -25,8 +42,13 @@ pub fn eval0(script: &str, use_prelude: bool) -> Result<Vec<String>> {
     })
 }
 
-pub fn eval1(script: &str, use_prelude: bool) -> Result<()> {
+pub fn eval1(
+    script: &str,
+    use_prelude: bool,
+    variables: &Vec<(String, ConfigObject)>,
+) -> Result<()> {
     Lua::new().context(|lua_ctx| {
+        create_variables(lua_ctx, variables)?;
         if use_prelude {
             load_prelude(&lua_ctx)?;
         }
