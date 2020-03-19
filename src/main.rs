@@ -1,5 +1,6 @@
 mod cli;
 mod config;
+mod config_key;
 mod error;
 mod os;
 mod scripting;

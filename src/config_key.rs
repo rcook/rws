@@ -1,0 +1,10 @@
+pub const DEFAULT_LANGUAGE: &str = "default-language";
+pub const DEPENDENCIES: &str = "dependencies";
+pub const DEPENDENCY_COMMAND: &str = "dependency-command";
+pub const EXCLUDED_PROJECTS: &str = "excluded-projects";
+pub const INIT_COMMAND: &str = "init-command";
+pub const LANGUAGE: &str = "language";
+pub const PREAMBLE: &str = "preamble";
+pub const SCRIPT: &str = "script";
+pub const USE_PRELUDE: &str = "use-prelude";
+pub const VARIABLES: &str = "variables";

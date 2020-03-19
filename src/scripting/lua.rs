@@ -8,8 +8,8 @@ fn create_variables(lua_ctx: Context, variables: &Vec<(String, ConfigObject)>) -
     let globals_table = lua_ctx.globals();
     for (name, config_object) in variables {
         let value = config_object.to_lua(lua_ctx)?;
-        let key = lua_ctx.create_string(name).expect("create_string failed");
-        globals_table.set(key, value).expect("set failed");
+        let key = lua_ctx.create_string(name)?;
+        globals_table.set(key, value)?;
     }
 
     Ok(())

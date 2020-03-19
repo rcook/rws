@@ -8,6 +8,43 @@ use std::path::{Path, PathBuf};
 
 const WORKSPACE_CONFIG_FILE_NAME: &str = "rws-workspace.yaml";
 
+mod config_helper {
+    use crate::config::{ConfigArray, ConfigHash};
+    use crate::error::{user_error_result, Result};
+
+    pub fn convert_optional_array<T, F>(hash: &ConfigHash, key: &str, f: F) -> Result<Option<T>>
+    where
+        F: FnOnce(ConfigArray) -> Result<T>,
+    {
+        match hash.get(key) {
+            Some(obj) => match obj.into_vec() {
+                Some(v) => f(v).map(|result| Some(result)),
+                None => user_error_result(format!(
+                    "Configuration item \"{}\" is not in expected format",
+                    key
+                )),
+            },
+            None => Ok(None),
+        }
+    }
+
+    pub fn convert_optional_hash<T, F>(hash: &ConfigHash, key: &str, f: F) -> Result<Option<T>>
+    where
+        F: FnOnce(ConfigHash) -> Result<T>,
+    {
+        match hash.get(key) {
+            Some(obj) => match obj.into_hash() {
+                Some(h) => f(h).map(|result| Some(result)),
+                None => user_error_result(format!(
+                    "Configuration item \"{}\" is not in expected format",
+                    key
+                )),
+            },
+            None => Ok(None),
+        }
+    }
+}
+
 /// Source of dependency information
 pub enum DependencySource {
     /// Dependencies specified in configuration file
@@ -111,55 +148,65 @@ impl Workspace {
         config_path: PathBuf,
         config_object: ConfigObject,
     ) -> Result<Self> {
+        use crate::config_key::*;
+        use config_helper::*;
+
         let root_hash = config_object
             .into_hash()
             .ok_or_else(|| user_error("Invalid config hash"))?;
-        let excluded_project_dirs = root_hash
-            .get("excluded-projects")
-            .and_then(|x| x.into_vec())
-            .map(|x| {
-                let mut values = Vec::new();
-                for i in 0..x.len() {
-                    values.push(x.get(i).into_string().expect("into_string failed"))
-                }
-                values
-            })
-            .unwrap_or_else(|| Vec::new())
-            .into_iter()
-            .map(|x| workspace_dir.join(x))
-            .collect::<HashSet<_>>();
-        let dependencies_hash_opt = root_hash.get("dependencies").and_then(|x| x.into_hash());
-        let dependency_command_hash_opt = root_hash
-            .get("dependency-command")
-            .and_then(|x| x.into_hash());
-        let init_command = match root_hash.get("init-command").and_then(|x| x.into_hash()) {
-            Some(h) => Some(Command::new(&root_hash, &h)?),
-            None => None,
-        };
 
-        match (dependencies_hash_opt, &dependency_command_hash_opt) {
-            (Some(_), Some(_)) => user_error_result("Must specify at most one of \"dependencies\" and \"dependency-command\" in workspace configuration"),
-            (Some(dependencies_hash), None) => Ok(Self {
+        let excluded_project_dirs: HashSet<PathBuf> =
+            convert_optional_array(&root_hash, EXCLUDED_PROJECTS, |array| {
+                let mut values: Vec<PathBuf> = Vec::new();
+                for i in 0..array.len() {
+                    let obj = array.get(i);
+                    let value = obj.as_str().ok_or_else(|| {
+                        user_error(format!(
+                            "Invalid value encountered in \"{}\" configuration element",
+                            EXCLUDED_PROJECTS
+                        ))
+                    })?;
+                    values.push(workspace_dir.join(value))
+                }
+                Ok(values.into_iter().collect::<HashSet<PathBuf>>())
+            })?
+            .unwrap_or_else(|| HashSet::new());
+
+        let init_command =
+            convert_optional_hash(&root_hash, INIT_COMMAND, |h| Command::new(&root_hash, &h))?;
+
+        let dependencies = convert_optional_hash(&root_hash, DEPENDENCIES, |h| Ok(h))?;
+
+        let dependency_command = convert_optional_hash(&root_hash, DEPENDENCY_COMMAND, |h| {
+            Command::new(&root_hash, &h)
+        })?;
+
+        match (dependencies, dependency_command) {
+            (Some(_), Some(_)) => user_error_result(format!(
+                "Must specify at most one of \"{}\" and \"{}\" in workspace configuration",
+                DEPENDENCIES, DEPENDENCY_COMMAND
+            )),
+            (Some(h), None) => Ok(Self {
                 workspace_dir: workspace_dir,
                 config_path: Some(config_path),
                 excluded_project_dirs: excluded_project_dirs,
-                dependency_source: DependencySource::Hash(dependencies_hash),
-                init_command:init_command
+                dependency_source: DependencySource::Hash(h),
+                init_command: init_command,
             }),
-            (None, Some(dependency_command_hash)) => Ok(Self {
+            (None, Some(c)) => Ok(Self {
                 workspace_dir: workspace_dir,
                 config_path: Some(config_path),
                 excluded_project_dirs: excluded_project_dirs,
-                dependency_source: DependencySource::Command(Command::new(&root_hash, &dependency_command_hash)?),
-                init_command:init_command
+                dependency_source: DependencySource::Command(c),
+                init_command: init_command,
             }),
             (None, None) => Ok(Self {
                 workspace_dir: workspace_dir,
                 config_path: Some(config_path),
                 excluded_project_dirs: excluded_project_dirs,
                 dependency_source: DependencySource::None,
-                init_command:init_command
-            })
+                init_command: init_command,
+            }),
         }
     }
 }

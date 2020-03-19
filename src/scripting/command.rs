@@ -4,6 +4,10 @@ use crate::scripting::lua;
 
 use rlua::FromLuaMulti;
 
+mod config_value {
+    pub const LUA: &str = "lua";
+}
+
 pub struct Command {
     language: String,
     use_prelude: bool,
@@ -13,19 +17,28 @@ pub struct Command {
 
 impl Command {
     pub fn new(root_hash: &ConfigHash, command_hash: &ConfigHash) -> Result<Command> {
+        use crate::config_key::*;
+        use config_value::*;
+
         let language_default = root_hash
-            .get("default-language")
+            .get(DEFAULT_LANGUAGE)
             .and_then(|x| x.into_string())
-            .unwrap_or(String::from("lua"));
+            .unwrap_or(String::from(LUA));
         let language = command_hash
-            .get("language")
+            .get(LANGUAGE)
             .and_then(|x| x.into_string())
             .unwrap_or(language_default)
             .to_string();
 
         let mut variables = Vec::new();
-        if let Some(h) = root_hash.get("variables").and_then(|x| x.into_hash()) {
-            for k in h.keys() {
+        if let Some(h) = root_hash.get(VARIABLES).and_then(|x| x.into_hash()) {
+            let keys = h.keys().ok_or_else(|| {
+                user_error(format!(
+                    "Invalid keys in \"{}\" configuration element",
+                    VARIABLES
+                ))
+            })?;
+            for k in keys {
                 let obj = h.get(&k).expect("Unreachable");
                 variables.push((k, obj));
             }
@@ -39,22 +52,22 @@ impl Command {
         let (preamble, use_prelude) = match language_hash_opt {
             Some(language_hash) => {
                 let preamble = language_hash
-                    .get("preamble")
+                    .get(PREAMBLE)
                     .and_then(|x| x.into_string())
                     .unwrap_or(String::from(""));
                 let use_prelude_default = language_hash
-                    .get("use-prelude")
+                    .get(USE_PRELUDE)
                     .and_then(|x| x.into_bool())
                     .unwrap_or(true);
                 let use_prelude = command_hash
-                    .get("use-prelude")
+                    .get(USE_PRELUDE)
                     .and_then(|x| x.into_bool())
                     .unwrap_or(use_prelude_default);
                 (preamble, use_prelude)
             }
             None => {
                 let use_prelude = command_hash
-                    .get("use-prelude")
+                    .get(USE_PRELUDE)
                     .and_then(|x| x.into_bool())
                     .unwrap_or(true);
                 (String::from(""), use_prelude)
@@ -62,9 +75,9 @@ impl Command {
         };
 
         let script = command_hash
-            .get("script")
+            .get(SCRIPT)
             .and_then(|x| x.into_string())
-            .ok_or_else(|| user_error("\"dependency-command\" missing required \"script\" field in workspace configuration"))?;
+            .ok_or_else(|| user_error(format!("\"dependency-command\" missing required \"{}\" field in workspace configuration", SCRIPT)))?;
 
         let full_script = format!("{}\n\n{}", preamble, script);
 

@@ -5,6 +5,7 @@ use std::path::Path;
 use yaml_rust::yaml::{Array, Hash, Yaml};
 use yaml_rust::YamlLoader;
 
+#[derive(Debug)]
 pub struct ConfigObject {
     yaml: Yaml,
 }
@@ -22,6 +23,10 @@ impl ConfigObject {
 
     pub fn into_bool(self) -> Option<bool> {
         self.yaml.into_bool()
+    }
+
+    pub fn as_str(&self) -> Option<&str> {
+        self.yaml.as_str()
     }
 
     pub fn into_string(self) -> Option<String> {
@@ -79,6 +84,7 @@ impl ConfigObject {
     }
 }
 
+#[derive(Debug)]
 pub struct ConfigHash {
     hash: Hash,
 }
@@ -90,11 +96,16 @@ impl ConfigHash {
             .map(|x| ConfigObject::new(x.clone()))
     }
 
-    pub fn keys(&self) -> Vec<String> {
-        self.hash
-            .keys()
-            .map(|x| x.as_str().expect("Keys must be strings").to_string())
-            .collect()
+    pub fn keys(&self) -> Option<Vec<String>> {
+        let mut keys = Vec::new();
+        for k in self.hash.keys() {
+            if let Some(s) = k.as_str() {
+                keys.push(s.to_string())
+            } else {
+                return None;
+            }
+        }
+        Some(keys)
     }
 
     fn new(hash: Hash) -> Self {
