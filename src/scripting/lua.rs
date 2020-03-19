@@ -14,13 +14,22 @@ impl std::convert::From<rlua::Error> for AppError {
     }
 }
 
-pub fn eval<T: Evaluatable>(script: &str, use_prelude: bool, variables: &Variables) -> Result<T> {
+pub fn eval<T: Evaluatable>(
+    preamble: &str,
+    script: &str,
+    use_prelude: bool,
+    variables: &Variables,
+) -> Result<T> {
     Lua::new().context(|lua_ctx| {
         create_variables(lua_ctx, variables)?;
+
         if use_prelude {
             load_prelude(&lua_ctx)?;
         }
-        Ok(lua_ctx.load(script).eval()?)
+
+        Ok(lua_ctx
+            .load(&(preamble.to_string() + "\n\n" + script))
+            .eval()?)
     })
 }
 

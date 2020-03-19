@@ -15,6 +15,7 @@ impl<T: lua::Evaluatable + javascript::Evaluatable> Evaluatable for T {}
 pub struct ScriptCommand {
     language: String,
     use_prelude: bool,
+    preamble: String,
     script: String,
     variables: Variables,
 }
@@ -34,7 +35,7 @@ impl ScriptCommand {
             .unwrap_or(language_default)
             .to_string();
 
-        let variables = Self::floop(&root_hash)?;
+        let variables = Self::get_variables(&root_hash)?;
 
         let language_hash_key = format!("{}-config", language);
         let language_hash_opt = root_hash
@@ -71,27 +72,34 @@ impl ScriptCommand {
             .and_then(|x| x.into_string())
             .ok_or_else(|| user_error(format!("\"dependency-command\" missing required \"{}\" field in workspace configuration", SCRIPT)))?;
 
-        let full_script = format!("{}\n\n{}", preamble, script);
-
         Ok(ScriptCommand {
             language: language,
             use_prelude: use_prelude,
-            script: full_script,
+            preamble: preamble,
+            script: script,
             variables: variables,
         })
     }
 
     pub fn eval<T: Evaluatable>(&self) -> Result<T> {
         match self.language.as_str() {
-            config_value::JAVASCRIPT => {
-                javascript::eval(&self.script, self.use_prelude, &self.variables)
-            }
-            config_value::LUA => lua::eval(&self.script, self.use_prelude, &self.variables),
+            config_value::JAVASCRIPT => javascript::eval(
+                &self.preamble,
+                &self.script,
+                self.use_prelude,
+                &self.variables,
+            ),
+            config_value::LUA => lua::eval(
+                &self.preamble,
+                &self.script,
+                self.use_prelude,
+                &self.variables,
+            ),
             language => user_error_result(format!("Unsupported language \"{}\"", language)),
         }
     }
 
-    fn floop(root_hash: &ConfigHash) -> Result<Variables> {
+    fn get_variables(root_hash: &ConfigHash) -> Result<Variables> {
         use crate::config_key::*;
 
         let mut values = Vec::new();

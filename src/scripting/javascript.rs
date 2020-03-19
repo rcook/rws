@@ -14,6 +14,7 @@ impl std::convert::From<Error> for AppError {
 }
 
 pub fn eval<T: Evaluatable>(
+    _preamble: &str,
     _script: &str,
     _use_prelude: bool,
     _variables: &Variables,
