@@ -31,12 +31,6 @@ impl std::convert::From<AppError> for rlua::Error {
     }
 }
 
-impl std::convert::From<rlua::Error> for AppError {
-    fn from(error: rlua::Error) -> Self {
-        internal_error("Lua", error.to_string())
-    }
-}
-
 impl std::convert::From<std::io::Error> for AppError {
     fn from(error: std::io::Error) -> Self {
         internal_error("IO", error.to_string())

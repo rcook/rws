@@ -1,8 +1,31 @@
 use crate::config::ConfigObject;
-use crate::error::Result;
+use crate::error::{internal_error, AppError, Result};
 use crate::scripting::prelude;
 
 use rlua::{Context, FromLuaMulti, Lua};
+
+pub trait Evaluatable: for<'lua> rlua::FromLuaMulti<'lua> {}
+impl<T: for<'lua> FromLuaMulti<'lua>> Evaluatable for T {}
+
+impl std::convert::From<rlua::Error> for AppError {
+    fn from(error: rlua::Error) -> Self {
+        internal_error("Lua", error.to_string())
+    }
+}
+
+pub fn eval<T: Evaluatable>(
+    script: &str,
+    use_prelude: bool,
+    variables: &Vec<(String, ConfigObject)>,
+) -> Result<T> {
+    Lua::new().context(|lua_ctx| {
+        create_variables(lua_ctx, variables)?;
+        if use_prelude {
+            load_prelude(&lua_ctx)?;
+        }
+        Ok(lua_ctx.load(script).eval()?)
+    })
+}
 
 fn create_variables(lua_ctx: Context, variables: &Vec<(String, ConfigObject)>) -> Result<()> {
     let globals_table = lua_ctx.globals();
@@ -13,20 +36,6 @@ fn create_variables(lua_ctx: Context, variables: &Vec<(String, ConfigObject)>) -
     }
 
     Ok(())
-}
-
-pub fn eval<R: for<'lua> FromLuaMulti<'lua>>(
-    script: &str,
-    use_prelude: bool,
-    variables: &Vec<(String, ConfigObject)>,
-) -> Result<R> {
-    Lua::new().context(|lua_ctx| {
-        create_variables(lua_ctx, variables)?;
-        if use_prelude {
-            load_prelude(&lua_ctx)?;
-        }
-        Ok(lua_ctx.load(script).eval()?)
-    })
 }
 
 fn load_prelude(lua_ctx: &Context) -> rlua::Result<()> {

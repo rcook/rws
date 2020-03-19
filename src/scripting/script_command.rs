@@ -2,11 +2,12 @@ use crate::config::{ConfigHash, ConfigObject};
 use crate::error::{user_error, user_error_result, Result};
 use crate::scripting::lua;
 
-use rlua::FromLuaMulti;
-
 mod config_value {
     pub const LUA: &str = "lua";
 }
+
+pub trait Evaluatable: lua::Evaluatable {}
+impl<T: lua::Evaluatable> Evaluatable for T {}
 
 pub struct ScriptCommand {
     language: String,
@@ -89,8 +90,7 @@ impl ScriptCommand {
         })
     }
 
-    // TBD: Figure out how to prevent `FromLuaMulti` from leaking!
-    pub fn eval<R: for<'lua> FromLuaMulti<'lua>>(&self) -> Result<R> {
+    pub fn eval<T: Evaluatable>(&self) -> Result<T> {
         match self.language.as_str() {
             "lua" => lua::eval(&self.script, self.use_prelude, &self.variables),
             language => user_error_result(format!("Unsupported language \"{}\"", language)),
