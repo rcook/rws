@@ -9,6 +9,8 @@ pub mod command {
 
 pub mod arg {
     pub const CMD: &str = "cmd";
+    pub const CONFIG: &str = "config";
+    pub const DIR: &str = "dir";
     pub const ENV: &str = "env";
     pub const FAIL_FAST: &str = "fail-fast";
     pub const NO_FAIL_FAST: &str = "no-fail-fast";
@@ -46,80 +48,86 @@ impl<'a, 'b> BoolSwitchExt<'a> for App<'a, 'b> {
     fn bool_switch(self, bs: BoolSwitch<'a>) -> Self {
         self.arg(
             Arg::with_name(bs.name)
-                .long(bs.name)
                 .help(bs.help)
+                .long(bs.name)
                 .takes_value(false),
         )
         .arg(
             Arg::with_name(bs.no_name)
                 .conflicts_with(bs.name)
-                .long(bs.no_name)
                 .help(bs.no_help)
+                .long(bs.no_name)
                 .takes_value(false),
         )
     }
 }
 
 pub fn make_rws_app<'a, 'b>() -> App<'a, 'b> {
+    use arg::*;
+    use command::*;
+
     App::new("Richard's Workspace Tool")
         .author(crate_authors!())
         .about("Manages Git-based workspaces")
         .setting(AppSettings::TrailingVarArg)
         .version(env!("CARGO_PKG_DESCRIPTION"))
         .arg(
-            Arg::with_name("config")
+            Arg::with_name(CONFIG)
                 .help("Path to configuration file")
-                .long("config")
+                .long(CONFIG)
                 .value_name("CONFIG-PATH")
                 .takes_value(true),
         )
         .arg(
-            Arg::with_name("dir")
+            Arg::with_name(DIR)
                 .help("Path to workspace directory")
-                .long("dir")
+                .long(DIR)
                 .value_name("WORKSPACE-DIR")
                 .takes_value(true),
         )
         .subcommand(run_command(
-            command::GIT,
+            GIT,
             "Runs Git command in each project directory",
             "Command to pass to Git",
         ))
         .subcommand(
-            SubCommand::with_name(command::INFO)
+            SubCommand::with_name(INFO)
                 .about("Prints workspace and environment information")
                 .arg(
-                    Arg::with_name(arg::ENV)
-                        .help("Show additional environment information")
-                        .long(arg::ENV)
+                    Arg::with_name(ENV)
+                        .help("Shows additional environment information")
+                        .long(ENV)
                         .takes_value(false),
                 ),
         )
-        .subcommand(SubCommand::with_name(command::INIT).about("Initialize workspace"))
+        .subcommand(SubCommand::with_name(INIT).about("Initializes workspace"))
         .subcommand(run_command(
-            command::RUN,
+            RUN,
             "Runs command in each project directory",
             "Command to pass to shell",
         ))
 }
 
 fn run_command<'a, 'b>(name: &'a str, about: &'a str, cmd_help: &'a str) -> App<'a, 'b> {
+    use arg::*;
+    use arg_value::*;
+
     SubCommand::with_name(name)
         .about(about)
         .bool_switch(BoolSwitch::new(
-            arg::FAIL_FAST,
+            FAIL_FAST,
             "Aborts command on first error (default)",
-            arg::NO_FAIL_FAST,
+            NO_FAIL_FAST,
             "Runs command in all project directories",
         ))
         .arg(
-            Arg::with_name(arg::ORDER)
+            Arg::with_name(ORDER)
                 .help("Order of project traversal")
-                .long("order")
-                .possible_values(&[arg_value::ALPHA, arg_value::TOPO])
+                .long(ORDER)
+                .possible_values(&[ALPHA, TOPO])
                 .takes_value(true)
-                .default_value(arg_value::TOPO)
+                .default_value(TOPO)
                 .required(true),
         )
-        .arg(Arg::with_name(arg::CMD).help(cmd_help).multiple(true))
+        .arg(Arg::with_name(CMD).help(cmd_help).multiple(true))
 }
