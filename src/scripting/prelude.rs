@@ -1,3 +1,4 @@
+use crate::git::GitInfo;
 use crate::os::path_to_str;
 
 use super::helpers::guard_io;
@@ -92,7 +93,8 @@ pub mod xpath {
 }
 
 pub fn git_clone(args: Variadic<String>) -> LuaResult<()> {
-    let mut git_command = Command::new("git");
+    let git_info = GitInfo::from_environment()?;
+    let mut git_command = Command::new(git_info.executable_path);
     git_command.arg("clone");
     for arg in args {
         git_command.arg(arg);
