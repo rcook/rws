@@ -74,7 +74,7 @@ impl ConfigObject {
                         .collect::<rlua::Result<Vec<(Value, Value)>>>()?,
                 )
                 .map(|table| Value::Table(table)),
-            _ => panic!("NotImpl2"),
+            _ => unimplemented!("Unsupported YAML node type"),
         }
     }
 }
