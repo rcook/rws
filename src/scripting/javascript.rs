@@ -1,5 +1,6 @@
-use crate::config::ConfigObject;
 use crate::error::{internal_error, AppError, Result};
+
+use super::variables::Variables;
 
 pub trait Evaluatable: Default {}
 impl<T: Default> Evaluatable for T {}
@@ -15,7 +16,7 @@ impl std::convert::From<Error> for AppError {
 pub fn eval<T: Evaluatable>(
     _script: &str,
     _use_prelude: bool,
-    _variables: &Vec<(String, ConfigObject)>,
+    _variables: &Variables,
 ) -> Result<T> {
     unimplemented!("JavaScript not implemented yet!")
 }

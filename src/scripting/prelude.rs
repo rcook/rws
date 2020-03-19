@@ -1,8 +1,6 @@
 use crate::git::GitInfo;
 use crate::os::path_to_str;
 
-use super::helpers::guard_io;
-
 use percent_encoding::percent_decode_str;
 use rlua::prelude::LuaResult;
 use rlua::Variadic;
@@ -10,6 +8,10 @@ use std::fs::{copy, read_to_string, File};
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::Command;
+
+fn guard_io<R>(result: std::io::Result<R>) -> LuaResult<R> {
+    result.map_err(|e| rlua::Error::ExternalError(std::sync::Arc::new(e)))
+}
 
 pub fn current_dir() -> LuaResult<String> {
     Ok(path_to_str(&guard_io(std::env::current_dir())?).to_string())
@@ -29,7 +31,7 @@ pub fn copy_file(from: String, to: String) -> LuaResult<()> {
 }
 
 pub mod copy_file_if_unchanged {
-    use super::super::helpers::guard_io;
+    use super::guard_io;
 
     use rlua::prelude::LuaResult;
     use std::fs::{copy, File};

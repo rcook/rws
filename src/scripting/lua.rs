@@ -1,6 +1,7 @@
-use crate::config::ConfigObject;
 use crate::error::{internal_error, AppError, Result};
-use crate::scripting::prelude;
+
+use super::prelude;
+use super::variables::Variables;
 
 use rlua::{Context, FromLuaMulti, Lua};
 
@@ -13,11 +14,7 @@ impl std::convert::From<rlua::Error> for AppError {
     }
 }
 
-pub fn eval<T: Evaluatable>(
-    script: &str,
-    use_prelude: bool,
-    variables: &Vec<(String, ConfigObject)>,
-) -> Result<T> {
+pub fn eval<T: Evaluatable>(script: &str, use_prelude: bool, variables: &Variables) -> Result<T> {
     Lua::new().context(|lua_ctx| {
         create_variables(lua_ctx, variables)?;
         if use_prelude {
@@ -27,11 +24,11 @@ pub fn eval<T: Evaluatable>(
     })
 }
 
-fn create_variables(lua_ctx: Context, variables: &Vec<(String, ConfigObject)>) -> Result<()> {
+fn create_variables(lua_ctx: Context, variables: &Variables) -> Result<()> {
     let globals_table = lua_ctx.globals();
-    for (name, config_object) in variables {
+    for (name, config_object) in &variables.values {
         let value = config_object.to_lua(lua_ctx)?;
-        let key = lua_ctx.create_string(name)?;
+        let key = lua_ctx.create_string(&name)?;
         globals_table.set(key, value)?;
     }
 

@@ -1,6 +1,8 @@
-use crate::config::{ConfigHash, ConfigObject};
+use crate::config::ConfigHash;
 use crate::error::{user_error, user_error_result, Result};
-use crate::scripting::{javascript, lua};
+
+use super::variables::Variables;
+use super::{javascript, lua};
 
 mod config_value {
     pub const JAVASCRIPT: &str = "javascript";
@@ -14,7 +16,7 @@ pub struct ScriptCommand {
     language: String,
     use_prelude: bool,
     script: String,
-    variables: Vec<(String, ConfigObject)>,
+    variables: Variables,
 }
 
 impl ScriptCommand {
@@ -32,19 +34,7 @@ impl ScriptCommand {
             .unwrap_or(language_default)
             .to_string();
 
-        let mut variables = Vec::new();
-        if let Some(h) = root_hash.get(VARIABLES).and_then(|x| x.into_hash()) {
-            let keys = h.keys().ok_or_else(|| {
-                user_error(format!(
-                    "Invalid keys in \"{}\" configuration element",
-                    VARIABLES
-                ))
-            })?;
-            for k in keys {
-                let obj = h.get(&k).expect("Unreachable");
-                variables.push((k, obj));
-            }
-        }
+        let variables = Self::floop(&root_hash)?;
 
         let language_hash_key = format!("{}-config", language);
         let language_hash_opt = root_hash
@@ -99,5 +89,24 @@ impl ScriptCommand {
             config_value::LUA => lua::eval(&self.script, self.use_prelude, &self.variables),
             language => user_error_result(format!("Unsupported language \"{}\"", language)),
         }
+    }
+
+    fn floop(root_hash: &ConfigHash) -> Result<Variables> {
+        use crate::config_key::*;
+
+        let mut values = Vec::new();
+        if let Some(h) = root_hash.get(VARIABLES).and_then(|x| x.into_hash()) {
+            let keys = h.keys().ok_or_else(|| {
+                user_error(format!(
+                    "Invalid keys in \"{}\" configuration element",
+                    VARIABLES
+                ))
+            })?;
+            for k in keys {
+                let obj = h.get(&k).expect("Unreachable");
+                values.push((k, obj));
+            }
+        };
+        Ok(Variables::new(values))
     }
 }
