@@ -41,6 +41,18 @@ impl std::convert::From<std::io::Error> for AppError {
     }
 }
 
+impl std::convert::From<std::str::Utf8Error> for AppError {
+    fn from(error: std::str::Utf8Error) -> Self {
+        AppError::Internal("Utf8", error.to_string())
+    }
+}
+
+impl std::convert::From<std::string::FromUtf8Error> for AppError {
+    fn from(error: std::string::FromUtf8Error) -> Self {
+        AppError::Internal("Utf8", error.to_string())
+    }
+}
+
 impl std::convert::From<sxd_document::parser::Error> for AppError {
     fn from(error: sxd_document::parser::Error) -> Self {
         AppError::Internal("Xml", error.to_string())
@@ -56,6 +68,12 @@ impl std::convert::From<sxd_xpath::ExecutionError> for AppError {
 impl std::convert::From<sxd_xpath::ParserError> for AppError {
     fn from(error: sxd_xpath::ParserError) -> Self {
         AppError::Internal("Xml", error.to_string())
+    }
+}
+
+impl std::convert::From<which::Error> for AppError {
+    fn from(error: which::Error) -> Self {
+        AppError::Internal("Which", error.to_string())
     }
 }
 

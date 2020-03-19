@@ -17,6 +17,7 @@ use colored::control::set_virtual_terminal;
 use colored::Colorize;
 use std::path::{Path, PathBuf};
 use std::process::{exit, Command};
+use which::which;
 
 fn reset_terminal() -> () {
     #[cfg(windows)]
@@ -95,6 +96,10 @@ fn main_inner() -> Result<()> {
 }
 
 fn do_info(plan: &Plan) -> Result<()> {
+    let git_info = get_git_info()?;
+    println!("Path to Git: {}", path_to_str(&git_info.0).cyan());
+    println!("Git version: {}", git_info.1.cyan());
+
     println!(
         "Workspace directory: {}",
         path_to_str(&plan.workspace.workspace_dir).cyan()
@@ -114,6 +119,22 @@ fn do_info(plan: &Plan) -> Result<()> {
         None => {}
     }
     Ok(())
+}
+
+fn get_git_info() -> Result<(PathBuf, String)> {
+    let git_path = which("git")?;
+    let output = std::process::Command::new(&git_path)
+        .arg("--version")
+        .output()?;
+    let parts = std::str::from_utf8(&output.stdout)?
+        .trim()
+        .split_whitespace()
+        .collect::<Vec<_>>();
+    if parts.len() != 3 || parts[0] != "git" || parts[1] != "version" {
+        return user_error_result("Git version output was invalid");
+    }
+
+    Ok((git_path, parts[2].to_string()))
 }
 
 fn show_project_dirs(order: &str, project_dirs: &Vec<PathBuf>) {
