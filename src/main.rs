@@ -80,7 +80,7 @@ fn main_inner() -> Result<()> {
             command
         }),
 
-        (command::INFO, Some(_)) => do_info(&Plan::resolve(workspace)?),
+        (command::INFO, submatches) => do_info(&Plan::resolve(workspace)?, submatches),
 
         (command::INIT, _) => do_init(&workspace),
 
@@ -92,11 +92,13 @@ fn main_inner() -> Result<()> {
             command
         }),
 
-        _ => do_info(&Plan::resolve(workspace)?),
+        _ => do_info(&Plan::resolve(workspace)?, None),
     }
 }
 
-fn do_info(plan: &Plan) -> Result<()> {
+fn do_info(plan: &Plan, submatches: Option<&ArgMatches>) -> Result<()> {
+    let show_env = submatches.map(|x| x.is_present(arg::ENV)).unwrap_or(false);
+
     println!(
         "Workspace directory: {}",
         path_to_str(&plan.workspace.workspace_dir).cyan()
@@ -116,11 +118,13 @@ fn do_info(plan: &Plan) -> Result<()> {
         None => {}
     }
 
-    println!("");
+    if show_env {
+        println!("");
 
-    let git_info = get_git_info()?;
-    println!("Path to Git: {}", path_to_str(&git_info.0).cyan());
-    println!("Git version: {}", git_info.1.cyan());
+        let git_info = get_git_info()?;
+        println!("Path to Git: {}", path_to_str(&git_info.0).cyan());
+        println!("Git version: {}", git_info.1.cyan());
+    }
 
     Ok(())
 }

@@ -9,6 +9,7 @@ pub mod command {
 
 pub mod arg {
     pub const CMD: &str = "cmd";
+    pub const ENV: &str = "env";
     pub const FAIL_FAST: &str = "fail-fast";
     pub const NO_FAIL_FAST: &str = "no-fail-fast";
     pub const ORDER: &str = "order";
@@ -84,7 +85,16 @@ pub fn make_rws_app<'a, 'b>() -> App<'a, 'b> {
             "Runs Git command in each project directory",
             "Command to pass to Git",
         ))
-        .subcommand(SubCommand::with_name(command::INFO).about("Prints workspace information"))
+        .subcommand(
+            SubCommand::with_name(command::INFO)
+                .about("Prints workspace and environment information")
+                .arg(
+                    Arg::with_name(arg::ENV)
+                        .help("Show additional environment information")
+                        .long(arg::ENV)
+                        .takes_value(false),
+                ),
+        )
         .subcommand(SubCommand::with_name(command::INIT).about("Initialize workspace"))
         .subcommand(run_command(
             command::RUN,
