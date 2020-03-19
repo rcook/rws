@@ -8,15 +8,15 @@ mod config_value {
     pub const LUA: &str = "lua";
 }
 
-pub struct Command {
+pub struct ScriptCommand {
     language: String,
     use_prelude: bool,
     script: String,
     variables: Vec<(String, ConfigObject)>,
 }
 
-impl Command {
-    pub fn new(root_hash: &ConfigHash, command_hash: &ConfigHash) -> Result<Command> {
+impl ScriptCommand {
+    pub fn new(root_hash: &ConfigHash, command_hash: &ConfigHash) -> Result<Self> {
         use crate::config_key::*;
         use config_value::*;
 
@@ -81,7 +81,7 @@ impl Command {
 
         let full_script = format!("{}\n\n{}", preamble, script);
 
-        Ok(Command {
+        Ok(ScriptCommand {
             language: language,
             use_prelude: use_prelude,
             script: full_script,

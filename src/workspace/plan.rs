@@ -54,7 +54,7 @@ impl Plan {
                     }
                 },
             )?),
-            DependencySource::Command(command) => Some(Self::topo_sort_project_dirs(
+            DependencySource::ScriptCommand(command) => Some(Self::topo_sort_project_dirs(
                 &project_dirs_alpha,
                 |project_dir| {
                     with_working_dir(project_dir, || command.eval())?.map(|x: Vec<String>| {
