@@ -1,4 +1,5 @@
 mod helpers;
+mod javascript;
 mod lua;
 mod prelude;
 mod script_command;

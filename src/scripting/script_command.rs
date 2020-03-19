@@ -1,13 +1,14 @@
 use crate::config::{ConfigHash, ConfigObject};
 use crate::error::{user_error, user_error_result, Result};
-use crate::scripting::lua;
+use crate::scripting::{javascript, lua};
 
 mod config_value {
+    pub const JAVASCRIPT: &str = "javascript";
     pub const LUA: &str = "lua";
 }
 
-pub trait Evaluatable: lua::Evaluatable {}
-impl<T: lua::Evaluatable> Evaluatable for T {}
+pub trait Evaluatable: lua::Evaluatable + javascript::Evaluatable {}
+impl<T: lua::Evaluatable + javascript::Evaluatable> Evaluatable for T {}
 
 pub struct ScriptCommand {
     language: String,
@@ -92,7 +93,10 @@ impl ScriptCommand {
 
     pub fn eval<T: Evaluatable>(&self) -> Result<T> {
         match self.language.as_str() {
-            "lua" => lua::eval(&self.script, self.use_prelude, &self.variables),
+            config_value::JAVASCRIPT => {
+                javascript::eval(&self.script, self.use_prelude, &self.variables)
+            }
+            config_value::LUA => lua::eval(&self.script, self.use_prelude, &self.variables),
             language => user_error_result(format!("Unsupported language \"{}\"", language)),
         }
     }
