@@ -31,7 +31,8 @@ impl Plan {
             DependencySource::Hash(hash) => Some(Self::topo_sort_project_dirs(
                 &project_dirs_alpha,
                 |project_dir| {
-                    let project_name = get_base_name(project_dir);
+                    let project_name = get_base_name(project_dir)
+                        .ok_or_else(|| user_error("Invalid project directory"))?;
                     match hash.get(project_name).and_then(|x| x.into_vec()) {
                         Some(v) => (0..v.len())
                             .into_iter()

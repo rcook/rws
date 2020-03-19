@@ -17,15 +17,12 @@ pub fn path_to_str(path: &Path) -> &str {
         .expect("Path contains invalid Unicode characters")
 }
 
-pub fn os_str_to_str(os_str: &std::ffi::OsStr) -> &str {
-    os_str
-        .to_str()
-        .expect("Path contains invalid Unicode characters")
-}
-
-pub fn get_base_name(path: &Path) -> &str {
-    match path.components().last().expect("Path is empty") {
-        Component::Normal(s) => os_str_to_str(s),
-        _ => panic!("Path is in invalid format"),
-    }
+pub fn get_base_name(path: &Path) -> Option<&str> {
+    path.components().last().and_then(|x| {
+        if let Component::Normal(s) = x {
+            s.to_str()
+        } else {
+            None
+        }
+    })
 }
