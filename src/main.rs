@@ -96,10 +96,6 @@ fn main_inner() -> Result<()> {
 }
 
 fn do_info(plan: &Plan) -> Result<()> {
-    let git_info = get_git_info()?;
-    println!("Path to Git: {}", path_to_str(&git_info.0).cyan());
-    println!("Git version: {}", git_info.1.cyan());
-
     println!(
         "Workspace directory: {}",
         path_to_str(&plan.workspace.workspace_dir).cyan()
@@ -109,15 +105,22 @@ fn do_info(plan: &Plan) -> Result<()> {
         plan.workspace
             .config_path
             .as_ref()
-            .map(|x| path_to_str(x))
-            .unwrap_or("(none)")
-            .cyan()
+            .map(|x| path_to_str(x).cyan())
+            .unwrap_or("(none)".red().italic())
     );
+
     show_project_dirs("alpha", &plan.project_dirs_alpha);
     match &plan.project_dirs_topo {
         Some(ds) => show_project_dirs(arg_value::TOPO, &ds),
         None => {}
     }
+
+    println!("");
+
+    let git_info = get_git_info()?;
+    println!("Path to Git: {}", path_to_str(&git_info.0).cyan());
+    println!("Git version: {}", git_info.1.cyan());
+
     Ok(())
 }
 
@@ -144,7 +147,11 @@ fn show_project_dirs(order: &str, project_dirs: &Vec<PathBuf>) {
             println!("  {}", path_to_str(project_dir).cyan())
         }
     } else {
-        println!("Project directories ({} order): {}", order, "(none)".cyan());
+        println!(
+            "Project directories ({} order): {}",
+            order,
+            "(none)".red().italic()
+        );
     }
 }
 
