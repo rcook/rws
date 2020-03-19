@@ -2,6 +2,7 @@ mod cli;
 mod config;
 mod config_key;
 mod error;
+mod git;
 mod os;
 mod scripting;
 mod workspace;
@@ -9,6 +10,7 @@ mod workspace;
 use crate::cli::make_rws_app;
 use crate::cli::{arg, arg_value, command};
 use crate::error::{user_error_result, AppError, Result};
+use crate::git::GitInfo;
 use crate::os::{path_to_str, with_working_dir};
 use crate::workspace::{Plan, Workspace};
 
@@ -18,7 +20,6 @@ use colored::control::set_virtual_terminal;
 use colored::Colorize;
 use std::path::{Path, PathBuf};
 use std::process::{exit, Command};
-use which::which;
 
 fn reset_terminal() -> () {
     #[cfg(windows)]
@@ -72,13 +73,16 @@ fn main_inner() -> Result<()> {
     let workspace = get_workspace(&matches)?;
 
     match matches.subcommand() {
-        (command::GIT, Some(s)) => run_helper(&Plan::resolve(workspace)?, s, |cmd| {
-            let mut command = Command::new("git");
-            for i in 0..(cmd.len()) {
-                command.arg(&cmd[i]);
-            }
-            command
-        }),
+        (command::GIT, Some(s)) => {
+            let git_info = GitInfo::from_environment()?;
+            run_helper(&Plan::resolve(workspace)?, s, |cmd| {
+                let mut command = Command::new(&git_info.executable_path);
+                for i in 0..(cmd.len()) {
+                    command.arg(&cmd[i]);
+                }
+                command
+            })
+        }
 
         (command::INFO, submatches) => do_info(&Plan::resolve(workspace)?, submatches),
 
@@ -121,28 +125,15 @@ fn do_info(plan: &Plan, submatches: Option<&ArgMatches>) -> Result<()> {
     if show_env {
         println!("");
 
-        let git_info = get_git_info()?;
-        println!("Path to Git: {}", path_to_str(&git_info.0).cyan());
-        println!("Git version: {}", git_info.1.cyan());
+        let git_info = GitInfo::from_environment()?;
+        println!(
+            "Path to Git: {}",
+            path_to_str(&git_info.executable_path).cyan()
+        );
+        println!("Git version: {}", git_info.version.cyan());
     }
 
     Ok(())
-}
-
-fn get_git_info() -> Result<(PathBuf, String)> {
-    let git_path = which("git")?;
-    let output = std::process::Command::new(&git_path)
-        .arg("--version")
-        .output()?;
-    let parts = std::str::from_utf8(&output.stdout)?
-        .trim()
-        .split_whitespace()
-        .collect::<Vec<_>>();
-    if parts.len() != 3 || parts[0] != "git" || parts[1] != "version" {
-        return user_error_result("Git version output was invalid");
-    }
-
-    Ok((git_path, parts[2].to_string()))
 }
 
 fn show_project_dirs(order: &str, project_dirs: &Vec<PathBuf>) {
