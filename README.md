@@ -1,6 +1,7 @@
 # Richard's Workspace Tool
 
-[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/w2nmlj9ljfkp10kh/branch/master?svg=true)](https://ci.appveyor.com/project/rcook/rws/branch/master)
+[![AppVeyor status for project](https://ci.appveyor.com/api/projects/status/m7bfloijbr2la3dh?svg=true)](https://ci.appveyor.com/project/rcook/rws)
+[![AppVeyor status for master branch](https://ci.appveyor.com/api/projects/status/m7bfloijbr2la3dh/branch/master?svg=true)](https://ci.appveyor.com/project/rcook/rws/branch/master)
 
 _Manages Git-based workspaces_
 
@@ -93,11 +94,6 @@ init-command:
     print("Hello from init-command")
 ```
 
-## CI/CD
-
-* [AppVeyor][appveyor-rws]
-* [GitLab][gitlab-rws]
-
 ## Building locally
 
 ### Install Rust
@@ -110,45 +106,6 @@ init-command:
 ```bash
 cd /path/to/repos
 git clone https://gitlab.com/rcook/rws.git
-```
-
-### Create `Cargo.toml`
-
-Create a `Cargo.toml` file using sed, PowerShell or my [rbbt][rbbt] tool.
-
-#### sed
-
-```bash
-cd /path/to/repos/rws
-sed -e 's/$cargo_version/0.1.0/g' -e 's/$full_version/0.1.0/g' _rbbt_templates/Cargo.toml > Cargo.toml
-```
-
-#### PowerShell
-
-```ps
-cd C:\path\to\repos\rws
-(Get-Content -Path .\_rbbt_templates\Cargo.toml) -replace '\$cargo_version|\$full_version', '0.1.0' | Out-File -Path Cargo.toml -Encoding ASCII
-```
-
-#### Using rbbt
-
-From Bash etc.:
-
-```bash
-cd /path/to/repos/rws
-curl -sS https://gitlab.com/rcook/rbbt/-/raw/stable/rbbt | bash
-```
-
-From PowerShell:
-
-```ps
-cd C:\path\to\repos\rws
-Invoke-WebRequest -Uri https://gitlab.com/rcook/rbbt/-/raw/stable/rbbt.ps1 | Invoke-Expression
-```
-
-### Build
-
-```bash
 cd /path/to/repos/rws
 cargo build
 ```
@@ -157,9 +114,6 @@ cargo build
 
 [MIT License][licence]
 
-[appveyor-rws]: https://ci.appveyor.com/project/rcook/rws
-[gitlab-rws]: https://gitlab.com/rcook/rws/pipelines
-[home]: https://gitlab.com/rcook/rws
+[home]: https://github.com/rcook/rws
 [licence]: LICENSE
-[rbbt]: https://gitlab.com/rcook/rbbt
 [rustup]: https://rustup.rs/

@@ -1,51 +1,34 @@
 environment:
-  RBBT_URL: https://gitlab.com/rcook/rbbt/-/raw/stable/rbbt
-  CHANNEL: nightly
-  global:
-    PROJECT_NAME: rws
   matrix:
-    - TARGET: x86_64-pc-windows-msvc
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     - APPVEYOR_BUILD_WORKER_IMAGE: macOS
-      TARGET: x86_64-apple-darwin
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      TARGET: x86_64-unknown-linux-gnu
-
-install:
-  - ps: $ErrorActionPreference = 'Stop'
-  - sh: echo $RBBT_URL
-  - sh: curl -sS $RBBT_URL | bash -s -- --ref $APPVEYOR_REPO_BRANCH
-  - sh: cat .rbbt_version
-  - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-host $TARGET --default-toolchain $CHANNEL --profile minimal -y
-  - sh: source $HOME/.cargo/env
-  - sh: rustc -Vv
-  - sh: cargo --version
-  - cmd: echo %RBBT_URL%
-  - cmd: appveyor-retry appveyor DownloadFile %RBBT_URL%.ps1
-  - ps: if ($IsWindows) { .\rbbt.ps1 -Ref $env:APPVEYOR_REPO_BRANCH }
-  - ps: if ($IsWindows) { Get-Content -Path .rbbt_version -Raw }
-  - cmd: appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-  - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
-  - cmd: rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% --profile minimal -y
-  - cmd: rustc -Vv
-  - cmd: cargo --version
 
 build: false
 
+install:
+  - ps: Invoke-WebRequest -Uri https://github.com/rcook/rust-appveyor-build-pack/releases/latest/download/rust-appveyor-build-pack.ps1 -OutFile rust-appveyor-build-pack.ps1
+  - ps: .\rust-appveyor-build-pack.ps1
+  - ps: .\rust-appveyor-build-pack\install.ps1 -RustupInit
+
 build_script:
-  - cargo clean
-  - cargo build
-  - cargo build --release
+  - ps: .\rust-appveyor-build-pack\build.ps1
 
 test_script:
-  - cargo test --all --verbose
+  - ps: .\rust-appveyor-build-pack\test.ps1
 
 artifacts:
-  - path: target/debug/rws
-  - path: target/debug/rws.exe
-  - path: target/release/rws
-  - path: target/release/rws.exe
+  - name: zip
+    path: target/dist/*.zip
+  - path: target/dist/build.txt
+  - path: target/dist/version.txt
 
-branches:
-  except:
-    - /^.+-no-ci$/
-    - /^.+-no-appveyor-ci$/
+deploy:
+  description: Official release from AppVeyor
+  artifact: zip
+  auth_token:
+    secure: KnsNe82iVYE0/gNPx55EdNiJ3q5rM9GKu+y8E/Fz5tCnybP3NZj0PEbLabX9wZzY
+  provider: GitHub
+  on:
+    branch: /v.+/
+    APPVEYOR_REPO_TAG: true

@@ -1,6 +1,6 @@
-/.rbbt_version
 /Cargo.lock
-/Cargo.toml
+/rust-appveyor-build-pack.ps1
 **/*.rs.bk
 
+/rust-appveyor-build-pack/
 /target/
