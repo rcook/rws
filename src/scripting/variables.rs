@@ -6,6 +6,6 @@ pub struct Variables {
 
 impl Variables {
     pub fn new(values: Vec<(String, ConfigObject)>) -> Self {
-        Self { values: values }
+        Self { values }
     }
 }

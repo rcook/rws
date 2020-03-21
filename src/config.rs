@@ -34,15 +34,15 @@ impl ConfigObject {
     }
 
     pub fn into_hash(self) -> Option<ConfigHash> {
-        self.yaml.into_hash().map(|x| ConfigHash::new(x))
+        self.yaml.into_hash().map(ConfigHash::new)
     }
 
     pub fn into_vec(self) -> Option<ConfigArray> {
-        self.yaml.into_vec().map(|x| ConfigArray::new(x))
+        self.yaml.into_vec().map(ConfigArray::new)
     }
 
     fn new(yaml: Yaml) -> Self {
-        Self { yaml: yaml }
+        Self { yaml }
     }
 
     pub fn to_lua<'a>(&self, lua_ctx: Context<'a>) -> Result<Value<'a>> {
@@ -51,7 +51,7 @@ impl ConfigObject {
 
     fn translate<'a>(lua_ctx: Context<'a>, yaml: &Yaml) -> rlua::Result<Value<'a>> {
         match yaml {
-            Yaml::String(value) => lua_ctx.create_string(&value).map(|str| Value::String(str)),
+            Yaml::String(value) => lua_ctx.create_string(&value).map(Value::String),
             Yaml::Array(value) => lua_ctx
                 .create_sequence_from(
                     value
@@ -59,7 +59,7 @@ impl ConfigObject {
                         .map(|x| Self::translate(lua_ctx, x))
                         .collect::<rlua::Result<Vec<_>>>()?,
                 )
-                .map(|seq| Value::Table(seq)),
+                .map(Value::Table),
             Yaml::Hash(value) => lua_ctx
                 .create_table_from(
                     value
@@ -78,7 +78,7 @@ impl ConfigObject {
                         })
                         .collect::<rlua::Result<Vec<(Value, Value)>>>()?,
                 )
-                .map(|table| Value::Table(table)),
+                .map(Value::Table),
             _ => unimplemented!("Unsupported YAML node type"),
         }
     }
@@ -109,7 +109,7 @@ impl ConfigHash {
     }
 
     fn new(hash: Hash) -> Self {
-        ConfigHash { hash: hash }
+        ConfigHash { hash }
     }
 }
 
@@ -119,7 +119,7 @@ pub struct ConfigArray {
 
 impl ConfigArray {
     fn new(array: Array) -> ConfigArray {
-        ConfigArray { array: array }
+        ConfigArray { array }
     }
 
     pub fn len(&self) -> usize {

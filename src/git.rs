@@ -11,7 +11,9 @@ pub struct GitInfo {
 impl GitInfo {
     pub fn from_environment() -> Result<GitInfo> {
         let executable_path = which("git").map_err(|e| match e.kind() {
-            ErrorKind::CannotFindBinaryPath => user_error(format!("Cannot locate Git executable")),
+            ErrorKind::CannotFindBinaryPath => {
+                user_error(String::from("Cannot locate Git executable"))
+            }
             _ => internal_error("Which", e.to_string()),
         })?;
 
@@ -29,8 +31,8 @@ impl GitInfo {
         let version = parts[2].to_string();
 
         Ok(GitInfo {
-            executable_path: executable_path,
-            version: version,
+            executable_path,
+            version,
         })
     }
 }

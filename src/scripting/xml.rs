@@ -18,7 +18,7 @@ impl XmlNamespace {
 }
 
 pub fn query_xpath_as_string(
-    namespaces: &Vec<XmlNamespace>,
+    namespaces: &[XmlNamespace],
     query: &str,
     xml: &str,
 ) -> Result<String> {

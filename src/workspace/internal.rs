@@ -18,7 +18,7 @@ mod config_helper {
     {
         match hash.get(key) {
             Some(obj) => match obj.into_vec() {
-                Some(v) => f(v).map(|result| Some(result)),
+                Some(v) => f(v).map(Some),
                 None => user_error_result(format!(
                     "Configuration item \"{}\" is not in expected format",
                     key
@@ -34,7 +34,7 @@ mod config_helper {
     {
         match hash.get(key) {
             Some(obj) => match obj.into_hash() {
-                Some(h) => f(h).map(|result| Some(result)),
+                Some(h) => f(h).map(Some),
                 None => user_error_result(format!(
                     "Configuration item \"{}\" is not in expected format",
                     key
@@ -93,16 +93,16 @@ impl Workspace {
             Some(c) => match ConfigObject::read_config_file(&c)? {
                 Some(config) => Self::read_config(workspace_dir, c.to_path_buf(), config),
                 None => Ok(Self {
-                    workspace_dir: workspace_dir,
-                    config_path: config_path,
+                    workspace_dir,
+                    config_path,
                     excluded_project_dirs: HashSet::new(),
                     dependency_source: DependencySource::None,
                     init_command: None,
                 }),
             },
             None => Ok(Self {
-                workspace_dir: workspace_dir,
-                config_path: config_path,
+                workspace_dir,
+                config_path,
                 excluded_project_dirs: HashSet::new(),
                 dependency_source: DependencySource::None,
                 init_command: None,
@@ -170,13 +170,13 @@ impl Workspace {
                 }
                 Ok(values.into_iter().collect::<HashSet<PathBuf>>())
             })?
-            .unwrap_or_else(|| HashSet::new());
+            .unwrap_or_else(HashSet::new);
 
         let init_command = convert_optional_hash(&root_hash, INIT_COMMAND, |h| {
             ScriptCommand::new(&root_hash, &h)
         })?;
 
-        let dependencies = convert_optional_hash(&root_hash, DEPENDENCIES, |h| Ok(h))?;
+        let dependencies = convert_optional_hash(&root_hash, DEPENDENCIES, Ok)?;
 
         let dependency_command = convert_optional_hash(&root_hash, DEPENDENCY_COMMAND, |h| {
             ScriptCommand::new(&root_hash, &h)
@@ -188,25 +188,25 @@ impl Workspace {
                 DEPENDENCIES, DEPENDENCY_COMMAND
             )),
             (Some(h), None) => Ok(Self {
-                workspace_dir: workspace_dir,
+                workspace_dir,
                 config_path: Some(config_path),
-                excluded_project_dirs: excluded_project_dirs,
+                excluded_project_dirs,
                 dependency_source: DependencySource::Hash(h),
-                init_command: init_command,
+                init_command,
             }),
             (None, Some(c)) => Ok(Self {
-                workspace_dir: workspace_dir,
+                workspace_dir,
                 config_path: Some(config_path),
-                excluded_project_dirs: excluded_project_dirs,
+                excluded_project_dirs,
                 dependency_source: DependencySource::ScriptCommand(c),
-                init_command: init_command,
+                init_command,
             }),
             (None, None) => Ok(Self {
-                workspace_dir: workspace_dir,
+                workspace_dir,
                 config_path: Some(config_path),
-                excluded_project_dirs: excluded_project_dirs,
+                excluded_project_dirs,
                 dependency_source: DependencySource::None,
-                init_command: init_command,
+                init_command,
             }),
         }
     }

@@ -35,7 +35,6 @@ impl Plan {
                         .ok_or_else(|| user_error("Invalid project directory"))?;
                     match hash.get(project_name).and_then(|x| x.into_vec()) {
                         Some(v) => (0..v.len())
-                            .into_iter()
                             .map(|i| {
                                 v.get(i)
                                     .into_string()
@@ -67,9 +66,9 @@ impl Plan {
             DependencySource::None => None,
         };
         Ok(Self {
-            workspace: workspace,
-            project_dirs_alpha: project_dirs_alpha,
-            project_dirs_topo: project_dirs_topo,
+            workspace,
+            project_dirs_alpha,
+            project_dirs_topo,
         })
     }
 
@@ -93,7 +92,7 @@ impl Plan {
         Ok(project_dirs_alpha)
     }
 
-    fn topo_sort_project_dirs<F>(project_dirs_alpha: &Vec<PathBuf>, f: F) -> Result<Vec<PathBuf>>
+    fn topo_sort_project_dirs<F>(project_dirs_alpha: &[PathBuf], f: F) -> Result<Vec<PathBuf>>
     where
         F: Fn(&Path) -> Result<Vec<String>>,
     {

@@ -21,7 +21,7 @@ use colored::Colorize;
 use std::path::{Path, PathBuf};
 use std::process::{exit, Command};
 
-fn reset_terminal() -> () {
+fn reset_terminal() {
     #[cfg(windows)]
     set_virtual_terminal(true).expect("set_virtual_terminal failed");
 }
@@ -77,8 +77,8 @@ fn main_inner() -> Result<()> {
             let git_info = GitInfo::from_environment()?;
             run_helper(&Plan::resolve(workspace)?, s, |cmd| {
                 let mut command = Command::new(&git_info.executable_path);
-                for i in 0..(cmd.len()) {
-                    command.arg(&cmd[i]);
+                for c in cmd.iter().skip(1) {
+                    command.arg(c);
                 }
                 command
             })
@@ -90,8 +90,8 @@ fn main_inner() -> Result<()> {
 
         (command::RUN, Some(s)) => run_helper(&Plan::resolve(workspace)?, s, |cmd| {
             let mut command = Command::new(&cmd[0]);
-            for i in 1..(cmd.len()) {
-                command.arg(&cmd[i]);
+            for c in cmd.iter().skip(1) {
+                command.arg(c);
             }
             command
         }),
@@ -113,7 +113,7 @@ fn do_info(plan: &Plan, submatches: Option<&ArgMatches>) -> Result<()> {
             .config_path
             .as_ref()
             .map(|x| path_to_str(x).cyan())
-            .unwrap_or("(none)".red().italic())
+            .unwrap_or_else(|| "(none)".red().italic())
     );
 
     show_project_dirs("alpha", &plan.project_dirs_alpha);
@@ -123,7 +123,7 @@ fn do_info(plan: &Plan, submatches: Option<&ArgMatches>) -> Result<()> {
     }
 
     if show_env {
-        println!("");
+        println!();
 
         let git_info = GitInfo::from_environment()?;
         println!(
@@ -136,18 +136,18 @@ fn do_info(plan: &Plan, submatches: Option<&ArgMatches>) -> Result<()> {
     Ok(())
 }
 
-fn show_project_dirs(order: &str, project_dirs: &Vec<PathBuf>) {
-    if project_dirs.len() > 0 {
-        println!("Project directories ({} order):", order);
-        for project_dir in project_dirs {
-            println!("  {}", path_to_str(project_dir).cyan())
-        }
-    } else {
+fn show_project_dirs(order: &str, project_dirs: &[PathBuf]) {
+    if project_dirs.is_empty() {
         println!(
             "Project directories ({} order): {}",
             order,
             "(none)".red().italic()
         );
+    } else {
+        println!("Project directories ({} order):", order);
+        for project_dir in project_dirs {
+            println!("  {}", path_to_str(project_dir).cyan())
+        }
     }
 }
 
@@ -158,8 +158,8 @@ where
     let cmd = &submatches
         .values_of(arg::CMD)
         .map(|x| x.collect())
-        .unwrap_or(Vec::new());
-    if cmd.len() < 1 {
+        .unwrap_or_else(Vec::new);
+    if cmd.is_empty() {
         return user_error_result("Command requires at least one command argument");
     }
 

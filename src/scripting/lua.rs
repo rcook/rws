@@ -24,7 +24,7 @@ pub fn eval<T: Evaluatable>(
         create_variables(lua_ctx, variables)?;
 
         if use_prelude {
-            load_prelude(&lua_ctx)?;
+            load_prelude(lua_ctx)?;
         }
 
         Ok(lua_ctx
@@ -44,7 +44,7 @@ fn create_variables(lua_ctx: Context, variables: &Variables) -> Result<()> {
     Ok(())
 }
 
-fn load_prelude(lua_ctx: &Context) -> rlua::Result<()> {
+fn load_prelude(lua_ctx: Context) -> rlua::Result<()> {
     let prelude = lua_ctx.create_table()?;
 
     prelude.set(

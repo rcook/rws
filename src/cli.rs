@@ -32,10 +32,10 @@ struct BoolSwitch<'a> {
 impl<'a> BoolSwitch<'a> {
     fn new(name: &'a str, help: &'a str, no_name: &'a str, no_help: &'a str) -> BoolSwitch<'a> {
         BoolSwitch {
-            name: name,
-            help: help,
-            no_name: no_name,
-            no_help: no_help,
+            name,
+            help,
+            no_name,
+            no_help,
         }
     }
 }

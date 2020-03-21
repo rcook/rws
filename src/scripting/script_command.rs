@@ -28,12 +28,11 @@ impl ScriptCommand {
         let language_default = root_hash
             .get(DEFAULT_LANGUAGE)
             .and_then(|x| x.into_string())
-            .unwrap_or(String::from(LUA));
+            .unwrap_or_else(|| String::from(LUA));
         let language = command_hash
             .get(LANGUAGE)
             .and_then(|x| x.into_string())
-            .unwrap_or(language_default)
-            .to_string();
+            .unwrap_or(language_default);
 
         let variables = Self::get_variables(&root_hash)?;
 
@@ -47,7 +46,7 @@ impl ScriptCommand {
                 let preamble = language_hash
                     .get(PREAMBLE)
                     .and_then(|x| x.into_string())
-                    .unwrap_or(String::from(""));
+                    .unwrap_or_else(|| String::from(""));
                 let use_prelude_default = language_hash
                     .get(USE_PRELUDE)
                     .and_then(|x| x.into_bool())
@@ -73,11 +72,11 @@ impl ScriptCommand {
             .ok_or_else(|| user_error(format!("\"dependency-command\" missing required \"{}\" field in workspace configuration", SCRIPT)))?;
 
         Ok(ScriptCommand {
-            language: language,
-            use_prelude: use_prelude,
-            preamble: preamble,
-            script: script,
-            variables: variables,
+            language,
+            use_prelude,
+            preamble,
+            script,
+            variables,
         })
     }
 
