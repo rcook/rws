@@ -1,5 +1,5 @@
+mod internal;
 mod plan;
-mod workspace;
 
+pub use self::internal::Workspace;
 pub use self::plan::Plan;
-pub use self::workspace::Workspace;

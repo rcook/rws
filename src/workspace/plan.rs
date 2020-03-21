@@ -2,7 +2,7 @@ use crate::error::{user_error, user_error_result, Result};
 use crate::os::with_working_dir;
 use crate::os::{get_base_name, path_to_str};
 
-use super::workspace::{DependencySource, Workspace};
+use super::internal::{DependencySource, Workspace};
 
 use std::collections::HashSet;
 use std::fs;
