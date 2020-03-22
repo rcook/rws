@@ -25,6 +25,8 @@ artifacts:
     path: target/dist/*.zip
   - path: target/dist/build.txt
   - path: target/dist/version.txt
+  - path: target/debug/debug-test.log
+  - path: target/release/release-test.log
 
 deploy:
   description: Official release from AppVeyor
