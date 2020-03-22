@@ -12,7 +12,7 @@ install:
         -Uri https://github.com/rcook/rust-appveyor-build-pack/releases/latest/download/rust-appveyor-build-pack.ps1 `
         -OutFile rust-appveyor-build-pack.ps1
   - ps: .\rust-appveyor-build-pack.ps1
-  - ps: .\rust-appveyor-build-pack\install.ps1 -RustupInit
+  - ps: .\rust-appveyor-build-pack\install.ps1
 
 build_script:
   - ps: .\rust-appveyor-build-pack\build.ps1
