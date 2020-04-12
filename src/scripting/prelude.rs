@@ -1,6 +1,7 @@
 use crate::git::GitInfo;
 use crate::os::path_to_str;
 
+//use git2::Repository;
 use percent_encoding::percent_decode_str;
 use rlua::prelude::LuaResult;
 use rlua::Variadic;
@@ -9,8 +10,49 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::Command;
 
+//fn guard_git<R>(result: std::result::Result<R, git2::Error>) -> LuaResult<R> {
+//    result.map_err(|e| rlua::Error::ExternalError(std::sync::Arc::new(e)))
+//}
+
 fn guard_io<R>(result: std::io::Result<R>) -> LuaResult<R> {
     result.map_err(|e| rlua::Error::ExternalError(std::sync::Arc::new(e)))
+}
+
+pub mod git {
+    use crate::error::user_error;
+    use crate::git::{clone_recursive, GitUrl};
+
+    use super::guard_io;
+
+    use absolute_path::absolute_path;
+    use std::env::current_dir;
+    use std::path::Path;
+
+    pub fn clone(arg: rlua::Table) -> rlua::Result<()> {
+        let recurse = arg.get::<_, bool>("recurse")?;
+        let url_str = arg.get::<_, String>("url")?;
+        let url = GitUrl::parse(&url_str).ok_or_else(|| user_error("Could not parse Git URL"))?;
+        let dir_str = arg.get::<_, String>("dir")?;
+        let base_dir = guard_io(current_dir())?;
+        let dir = guard_io(absolute_path(base_dir, Path::new(&dir_str)))?;
+        let branch: String = arg.get("branch")?;
+
+        println!(
+            "git.clone: recurse={} url={} dir={} branch={}",
+            recurse,
+            url,
+            dir.display(),
+            branch
+        );
+
+        let repo = match recurse {
+            true => clone_recursive(&url, &dir, &branch)?,
+            false => unimplemented!("Non-recursive clone not implemented"),
+        };
+
+        println!("git.clone: dir={}", repo.path().display());
+        Ok(())
+    }
 }
 
 pub fn current_dir() -> LuaResult<String> {

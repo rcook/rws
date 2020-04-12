@@ -87,7 +87,7 @@ pub fn make_rws_app<'a, 'b>() -> App<'a, 'b> {
         )
         .subcommand(run_command(
             GIT,
-            "Runs Git command in each project directory",
+            "Runs Git command in each project directory using system Git command",
             "Command to pass to Git",
         ))
         .subcommand(

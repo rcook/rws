@@ -7,6 +7,7 @@ environment:
 build: false
 
 install:
+  - git submodule update --init --recursive
   - ps: |
       Invoke-WebRequest `
         -Uri https://github.com/rcook/rust-appveyor-build-pack/releases/latest/download/rust-appveyor-build-pack.ps1 `

@@ -1,0 +1,6 @@
+[submodule "git2-rs"]
+	path = git2-rs
+	url = https://github.com/rcook/git2-rs.git
+[submodule "ssh2-rs"]
+	path = ssh2-rs
+	url = https://github.com/rcook/ssh2-rs.git

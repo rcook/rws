@@ -5,19 +5,22 @@ mod error;
 mod git;
 mod os;
 mod scripting;
+mod util;
 mod workspace;
 
 use crate::cli::make_rws_app;
 use crate::cli::{arg, arg_value, command};
 use crate::error::{user_error_result, Error, Result};
 use crate::git::GitInfo;
-use crate::os::{get_absolute_path, path_to_str, with_working_dir};
+use crate::os::{path_to_str, with_working_dir};
 use crate::workspace::{Plan, Workspace};
 
+use absolute_path::absolute_path;
 use clap::ArgMatches;
 #[cfg(windows)]
 use colored::control::set_virtual_terminal;
 use colored::Colorize;
+use std::env::current_dir;
 use std::path::{Path, PathBuf};
 use std::process::{exit, Command};
 
@@ -44,12 +47,13 @@ fn main() {
 }
 
 fn get_workspace(matches: &ArgMatches) -> Result<Workspace> {
+    let base_dir = current_dir()?;
     match matches.value_of(arg::CONFIG) {
         Some(c) => {
-            let config_path = get_absolute_path(Path::new(c))?;
+            let config_path = absolute_path(&base_dir, Path::new(c))?;
             match matches.value_of(arg::DIR) {
                 Some(d) => {
-                    let workspace_dir = get_absolute_path(Path::new(d))?;
+                    let workspace_dir = absolute_path(&base_dir, Path::new(d))?;
                     Workspace::new(Some(workspace_dir), Some(config_path))
                 }
                 None => Workspace::new(None, Some(config_path)),
@@ -57,7 +61,7 @@ fn get_workspace(matches: &ArgMatches) -> Result<Workspace> {
         }
         None => match matches.value_of(arg::DIR) {
             Some(d) => {
-                let workspace_dir = get_absolute_path(Path::new(d))?;
+                let workspace_dir = absolute_path(&base_dir, Path::new(d))?;
                 Workspace::new(Some(workspace_dir), None)
             }
             None => Workspace::new(None, None),
@@ -124,13 +128,16 @@ fn do_info(plan: &Plan, submatches: Option<&ArgMatches>) -> Result<()> {
 
     if show_env {
         println!();
-
-        let git_info = GitInfo::from_environment()?;
-        println!(
-            "Path to Git: {}",
-            path_to_str(&git_info.executable_path).cyan()
-        );
-        println!("Git version: {}", git_info.version.cyan());
+        match GitInfo::from_environment() {
+            Ok(git_info) => {
+                println!(
+                    "Path to Git: {}",
+                    path_to_str(&git_info.executable_path).cyan()
+                );
+                println!("Git version: {}", git_info.version.cyan())
+            }
+            _ => println!("Path to Git: {}", "(not found)".red().italic()),
+        }
     }
 
     Ok(())

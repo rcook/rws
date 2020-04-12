@@ -1,6 +1,5 @@
 use std::env::{current_dir, set_current_dir};
-use std::io::{Error, ErrorKind};
-use std::path::{Component, Path, PathBuf, Prefix};
+use std::path::{Component, Path};
 
 pub fn with_working_dir<F, R>(dir: &Path, f: F) -> std::io::Result<R>
 where
@@ -26,33 +25,4 @@ pub fn get_base_name(path: &Path) -> Option<&str> {
             None
         }
     })
-}
-
-#[cfg(target_os = "windows")]
-pub fn get_absolute_path(path: &Path) -> std::io::Result<PathBuf> {
-    let p = path.canonicalize()?;
-
-    let is_verbatim_disc = match p.components().next() {
-        Some(Component::Prefix(prefix_component)) => match prefix_component.kind() {
-            Prefix::VerbatimDisk(_) => true,
-            _ => false,
-        },
-        _ => false,
-    };
-    if !is_verbatim_disc {
-        return Err(Error::new(
-            ErrorKind::Other,
-            format!("Could not canonicalize path {}", path.display()),
-        ));
-    }
-
-    const VERBATIM_PREFIX: &str = r#"\\?\"#;
-    let temp = p.display().to_string();
-    assert!(temp.starts_with(VERBATIM_PREFIX));
-    Ok(Path::new(&temp[VERBATIM_PREFIX.len()..]).to_path_buf())
-}
-
-#[cfg(not(target_os = "windows"))]
-pub fn get_absolute_path(path: &Path) -> std::io::Result<PathBuf> {
-    path.canonicalize()
 }

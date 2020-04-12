@@ -44,8 +44,22 @@ fn create_variables(lua_ctx: Context, variables: &Variables) -> Result<()> {
     Ok(())
 }
 
+fn create_git(lua_ctx: Context) -> Result<rlua::Table> {
+    let git = lua_ctx.create_table()?;
+
+    git.set(
+        "clone",
+        lua_ctx.create_function(|_, arg| prelude::git::clone(arg))?,
+    )?;
+
+    Ok(git)
+}
+
 fn load_prelude(lua_ctx: Context) -> rlua::Result<()> {
     let prelude = lua_ctx.create_table()?;
+
+    // Nested objects
+    prelude.set("git", create_git(lua_ctx)?)?;
 
     prelude.set(
         "current_dir",
