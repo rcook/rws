@@ -1,4 +1,4 @@
-use crate::error::{internal_error, AppError, Result};
+use crate::error::{internal_error, Error, Result};
 
 use super::prelude;
 use super::variables::Variables;
@@ -8,7 +8,7 @@ use rlua::{Context, FromLuaMulti, Lua};
 pub trait Evaluatable: for<'lua> rlua::FromLuaMulti<'lua> {}
 impl<T: for<'lua> FromLuaMulti<'lua>> Evaluatable for T {}
 
-impl std::convert::From<rlua::Error> for AppError {
+impl std::convert::From<rlua::Error> for Error {
     fn from(error: rlua::Error) -> Self {
         internal_error("Lua", error.to_string())
     }

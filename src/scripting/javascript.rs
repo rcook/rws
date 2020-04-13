@@ -1,14 +1,14 @@
-use crate::error::{internal_error, AppError, Result};
+use crate::error::{internal_error, Error, Result};
 
 use super::variables::Variables;
 
 pub trait Evaluatable: Default {}
 impl<T: Default> Evaluatable for T {}
 
-enum Error {}
+enum JavaScriptError {}
 
-impl std::convert::From<Error> for AppError {
-    fn from(_error: Error) -> Self {
+impl std::convert::From<JavaScriptError> for Error {
+    fn from(_error: JavaScriptError) -> Self {
         internal_error("JavaScript", "(no message)")
     }
 }

@@ -9,7 +9,7 @@ mod workspace;
 
 use crate::cli::make_rws_app;
 use crate::cli::{arg, arg_value, command};
-use crate::error::{user_error_result, AppError, Result};
+use crate::error::{user_error_result, Error, Result};
 use crate::git::GitInfo;
 use crate::os::{path_to_str, with_working_dir};
 use crate::workspace::{Plan, Workspace};
@@ -29,11 +29,11 @@ fn reset_terminal() {
 fn main() {
     exit(match main_inner() {
         Ok(()) => 0,
-        Err(AppError::User(message)) => {
+        Err(Error::User(message)) => {
             println!("{}", format!("Error: {}", message).bright_red());
             1
         }
-        Err(AppError::Internal(facility, message)) => {
+        Err(Error::Internal(facility, message)) => {
             println!(
                 "{}",
                 format!("Internal ({}): {}", facility, message).red().bold()
