@@ -11,7 +11,7 @@ use crate::cli::make_rws_app;
 use crate::cli::{arg, arg_value, command};
 use crate::error::{user_error_result, Error, Result};
 use crate::git::GitInfo;
-use crate::os::{path_to_str, with_working_dir};
+use crate::os::{get_absolute_path, path_to_str, with_working_dir};
 use crate::workspace::{Plan, Workspace};
 
 use clap::ArgMatches;
@@ -46,10 +46,10 @@ fn main() {
 fn get_workspace(matches: &ArgMatches) -> Result<Workspace> {
     match matches.value_of(arg::CONFIG) {
         Some(c) => {
-            let config_path = Path::new(c).canonicalize()?;
+            let config_path = get_absolute_path(Path::new(c))?;
             match matches.value_of(arg::DIR) {
                 Some(d) => {
-                    let workspace_dir = Path::new(d).canonicalize()?;
+                    let workspace_dir = get_absolute_path(Path::new(d))?;
                     Workspace::new(Some(workspace_dir), Some(config_path))
                 }
                 None => Workspace::new(None, Some(config_path)),
@@ -57,7 +57,7 @@ fn get_workspace(matches: &ArgMatches) -> Result<Workspace> {
         }
         None => match matches.value_of(arg::DIR) {
             Some(d) => {
-                let workspace_dir = Path::new(d).canonicalize()?;
+                let workspace_dir = get_absolute_path(Path::new(d))?;
                 Workspace::new(Some(workspace_dir), None)
             }
             None => Workspace::new(None, None),
