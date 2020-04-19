@@ -1,6 +1,6 @@
 use crate::error::{Error, Result};
-use crate::git::GitUrl;
 
+use git_url::GitUrl;
 use regex::Regex;
 use std::fs::{copy, File};
 use std::io::prelude::*;
