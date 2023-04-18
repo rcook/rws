@@ -15,11 +15,11 @@ use crate::git::GitInfo;
 use crate::os::{path_to_str, with_working_dir};
 use crate::workspace::{Plan, Workspace};
 
-use absolute_path::absolute_path;
 use clap::ArgMatches;
 #[cfg(windows)]
 use colored::control::set_virtual_terminal;
 use colored::Colorize;
+use joat_path::absolute_path;
 use std::env::current_dir;
 use std::path::{Path, PathBuf};
 use std::process::{exit, Command};
