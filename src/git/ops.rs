@@ -6,7 +6,7 @@ use super::submodule::SubmoduleURLRewriter;
 use dirs::home_dir;
 use git2::build::RepoBuilder;
 use git2::{Cred, FetchOptions, RemoteCallbacks, Repository, SubmoduleUpdateOptions};
-use git_url::GitUrl;
+use joat_git_url::GitUrl;
 use std::path::Path;
 
 pub fn clone_recursive(git_url: &GitUrl, clone_dir: &Path, branch: &str) -> Result<Repository> {

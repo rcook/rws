@@ -25,7 +25,7 @@ pub mod git {
     use super::guard_io;
 
     use absolute_path::absolute_path;
-    use git_url::GitUrl;
+    use joat_git_url::GitUrl;
     use std::env::current_dir;
     use std::path::Path;
 
