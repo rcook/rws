@@ -287,9 +287,9 @@ checksum = "0658e8c078af9a40b13cebcc8c8f304c30e7dcde15a98a7170296f5eee7bb9dc"
 
 [[package]]
 name = "joat-path"
-version = "0.0.7"
+version = "0.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b27a2bdd13397413397f37aafc4d17b84ed9c7dd9b8dd5ed4208bb8aa6720829"
+checksum = "4d34ab4c1b4b4becf7bf83ae852b341f098b882728d4a1afa4d526785a9a68d1"
 
 [[package]]
 name = "jobserver"
