@@ -1,6 +1,1 @@
-/Cargo.lock
-/rust-appveyor-build-pack.ps1
-**/*.rs.bk
-
-/rust-appveyor-build-pack/
-/target/
+/target
