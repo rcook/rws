@@ -1,7 +1,7 @@
 # Richard's Workspace Tool
 
-[![AppVeyor status for project](https://ci.appveyor.com/api/projects/status/m7bfloijbr2la3dh?svg=true)](https://ci.appveyor.com/project/rcook/rws)
-[![AppVeyor status for master branch](https://ci.appveyor.com/api/projects/status/m7bfloijbr2la3dh/branch/master?svg=true)](https://ci.appveyor.com/project/rcook/rws/branch/master)
+[![CI](https://github.com/rcook/rws/actions/workflows/ci.yaml/badge.svg)][ci-workflow]
+[![Release](https://github.com/rcook/rws/actions/workflows/release.yaml/badge.svg)][release-workflow]
 
 _Manages Git-based workspaces_
 
@@ -114,6 +114,8 @@ cargo build
 
 [MIT License][licence]
 
+[ci-workflow]: https://github.com/rcook/rws/actions/workflows/ci.yaml
 [home]: https://github.com/rcook/rws
 [licence]: LICENSE
+[release-workflow]: https://github.com/rcook/rws/actions/workflows/release.yaml
 [rustup]: https://rustup.rs/
