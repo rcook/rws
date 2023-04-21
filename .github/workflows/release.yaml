@@ -40,6 +40,15 @@ jobs:
             build_os: ubuntu-latest
     runs-on: ${{ matrix.build_os }}
     steps:
+      - name: Set up environment
+        shell: bash
+        run: |
+          if [ '${{ matrix.build_os }}' == 'windows-latest' ]; then
+            # MinGW perl doesn't handle Windows paths properly
+            echo '/C/Strawberry/perl/bin' >> $GITHUB_PATH
+            mv /usr/bin/perl /usr/bin/perl.bak
+          fi
+
       - name: Build, test and release Rust tool
         uses: rcook/rust-tool-action@v0.0.27
         with:
