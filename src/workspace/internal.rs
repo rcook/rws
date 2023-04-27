@@ -169,7 +169,8 @@ impl Workspace {
                     values.push(workspace_dir.join(value))
                 }
                 Ok(values.into_iter().collect::<HashSet<PathBuf>>())
-            })?.unwrap_or_default();
+            })?
+            .unwrap_or_default();
 
         let init_command = convert_optional_hash(&root_hash, INIT_COMMAND, |h| {
             ScriptCommand::new(&root_hash, &h)
