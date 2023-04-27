@@ -46,9 +46,9 @@ impl RunInfo {
             == arg_value::TOPO;
 
         Ok(Self {
-            cmd: cmd.into_iter().map(|x| String::from(x)).collect::<Vec<_>>(),
-            fail_fast: fail_fast,
-            topo_order: topo_order,
+            cmd: cmd.into_iter().map(String::from).collect::<Vec<_>>(),
+            fail_fast,
+            topo_order,
         })
     }
 }
