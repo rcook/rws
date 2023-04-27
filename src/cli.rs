@@ -44,7 +44,7 @@ trait BoolSwitchExt<'a> {
     fn bool_switch(self, bs: BoolSwitch<'a>) -> Self;
 }
 
-impl<'a, 'b> BoolSwitchExt<'a> for App<'a, 'b> {
+impl<'a, 'b> BoolSwitchExt<'a> for App<'a> {
     fn bool_switch(self, bs: BoolSwitch<'a>) -> Self {
         self.arg(
             Arg::with_name(bs.name)
@@ -62,7 +62,7 @@ impl<'a, 'b> BoolSwitchExt<'a> for App<'a, 'b> {
     }
 }
 
-pub fn make_rws_app<'a, 'b>() -> App<'a, 'b> {
+pub fn make_rws_app<'a, 'b>() -> App<'a> {
     use arg::*;
     use command::*;
 
@@ -108,7 +108,7 @@ pub fn make_rws_app<'a, 'b>() -> App<'a, 'b> {
         ))
 }
 
-fn run_command<'a, 'b>(name: &'a str, about: &'a str, cmd_help: &'a str) -> App<'a, 'b> {
+fn run_command<'a, 'b>(name: &'a str, about: &'a str, cmd_help: &'a str) -> App<'a> {
     use arg::*;
     use arg_value::*;
 

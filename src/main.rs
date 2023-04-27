@@ -77,7 +77,7 @@ fn main_inner() -> Result<()> {
     let workspace = get_workspace(&matches)?;
 
     match matches.subcommand() {
-        (command::GIT, Some(s)) => {
+        Some((command::GIT, s)) => {
             let git_info = GitInfo::from_environment()?;
             run_helper(&Plan::resolve(workspace)?, s, |cmd| {
                 let mut command = Command::new(&git_info.executable_path);
@@ -88,11 +88,11 @@ fn main_inner() -> Result<()> {
             })
         }
 
-        (command::INFO, submatches) => do_info(&Plan::resolve(workspace)?, submatches),
+        Some((command::INFO, submatches)) => do_info(&Plan::resolve(workspace)?, Some(submatches)),
 
-        (command::INIT, _) => do_init(&workspace),
+        Some((command::INIT, _)) => do_init(&workspace),
 
-        (command::RUN, Some(s)) => run_helper(&Plan::resolve(workspace)?, s, |cmd| {
+        Some((command::RUN, s)) => run_helper(&Plan::resolve(workspace)?, s, |cmd| {
             let mut command = Command::new(&cmd[0]);
             for c in cmd.iter().skip(1) {
                 command.arg(c);
