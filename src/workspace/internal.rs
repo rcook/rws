@@ -90,7 +90,7 @@ impl Workspace {
 
     fn known(workspace_dir: PathBuf, config_path: Option<PathBuf>) -> Result<Self> {
         match &config_path {
-            Some(c) => match ConfigObject::read_config_file(&c)? {
+            Some(c) => match ConfigObject::read_config_file(c)? {
                 Some(config) => Self::read_config(workspace_dir, c.to_path_buf(), config),
                 None => Ok(Self {
                     workspace_dir,
@@ -169,8 +169,7 @@ impl Workspace {
                     values.push(workspace_dir.join(value))
                 }
                 Ok(values.into_iter().collect::<HashSet<PathBuf>>())
-            })?
-            .unwrap_or_else(HashSet::new);
+            })?.unwrap_or_default();
 
         let init_command = convert_optional_hash(&root_hash, INIT_COMMAND, |h| {
             ScriptCommand::new(&root_hash, &h)

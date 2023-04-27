@@ -93,7 +93,7 @@ fn main_inner() -> Result<()> {
         Some((command::INIT, _)) => do_init(&workspace),
 
         Some((command::RUN, s)) => run_helper(&Plan::resolve(workspace)?, s, |cmd| {
-            let mut command = Command::new(&cmd[0]);
+            let mut command = Command::new(cmd[0]);
             for c in cmd.iter().skip(1) {
                 command.arg(c);
             }
@@ -122,7 +122,7 @@ fn do_info(plan: &Plan, submatches: Option<&ArgMatches>) -> Result<()> {
 
     show_project_dirs("alpha", &plan.project_dirs_alpha);
     match &plan.project_dirs_topo {
-        Some(ds) => show_project_dirs(arg_value::TOPO, &ds),
+        Some(ds) => show_project_dirs(arg_value::TOPO, ds),
         None => {}
     }
 
@@ -184,7 +184,7 @@ where
     for project_dir in project_dirs {
         let d = path_to_str(project_dir);
         println!("{}", d.cyan());
-        let exit_status = f(cmd).current_dir(&project_dir).spawn()?.wait()?;
+        let exit_status = f(cmd).current_dir(project_dir).spawn()?.wait()?;
         reset_terminal();
         if exit_status.success() {
             println!("{}", format!("Command succeeded in {}", d).green())

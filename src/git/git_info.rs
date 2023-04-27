@@ -19,7 +19,6 @@ impl GitInfo {
             .arg("--version")
             .output()?;
         let parts = std::str::from_utf8(&output.stdout)?
-            .trim()
             .split_whitespace()
             .collect::<Vec<_>>();
         if parts.len() != 3 || parts[0] != "git" || parts[1] != "version" {

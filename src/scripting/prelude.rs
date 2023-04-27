@@ -85,7 +85,7 @@ pub mod copy_file_if_unchanged {
         let from_path = Path::new(&from);
         let to_path = Path::new(&to);
         let perform_copy = !to_path.is_file()
-            || guard_io(read_bytes(&from_path))? != guard_io(read_bytes(&to_path))?;
+            || guard_io(read_bytes(from_path))? != guard_io(read_bytes(to_path))?;
         if perform_copy {
             guard_io(copy(from_path, to_path))?;
         }
@@ -101,11 +101,11 @@ pub mod copy_file_if_unchanged {
 }
 
 pub fn read_file(path: String) -> LuaResult<String> {
-    guard_io(read_to_string(&path))
+    guard_io(read_to_string(path))
 }
 
 pub fn read_file_lines(path: String) -> LuaResult<Vec<String>> {
-    let f = guard_io(File::open(&path))?;
+    let f = guard_io(File::open(path))?;
     guard_io(BufReader::new(f).lines().collect::<std::io::Result<_>>())
 }
 

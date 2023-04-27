@@ -44,7 +44,7 @@ trait BoolSwitchExt<'a> {
     fn bool_switch(self, bs: BoolSwitch<'a>) -> Self;
 }
 
-impl<'a, 'b> BoolSwitchExt<'a> for App<'a> {
+impl<'a> BoolSwitchExt<'a> for App<'a> {
     fn bool_switch(self, bs: BoolSwitch<'a>) -> Self {
         self.arg(
             Arg::with_name(bs.name)
@@ -62,7 +62,7 @@ impl<'a, 'b> BoolSwitchExt<'a> for App<'a> {
     }
 }
 
-pub fn make_rws_app<'a, 'b>() -> App<'a> {
+pub fn make_rws_app<'a>() -> App<'a> {
     use arg::*;
     use command::*;
 
@@ -108,7 +108,7 @@ pub fn make_rws_app<'a, 'b>() -> App<'a> {
         ))
 }
 
-fn run_command<'a, 'b>(name: &'a str, about: &'a str, cmd_help: &'a str) -> App<'a> {
+fn run_command<'a>(name: &'a str, about: &'a str, cmd_help: &'a str) -> App<'a> {
     use arg::*;
     use arg_value::*;
 
@@ -124,7 +124,7 @@ fn run_command<'a, 'b>(name: &'a str, about: &'a str, cmd_help: &'a str) -> App<
             Arg::with_name(ORDER)
                 .help("Order of project traversal")
                 .long(ORDER)
-                .possible_values(&[ALPHA, TOPO])
+                .possible_values([ALPHA, TOPO])
                 .takes_value(true)
                 .default_value(TOPO)
                 .required(true),

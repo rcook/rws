@@ -34,7 +34,7 @@ impl ScriptCommand {
             .and_then(|x| x.into_string())
             .unwrap_or(language_default);
 
-        let variables = Self::get_variables(&root_hash)?;
+        let variables = Self::get_variables(root_hash)?;
 
         let language_hash_key = format!("{}-config", language);
         let language_hash_opt = root_hash

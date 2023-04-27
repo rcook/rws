@@ -77,7 +77,7 @@ impl Plan {
         excluded_project_dirs: &HashSet<PathBuf>,
     ) -> std::io::Result<Vec<PathBuf>> {
         let mut project_dirs_alpha = Vec::new();
-        for entry in fs::read_dir(&workspace_dir)? {
+        for entry in fs::read_dir(workspace_dir)? {
             let e = entry?;
             let project_dir = e.path();
             if !excluded_project_dirs.contains(&project_dir) && project_dir.is_dir() {

@@ -15,13 +15,13 @@ pub struct SubmoduleURLRewriter {
 
 impl SubmoduleURLRewriter {
     pub fn new(submodules_path: &Path, remote_git_url: &GitUrl) -> Result<Self> {
-        let foo = Self {
+        let rewriter = Self {
             submodules_path: submodules_path.to_path_buf(),
             temp_file: NamedTempFile::new()?,
         };
-        copy(&foo.submodules_path, &foo.temp_file.path())?;
-        let in_f = File::open(&foo.temp_file.path())?;
-        let out_f = File::create(&foo.submodules_path)?;
+        copy(&rewriter.submodules_path, rewriter.temp_file.path())?;
+        let in_f = File::open(rewriter.temp_file.path())?;
+        let out_f = File::create(&rewriter.submodules_path)?;
         let reader = BufReader::new(in_f);
         let mut writer = BufWriter::new(out_f);
         let re = Regex::new(r"(?P<prefix>\s*url\s*=\s*)(?P<url>.*)")?;
@@ -35,7 +35,7 @@ impl SubmoduleURLRewriter {
                             &caps["url"]
                         ))
                     })?;
-                    writeln!(writer, "{}{}", &caps["prefix"], git_url.to_string())?;
+                    writeln!(writer, "{}{}", &caps["prefix"], git_url)?;
                     writer.flush()?;
                 }
                 None => {
@@ -44,11 +44,11 @@ impl SubmoduleURLRewriter {
                 }
             }
         }
-        Ok(foo)
+        Ok(rewriter)
     }
 
     pub fn restore(&self) {
         // Could do git checkout -- .gitmodules instead!
-        let _ = copy(&self.temp_file.path(), &self.submodules_path);
+        let _ = copy(self.temp_file.path(), &self.submodules_path);
     }
 }

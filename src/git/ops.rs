@@ -14,19 +14,20 @@ pub fn clone_recursive(git_url: &GitUrl, clone_dir: &Path, branch: &str) -> Resu
     builder.fetch_options(default_fetch_options());
     builder.branch(branch);
 
-    let repo = builder.clone(&git_url.to_string(), &clone_dir)?;
+    let repo = builder.clone(&git_url.to_string(), clone_dir)?;
 
     // Workaround for libgit2/GitLab issue: cannot reliably handle relative URLs for Git submodules
     // We temporarily rewrite the contents of the .gitmodules
     let submodules_path = clone_dir.join(".gitmodules");
     bracket(
         || match submodules_path.is_file() {
-            true => Ok(Some(SubmoduleURLRewriter::new(&submodules_path, &git_url)?)),
+            true => Ok(Some(SubmoduleURLRewriter::new(&submodules_path, git_url)?)),
             false => Ok(None),
         },
-        |rewriter| match rewriter {
-            Some(x) => x.restore(),
-            None => {}
+        |rewriter| {
+            if let Some(x) = rewriter {
+                x.restore()
+            }
         },
         |_| {
             for mut submodule in repo.submodules()? {
