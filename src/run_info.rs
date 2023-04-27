@@ -19,23 +19,36 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-#[cfg(windows)]
-use colored::control::set_virtual_terminal;
+use crate::cli::{arg, arg_value};
+use crate::error::{user_error_result, Result};
+use clap::ArgMatches;
 
-#[allow(dead_code)]
-pub fn bracket<R, T, E, F, G, H>(acquire: F, release: G, consume: H) -> std::result::Result<T, E>
-where
-    F: FnOnce() -> std::result::Result<R, E>,
-    G: FnOnce(R),
-    H: FnOnce(&R) -> std::result::Result<T, E>,
-{
-    let resource = acquire()?;
-    let result = consume(&resource);
-    release(resource);
-    result
+pub struct RunInfo {
+    pub cmd: Vec<String>,
+    pub fail_fast: bool,
+    pub topo_order: bool,
 }
 
-pub fn reset_terminal() {
-    #[cfg(windows)]
-    set_virtual_terminal(true).expect("set_virtual_terminal failed");
+impl RunInfo {
+    pub fn new(submatches: &ArgMatches) -> Result<Self> {
+        let cmd = submatches
+            .values_of(arg::CMD)
+            .map(|x| x.collect())
+            .unwrap_or_else(Vec::new);
+        if cmd.is_empty() {
+            return user_error_result("Command requires at least one command argument");
+        }
+
+        let fail_fast = !submatches.is_present(arg::NO_FAIL_FAST);
+        let topo_order = submatches
+            .value_of(arg::ORDER)
+            .expect("--order is required")
+            == arg_value::TOPO;
+
+        Ok(Self {
+            cmd: cmd.into_iter().map(|x| String::from(x)).collect::<Vec<_>>(),
+            fail_fast: fail_fast,
+            topo_order: topo_order,
+        })
+    }
 }
