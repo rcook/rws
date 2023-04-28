@@ -19,12 +19,12 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::error::Result;
 use crate::git::GitInfo;
 use crate::os::{path_to_str, with_working_dir};
 use crate::run_info::RunInfo;
 use crate::util::reset_terminal;
 use crate::workspace::{Plan, Workspace};
+use anyhow::Result;
 use colored::Colorize;
 use std::path::PathBuf;
 use std::process::Command;

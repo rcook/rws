@@ -33,32 +33,25 @@ mod workspace;
 
 use crate::args::{Args, Command};
 use crate::commands::{do_git, do_info, do_init, do_run};
-use crate::error::{Error, Result};
 use crate::run_info::RunInfo;
 use crate::util::reset_terminal;
 use crate::workspace::{Plan, Workspace};
+use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
 use std::process::exit;
 
 fn main() {
-    exit(match main_inner() {
-        Ok(()) => 0,
-        Err(Error::User(message)) => {
-            println!("{}", format!("Error: {}", message).bright_red());
+    exit(match run() {
+        Ok(_) => 0,
+        Err(e) => {
+            println!("{}", format!("{}", e).bright_red());
             1
-        }
-        Err(Error::Internal(facility, message)) => {
-            println!(
-                "{}",
-                format!("Internal ({}): {}", facility, message).red().bold()
-            );
-            2
         }
     })
 }
 
-fn main_inner() -> Result<()> {
+fn run() -> Result<()> {
     reset_terminal();
     let args = Args::parse();
     let workspace = Workspace::new(args.config_path, args.workspace_dir)?;
@@ -71,9 +64,9 @@ fn main_inner() -> Result<()> {
         } => do_git(
             workspace,
             &RunInfo::new(command, args, fail_fast, topo_order),
-        ),
-        Command::Info => do_info(&Plan::resolve(workspace)?, true),
-        Command::Init => do_init(&workspace),
+        )?,
+        Command::Info => do_info(&Plan::resolve(workspace)?, true)?,
+        Command::Init => do_init(&workspace)?,
         Command::Run {
             fail_fast,
             topo_order,
@@ -82,6 +75,7 @@ fn main_inner() -> Result<()> {
         } => do_run(
             workspace,
             &RunInfo::new(command, args, fail_fast, topo_order),
-        ),
+        )?,
     }
+    Ok(())
 }
