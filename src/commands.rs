@@ -19,7 +19,6 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::cli::arg_value;
 use crate::error::Result;
 use crate::git::GitInfo;
 use crate::os::{path_to_str, with_working_dir};
@@ -57,7 +56,7 @@ pub fn do_info(plan: &Plan, show_env: bool) -> Result<()> {
 
     show_project_dirs("alpha", &plan.project_dirs_alpha);
     match &plan.project_dirs_topo {
-        Some(ds) => show_project_dirs(arg_value::TOPO, ds),
+        Some(ds) => show_project_dirs("topo", ds),
         None => {}
     }
 

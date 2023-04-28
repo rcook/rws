@@ -8,7 +8,7 @@ name = "rws"
 version = "0.3.0"
 
 [dependencies]
-clap = { version = "3.2.24", features = ["cargo"] }
+clap = { version = "4.2.4", features = ["derive"] }
 colored = "2.0.0"
 dirs = "5.0.0"
 gc = "0.4.1"
@@ -24,3 +24,4 @@ tempfile = "3.5.0"
 topological-sort = "0.2.2"
 which = "4.4.0"
 yaml-rust = "0.4"
+path-absolutize = "3.0.14"

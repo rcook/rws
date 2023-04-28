@@ -19,10 +19,6 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::cli::{arg, arg_value};
-use crate::error::{user_error_result, Result};
-use clap::ArgMatches;
-
 pub struct RunInfo {
     pub cmd: Vec<String>,
     pub fail_fast: bool,
@@ -30,25 +26,17 @@ pub struct RunInfo {
 }
 
 impl RunInfo {
-    pub fn new(submatches: &ArgMatches) -> Result<Self> {
-        let cmd = submatches
-            .values_of(arg::CMD)
-            .map(|x| x.collect())
-            .unwrap_or_else(Vec::new);
-        if cmd.is_empty() {
-            return user_error_result("Command requires at least one command argument");
+    pub fn new(command: String, args: Vec<String>, fail_fast: bool, topo_order: bool) -> Self {
+        let mut cmd = Vec::new();
+        cmd.push(command);
+        for arg in args {
+            cmd.push(arg);
         }
 
-        let fail_fast = !submatches.is_present(arg::NO_FAIL_FAST);
-        let topo_order = submatches
-            .value_of(arg::ORDER)
-            .expect("--order is required")
-            == arg_value::TOPO;
-
-        Ok(Self {
-            cmd: cmd.into_iter().map(String::from).collect::<Vec<_>>(),
+        Self {
+            cmd,
             fail_fast,
             topo_order,
-        })
+        }
     }
 }
