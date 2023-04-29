@@ -20,6 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use crate::git::GitInfo;
+use crate::order::DirectoryOrder;
 use crate::os::{path_to_str, with_working_dir};
 use crate::run_info::RunInfo;
 use crate::util::reset_terminal;
@@ -107,8 +108,8 @@ where
     F: Fn(&Vec<String>) -> Command,
 {
     let mut failure_count = 0;
-    let project_dirs = match (run_info.topo_order, &plan.project_dirs_topo) {
-        (true, Some(ds)) => ds,
+    let project_dirs = match (&run_info.order, &plan.project_dirs_topo) {
+        (DirectoryOrder::Topological, Some(ds)) => ds,
         _ => &plan.project_dirs_alpha,
     };
     for project_dir in project_dirs {

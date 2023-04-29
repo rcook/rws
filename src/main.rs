@@ -25,6 +25,7 @@ mod config;
 mod config_key;
 mod error;
 mod git;
+mod order;
 mod os;
 mod run_info;
 mod scripting;
@@ -58,24 +59,18 @@ fn run() -> Result<()> {
     match args.command {
         Command::Git {
             fail_fast,
-            topo_order,
+            order,
             command,
             args,
-        } => do_git(
-            workspace,
-            &RunInfo::new(command, args, fail_fast, topo_order),
-        )?,
+        } => do_git(workspace, &RunInfo::new(command, args, fail_fast, order))?,
         Command::Info => do_info(&Plan::resolve(workspace)?, true)?,
         Command::Init => do_init(&workspace)?,
         Command::Run {
             fail_fast,
-            topo_order,
+            order,
             command,
             args,
-        } => do_run(
-            workspace,
-            &RunInfo::new(command, args, fail_fast, topo_order),
-        )?,
+        } => do_run(workspace, &RunInfo::new(command, args, fail_fast, order))?,
     }
     Ok(())
 }

@@ -19,6 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+use crate::order::DirectoryOrder;
 use clap::{Parser, Subcommand};
 use path_absolutize::Absolutize;
 use std::path::PathBuf;
@@ -55,8 +56,14 @@ pub enum Command {
         #[arg(help = "Fail fast", short = 'f', long = "fail-fast")]
         fail_fast: bool,
 
-        #[arg(help = "Directory traversal order", short = 'o', long = "order")]
-        topo_order: bool,
+        #[arg(
+            help = "Directory traversal order",
+            short = 'o',
+            long = "order",
+            default_value_t = DirectoryOrder::Topological,
+            value_enum
+        )]
+        order: DirectoryOrder,
 
         #[arg(help = "Program to run in environment")]
         command: String,
@@ -77,8 +84,14 @@ pub enum Command {
         #[arg(help = "Fail fast", short = 'f', long = "fail-fast")]
         fail_fast: bool,
 
-        #[arg(help = "Directory traversal order", short = 'o', long = "order")]
-        topo_order: bool,
+        #[arg(
+            help = "Directory traversal order",
+            short = 'o',
+            long = "order",
+            default_value_t = DirectoryOrder::Topological,
+            value_enum
+        )]
+        order: DirectoryOrder,
 
         #[arg(help = "Program to run in environment")]
         command: String,
