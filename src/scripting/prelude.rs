@@ -20,9 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use crate::git::GitInfo;
-use crate::os::path_to_str;
-
-//use git2::Repository;
+use joatmon::path_to_str;
 use percent_encoding::percent_decode_str;
 use rlua::prelude::LuaResult;
 use rlua::Variadic;
@@ -31,6 +29,7 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::Command;
 
+//use git2::Repository;
 //fn guard_git<R>(result: std::result::Result<R, git2::Error>) -> LuaResult<R> {
 //    result.map_err(|e| rlua::Error::ExternalError(std::sync::Arc::new(e)))
 //}

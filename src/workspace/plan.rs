@@ -19,12 +19,9 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::error::{user_error, user_error_result, Result};
-use crate::os::with_working_dir;
-use crate::os::{get_base_name, path_to_str};
-
 use super::internal::{DependencySource, Workspace};
-
+use anyhow::{anyhow, bail, Result};
+use joatmon::{get_base_name, path_to_str, WorkingDirectory};
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -53,14 +50,14 @@ impl Plan {
                 &project_dirs_alpha,
                 |project_dir| {
                     let project_name = get_base_name(project_dir)
-                        .ok_or_else(|| user_error("Invalid project directory"))?;
+                        .ok_or_else(|| anyhow!("Invalid project directory"))?;
                     match hash.get(project_name).and_then(|x| x.into_vec()) {
                         Some(v) => (0..v.len())
                             .map(|i| {
                                 v.get(i)
                                     .into_string()
                                     .ok_or_else(|| {
-                                        user_error(format!(
+                                        anyhow!(format!(
                                             "Invalid dependency for project {}",
                                             project_name
                                         ))
@@ -69,7 +66,7 @@ impl Plan {
                                         String::from(path_to_str(&workspace.workspace_dir.join(s)))
                                     })
                             })
-                            .collect(),
+                            .collect::<Result<Vec<_>>>(),
                         None => Ok(Vec::new()),
                     }
                 },
@@ -77,11 +74,13 @@ impl Plan {
             DependencySource::ScriptCommand(command) => Some(Self::topo_sort_project_dirs(
                 &project_dirs_alpha,
                 |project_dir| {
-                    with_working_dir(project_dir, || command.eval())?.map(|x: Vec<String>| {
-                        x.into_iter()
-                            .map(|x| String::from(path_to_str(&workspace.workspace_dir.join(x))))
-                            .collect()
-                    })
+                    let working_dir = WorkingDirectory::change(&project_dir)?;
+                    let deps: Vec<String> = command.eval()?;
+                    drop(working_dir);
+                    Ok(deps
+                        .into_iter()
+                        .map(|x| String::from(path_to_str(&workspace.workspace_dir.join(x))))
+                        .collect::<Vec<_>>())
                 },
             )?),
             DependencySource::None => None,
@@ -126,18 +125,15 @@ impl Plan {
             for dep in &deps {
                 let p = Path::new(dep);
                 if !p.is_dir() {
-                    return user_error_result(format!(
-                        "Project directory {} does not exist",
-                        path_to_str(p)
-                    ));
+                    bail!("Project directory {} does not exist", path_to_str(p));
                 }
 
                 // TBD: Lots of copying happening here!
                 if !project_dirs_alpha_set.contains(&p.to_path_buf()) {
-                    return user_error_result(format!(
+                    bail!(
                         "Project dependency {} is not a valid Git repository",
                         path_to_str(p)
-                    ));
+                    );
                 }
             }
 

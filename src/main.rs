@@ -26,7 +26,6 @@ mod config_key;
 mod error;
 mod git;
 mod order;
-mod os;
 mod run_info;
 mod scripting;
 mod util;

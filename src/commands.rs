@@ -21,12 +21,12 @@
 //
 use crate::git::GitInfo;
 use crate::order::DirectoryOrder;
-use crate::os::{path_to_str, with_working_dir};
 use crate::run_info::RunInfo;
 use crate::util::reset_terminal;
 use crate::workspace::{Plan, Workspace};
 use anyhow::Result;
 use colored::Colorize;
+use joatmon::{path_to_str, WorkingDirectory};
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -153,7 +153,11 @@ where
 
 pub fn do_init(workspace: &Workspace) -> Result<()> {
     match &workspace.init_command {
-        Some(c) => with_working_dir(&workspace.workspace_dir, || c.eval())??,
+        Some(c) => {
+            let working_dir = WorkingDirectory::change(&workspace.workspace_dir)?;
+            c.eval()?;
+            drop(working_dir);
+        }
         None => {}
     }
     Ok(())
