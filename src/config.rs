@@ -20,6 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use anyhow::{bail, Result};
+use joatmon::read_text_file;
 use rlua::{Context, Value};
 use std::path::Path;
 use yaml_rust::yaml::{Array, Hash, Yaml};
@@ -32,7 +33,7 @@ pub struct ConfigObject {
 
 impl ConfigObject {
     pub fn read_config_file(path: &Path) -> Result<Option<Self>> {
-        let yaml = std::fs::read_to_string(path)?;
+        let yaml = read_text_file(path)?;
         let mut docs = YamlLoader::load_from_str(&yaml)?;
         match docs.len() {
             0 => Ok(None),
