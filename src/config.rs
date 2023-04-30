@@ -19,8 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::error::{user_error_result, Result};
-
+use anyhow::{bail, Result};
 use rlua::{Context, Value};
 use std::path::Path;
 use yaml_rust::yaml::{Array, Hash, Yaml};
@@ -38,7 +37,7 @@ impl ConfigObject {
         match docs.len() {
             0 => Ok(None),
             1 => Ok(Some(Self::new(docs.remove(0)))),
-            _ => user_error_result(format!("Invalid workspace config file {}", path.display())),
+            _ => bail!("Invalid workspace config file {}", path.display()),
         }
     }
 

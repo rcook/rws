@@ -19,8 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::error::{user_error, Result};
-
+use anyhow::{anyhow, Result};
 use sxd_document::parser;
 use sxd_xpath::{Context, Factory};
 
@@ -54,7 +53,7 @@ pub fn query_xpath_as_string(
 
     Ok(Factory::new()
         .build(query)?
-        .ok_or_else(|| user_error("No XPath query was available"))?
+        .ok_or_else(|| anyhow!("No XPath query was available"))?
         .evaluate(&context, root)?
         .string())
 }

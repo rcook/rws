@@ -1,3 +1,5 @@
+use crate::result::LiftResult;
+
 // The MIT License (MIT)
 //
 // Copyright (c) 2020-3 Richard Cook
@@ -19,21 +21,14 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::error::{internal_error, Error, Result};
-
 use super::prelude;
 use super::variables::Variables;
-
+use anyhow::Result;
 use rlua::{Context, FromLuaMulti, Lua};
 
 pub trait Evaluatable: for<'lua> rlua::FromLuaMulti<'lua> {}
-impl<T: for<'lua> FromLuaMulti<'lua>> Evaluatable for T {}
 
-impl std::convert::From<rlua::Error> for Error {
-    fn from(error: rlua::Error) -> Self {
-        internal_error("Lua", error.to_string())
-    }
-}
+impl<T: for<'lua> FromLuaMulti<'lua>> Evaluatable for T {}
 
 pub fn eval<T: Evaluatable>(
     preamble: &str,
@@ -80,7 +75,7 @@ fn load_prelude(lua_ctx: Context) -> rlua::Result<()> {
     let prelude = lua_ctx.create_table()?;
 
     // Nested objects
-    prelude.set("git", create_git(lua_ctx)?)?;
+    prelude.set("git", create_git(lua_ctx).lift_result())?;
 
     prelude.set(
         "current_dir",

@@ -19,8 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::error::{internal_error, user_error, user_error_result, Result};
-
+use anyhow::{anyhow, bail, Result};
 use std::path::PathBuf;
 use which::{which, Error};
 
@@ -32,8 +31,8 @@ pub struct GitInfo {
 impl GitInfo {
     pub fn from_environment() -> Result<GitInfo> {
         let executable_path = which("git").map_err(|e| match e {
-            Error::CannotFindBinaryPath => user_error(String::from("Cannot locate Git executable")),
-            _ => internal_error("Which", e.to_string()),
+            Error::CannotFindBinaryPath => anyhow!("Cannot locate Git executable"),
+            _ => anyhow!("which failed: {}", e),
         })?;
 
         let output = std::process::Command::new(&executable_path)
@@ -43,7 +42,7 @@ impl GitInfo {
             .split_whitespace()
             .collect::<Vec<_>>();
         if parts.len() != 3 || parts[0] != "git" || parts[1] != "version" {
-            return user_error_result("Git version output was invalid");
+            bail!("Git version output was invalid");
         }
 
         let version = parts[2].to_string();

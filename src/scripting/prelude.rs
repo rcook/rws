@@ -20,6 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use crate::git::GitInfo;
+use crate::result::LiftResult;
 use joatmon::path_to_str;
 use percent_encoding::percent_decode_str;
 use rlua::prelude::LuaResult;
@@ -39,11 +40,10 @@ fn guard_io<R>(result: std::io::Result<R>) -> LuaResult<R> {
 }
 
 pub mod git {
-    use crate::error::user_error;
-    use crate::git::clone_recursive;
-
     use super::guard_io;
-
+    use crate::git::clone_recursive;
+    use crate::result::LiftResult;
+    use anyhow::anyhow;
     use joat_git_url::GitUrl;
     use joat_path::absolute_path;
     use std::env::current_dir;
@@ -52,7 +52,9 @@ pub mod git {
     pub fn clone(arg: rlua::Table) -> rlua::Result<()> {
         let recurse = arg.get::<_, bool>("recurse")?;
         let url_str = arg.get::<_, String>("url")?;
-        let url = GitUrl::parse(&url_str).ok_or_else(|| user_error("Could not parse Git URL"))?;
+        let url = GitUrl::parse(&url_str)
+            .ok_or_else(|| anyhow!("Could not parse Git URL"))
+            .lift_result();
         let dir_str = arg.get::<_, String>("dir")?;
         let base_dir = guard_io(current_dir())?;
         let dir = guard_io(absolute_path(base_dir, Path::new(&dir_str)))?;
@@ -67,7 +69,7 @@ pub mod git {
         );
 
         let repo = match recurse {
-            true => clone_recursive(&url, &dir, &branch)?,
+            true => clone_recursive(&url, &dir, &branch).lift_result(),
             false => unimplemented!("Non-recursive clone not implemented"),
         };
 
@@ -134,15 +136,15 @@ pub fn trim_string(str: String) -> LuaResult<String> {
 }
 
 pub mod xpath {
-    use crate::error::Result;
+    use crate::result::LiftResult;
     use crate::scripting::xml::{query_xpath_as_string, XmlNamespace};
-
+    use anyhow::Result;
     use rlua::prelude::LuaResult;
     use rlua::Table;
 
     pub fn main(namespaces_table: Table, query: String, xml: String) -> LuaResult<String> {
-        let namespaces = decode_namespaces(namespaces_table)?;
-        Ok(query_xpath_as_string(&namespaces, &query, &xml)?)
+        let namespaces = decode_namespaces(namespaces_table).lift_result();
+        Ok(query_xpath_as_string(&namespaces, &query, &xml).lift_result())
     }
 
     fn decode_namespaces(namespaces_table: Table) -> Result<Vec<XmlNamespace>> {
@@ -158,7 +160,7 @@ pub mod xpath {
 }
 
 pub fn git_clone(args: Variadic<String>) -> LuaResult<()> {
-    let git_info = GitInfo::from_environment()?;
+    let git_info = GitInfo::from_environment().lift_result();
     let mut git_command = Command::new(git_info.executable_path);
     git_command.arg("clone");
     for arg in args {

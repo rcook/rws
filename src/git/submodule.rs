@@ -19,8 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::error::{Error, Result};
-
+use anyhow::{anyhow, Result};
 use joat_git_url::GitUrl;
 use regex::Regex;
 use std::fs::{copy, File};
@@ -51,10 +50,7 @@ impl SubmoduleURLRewriter {
             match re.captures(&line) {
                 Some(caps) => {
                     let git_url = remote_git_url.join(&caps["url"]).ok_or_else(|| {
-                        Error::User(format!(
-                            "Failed to resolve Git submodule URL {}",
-                            &caps["url"]
-                        ))
+                        anyhow!("Failed to resolve Git submodule URL {}", &caps["url"])
                     })?;
                     writeln!(writer, "{}{}", &caps["prefix"], git_url)?;
                     writer.flush()?;

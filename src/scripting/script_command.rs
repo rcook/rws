@@ -19,11 +19,10 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::config::ConfigHash;
-use crate::error::{user_error, user_error_result, Result};
-
 use super::variables::Variables;
 use super::{javascript, lua};
+use crate::config::ConfigHash;
+use anyhow::{anyhow, bail, Result};
 
 mod config_value {
     pub const JAVASCRIPT: &str = "javascript";
@@ -31,6 +30,7 @@ mod config_value {
 }
 
 pub trait Evaluatable: lua::Evaluatable + javascript::Evaluatable {}
+
 impl<T: lua::Evaluatable + javascript::Evaluatable> Evaluatable for T {}
 
 pub struct ScriptCommand {
@@ -90,7 +90,7 @@ impl ScriptCommand {
         let script = command_hash
             .get(SCRIPT)
             .and_then(|x| x.into_string())
-            .ok_or_else(|| user_error(format!("\"dependency-command\" missing required \"{}\" field in workspace configuration", SCRIPT)))?;
+            .ok_or_else(|| anyhow!("\"dependency-command\" missing required \"{}\" field in workspace configuration", SCRIPT))?;
 
         Ok(ScriptCommand {
             language,
@@ -115,7 +115,7 @@ impl ScriptCommand {
                 self.use_prelude,
                 &self.variables,
             ),
-            language => user_error_result(format!("Unsupported language \"{}\"", language)),
+            language => bail!("Unsupported language \"{}\"", language),
         }
     }
 
@@ -125,10 +125,7 @@ impl ScriptCommand {
         let mut values = Vec::new();
         if let Some(h) = root_hash.get(VARIABLES).and_then(|x| x.into_hash()) {
             let keys = h.keys().ok_or_else(|| {
-                user_error(format!(
-                    "Invalid keys in \"{}\" configuration element",
-                    VARIABLES
-                ))
+                anyhow!("Invalid keys in \"{}\" configuration element", VARIABLES)
             })?;
             for k in keys {
                 let obj = h.get(&k).expect("Unreachable");

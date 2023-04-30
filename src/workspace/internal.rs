@@ -20,9 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use crate::config::{ConfigHash, ConfigObject};
-use crate::error::{user_error, user_error_result, Result};
 use crate::scripting::ScriptCommand;
-
+use anyhow::{anyhow, bail, Result};
 use std::collections::HashSet;
 use std::env;
 use std::path::{Path, PathBuf};
@@ -31,7 +30,7 @@ const WORKSPACE_CONFIG_FILE_NAME: &str = "rws-workspace.yaml";
 
 mod config_helper {
     use crate::config::{ConfigArray, ConfigHash};
-    use crate::error::{user_error_result, Result};
+    use anyhow::{bail, Result};
 
     pub fn convert_optional_array<T, F>(hash: &ConfigHash, key: &str, f: F) -> Result<Option<T>>
     where
@@ -40,10 +39,7 @@ mod config_helper {
         match hash.get(key) {
             Some(obj) => match obj.into_vec() {
                 Some(v) => f(v).map(Some),
-                None => user_error_result(format!(
-                    "Configuration item \"{}\" is not in expected format",
-                    key
-                )),
+                None => bail!("Configuration item \"{}\" is not in expected format", key),
             },
             None => Ok(None),
         }
@@ -56,10 +52,7 @@ mod config_helper {
         match hash.get(key) {
             Some(obj) => match obj.into_hash() {
                 Some(h) => f(h).map(Some),
-                None => user_error_result(format!(
-                    "Configuration item \"{}\" is not in expected format",
-                    key
-                )),
+                None => bail!("Configuration item \"{}\" is not in expected format", key),
             },
             None => Ok(None),
         }
@@ -101,7 +94,7 @@ impl Workspace {
             }
             (None, Some(c)) => Self::known(
                 c.parent()
-                    .ok_or_else(|| user_error("Invalid config path"))?
+                    .ok_or_else(|| anyhow!("Invalid config path"))?
                     .to_path_buf(),
                 Some(c),
             ),
@@ -174,7 +167,7 @@ impl Workspace {
 
         let root_hash = config_object
             .into_hash()
-            .ok_or_else(|| user_error("Invalid config hash"))?;
+            .ok_or_else(|| anyhow!("Invalid config hash"))?;
 
         let excluded_project_dirs: HashSet<PathBuf> =
             convert_optional_array(&root_hash, EXCLUDED_PROJECTS, |array| {
@@ -182,7 +175,7 @@ impl Workspace {
                 for i in 0..array.len() {
                     let obj = array.get(i);
                     let value = obj.as_str().ok_or_else(|| {
-                        user_error(format!(
+                        anyhow!(format!(
                             "Invalid value encountered in \"{}\" configuration element",
                             EXCLUDED_PROJECTS
                         ))
@@ -204,10 +197,11 @@ impl Workspace {
         })?;
 
         match (dependencies, dependency_command) {
-            (Some(_), Some(_)) => user_error_result(format!(
+            (Some(_), Some(_)) => bail!(
                 "Must specify at most one of \"{}\" and \"{}\" in workspace configuration",
-                DEPENDENCIES, DEPENDENCY_COMMAND
-            )),
+                DEPENDENCIES,
+                DEPENDENCY_COMMAND
+            ),
             (Some(h), None) => Ok(Self {
                 workspace_dir,
                 config_path: Some(config_path),

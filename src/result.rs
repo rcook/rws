@@ -19,18 +19,12 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use super::variables::Variables;
-use anyhow::Result;
+pub trait LiftResult<T> {
+    fn lift_result(&self) -> T;
+}
 
-pub trait Evaluatable: Default {}
-
-impl<T: Default> Evaluatable for T {}
-
-pub fn eval<T: Evaluatable>(
-    _preamble: &str,
-    _script: &str,
-    _use_prelude: bool,
-    _variables: &Variables,
-) -> Result<T> {
-    unimplemented!("JavaScript not implemented yet!")
+impl<T> LiftResult<T> for anyhow::Result<T> {
+    fn lift_result(&self) -> T {
+        todo!()
+    }
 }
