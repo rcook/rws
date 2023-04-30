@@ -21,21 +21,25 @@
 //
 use crate::git::GitInfo;
 use crate::result::LiftResult;
-use joatmon::path_to_str;
+use joatmon::{path_to_str, read_text_file};
 use percent_encoding::percent_decode_str;
 use rlua::prelude::LuaResult;
 use rlua::Variadic;
-use std::fs::{copy, read_to_string, File};
+use std::fs::{copy, File};
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::Command;
+use std::result::Result as StdResult;
 
 //use git2::Repository;
 //fn guard_git<R>(result: std::result::Result<R, git2::Error>) -> LuaResult<R> {
 //    result.map_err(|e| rlua::Error::ExternalError(std::sync::Arc::new(e)))
 //}
 
-fn guard_io<R>(result: std::io::Result<R>) -> LuaResult<R> {
+fn guard_io<T, E>(result: StdResult<T, E>) -> LuaResult<T>
+where
+    E: std::error::Error + Send + Sync + 'static,
+{
     result.map_err(|e| rlua::Error::ExternalError(std::sync::Arc::new(e)))
 }
 
@@ -123,7 +127,7 @@ pub mod copy_file_if_unchanged {
 }
 
 pub fn read_file(path: String) -> LuaResult<String> {
-    guard_io(read_to_string(path))
+    guard_io(read_text_file(path))
 }
 
 pub fn read_file_lines(path: String) -> LuaResult<Vec<String>> {
