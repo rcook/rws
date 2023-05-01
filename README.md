@@ -34,7 +34,7 @@ variables:
   VARIABLE1: VALUE1
 
 # (Optional)
-default-language: lua
+default_language: lua
 
 # (Optional)
 lua-config:
@@ -53,9 +53,9 @@ lua-config:
       return result
     end
   # (Optional)
-  use-prelude: true
+  use_prelude: true
 
-# (Optional) (or specify "dependency-command")
+# (Optional) (or specify "dependency_command")
 dependencies:
   aaa:
   - bbb
@@ -65,11 +65,11 @@ dependencies:
   - eee
 
 # (Optional) (or specify "dependencies")
-dependency-command:
+dependency_command:
   # (Optional)
   language: lua
   # (Optional)
-  use-prelude: true
+  use_prelude: true
   # (Required)
   script: |
     if prelude.is_file(DEPS_FILE_NAME) then
@@ -79,19 +79,19 @@ dependency-command:
     end
 
 # (Optional)
-excluded-projects:
+excluded_projects:
 - fff
 - ggg
 
 # (Optional)
-init-command:
+init_command:
   # (Optional)
   language: lua
   # (Optional)
-  use-prelude: true
+  use_prelude: true
   # (Required)
   script: |
-    print("Hello from init-command")
+    print("Hello from init_command")
 ```
 
 ## Building locally

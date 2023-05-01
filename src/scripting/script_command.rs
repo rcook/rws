@@ -91,7 +91,13 @@ impl ScriptCommand {
         let script = command_hash
             .get(SCRIPT)
             .and_then(|x| x.into_string())
-            .ok_or_else(|| anyhow!("\"dependency-command\" missing required \"{}\" field in workspace configuration", SCRIPT))?;
+            .ok_or_else(|| {
+                anyhow!(
+                    "\"{}\" element missing required \"{}\" field in workspace configuration",
+                    DEPENDENCY_COMMAND,
+                    SCRIPT
+                )
+            })?;
 
         Ok(ScriptCommand {
             language,
