@@ -37,7 +37,7 @@ variables:
 default_language: lua
 
 # (Optional)
-lua-config:
+lua_config:
   # (Optional)
   preamble: |
     #dofile("shared.lua")
