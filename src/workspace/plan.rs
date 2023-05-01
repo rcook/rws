@@ -102,7 +102,7 @@ impl Plan {
             let project_dir = e.path();
             if !excluded_project_dirs.contains(&project_dir) && project_dir.is_dir() {
                 let git_dir = project_dir.join(".git");
-                if git_dir.is_dir() {
+                if git_dir.exists() {
                     project_dirs_alpha.push(project_dir)
                 }
             }
