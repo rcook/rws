@@ -19,11 +19,10 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use super::lift::lift_result;
 use super::prelude;
 use super::variables::Variables;
 use anyhow::Result;
-use rlua::prelude::{FromLuaMulti, Lua, LuaContext, LuaResult, LuaTable};
+use rlua::prelude::{FromLuaMulti, Lua, LuaContext, LuaTable};
 
 pub trait Evaluatable: for<'lua> FromLuaMulti<'lua> {}
 
@@ -70,11 +69,11 @@ fn create_git(lua_ctx: LuaContext) -> Result<LuaTable> {
     Ok(git)
 }
 
-fn load_prelude(lua_ctx: LuaContext) -> LuaResult<()> {
+fn load_prelude(lua_ctx: LuaContext) -> Result<()> {
     let prelude = lua_ctx.create_table()?;
 
     // Nested objects
-    prelude.set("git", lift_result(create_git(lua_ctx))?)?;
+    prelude.set("git", create_git(lua_ctx)?)?;
 
     prelude.set(
         "current_dir",
@@ -133,5 +132,7 @@ fn load_prelude(lua_ctx: LuaContext) -> LuaResult<()> {
         lua_ctx.create_function(|_, str| prelude::percent_decode(str))?,
     )?;
 
-    lua_ctx.globals().set("prelude", prelude)
+    lua_ctx.globals().set("prelude", prelude)?;
+
+    Ok(())
 }
