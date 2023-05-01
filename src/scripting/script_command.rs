@@ -22,6 +22,7 @@
 use super::variables::Variables;
 use super::{javascript, lua};
 use crate::config::ConfigHash;
+use crate::workspace::Workspace;
 use anyhow::{anyhow, bail, Result};
 
 mod config_value {
@@ -108,15 +109,17 @@ impl ScriptCommand {
         })
     }
 
-    pub fn eval<T: Evaluatable>(&self) -> Result<T> {
+    pub fn eval<T: Evaluatable>(&self, workspace: &Workspace) -> Result<T> {
         match self.language.as_str() {
             config_value::JAVASCRIPT => javascript::eval(
+                workspace,
                 &self.preamble,
                 &self.script,
                 self.use_prelude,
                 &self.variables,
             ),
             config_value::LUA => lua::eval(
+                workspace,
                 &self.preamble,
                 &self.script,
                 self.use_prelude,

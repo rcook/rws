@@ -21,7 +21,9 @@
 //
 use super::prelude;
 use super::variables::Variables;
+use crate::workspace::Workspace;
 use anyhow::Result;
+use joatmon::path_to_str;
 use rlua::prelude::{FromLuaMulti, Lua, LuaContext, LuaTable};
 
 pub trait Evaluatable: for<'lua> FromLuaMulti<'lua> {}
@@ -29,6 +31,7 @@ pub trait Evaluatable: for<'lua> FromLuaMulti<'lua> {}
 impl<T: for<'lua> FromLuaMulti<'lua>> Evaluatable for T {}
 
 pub fn eval<T: Evaluatable>(
+    workspace: &Workspace,
     preamble: &str,
     script: &str,
     use_prelude: bool,
@@ -38,7 +41,7 @@ pub fn eval<T: Evaluatable>(
         create_variables(lua_ctx, variables)?;
 
         if use_prelude {
-            load_prelude(lua_ctx)?;
+            load_prelude(lua_ctx, workspace)?;
         }
 
         Ok(lua_ctx
@@ -69,11 +72,16 @@ fn create_git(lua_ctx: LuaContext) -> Result<LuaTable> {
     Ok(git)
 }
 
-fn load_prelude(lua_ctx: LuaContext) -> Result<()> {
+fn load_prelude(lua_ctx: LuaContext, workspace: &Workspace) -> Result<()> {
     let prelude = lua_ctx.create_table()?;
 
     // Nested objects
     prelude.set("git", create_git(lua_ctx)?)?;
+
+    prelude.set(
+        "workspace_dir",
+        lua_ctx.create_string(path_to_str(&workspace.workspace_dir))?,
+    )?;
 
     prelude.set(
         "current_dir",

@@ -20,6 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::variables::Variables;
+use crate::workspace::Workspace;
 use anyhow::Result;
 
 pub trait Evaluatable: Default {}
@@ -27,6 +28,7 @@ pub trait Evaluatable: Default {}
 impl<T: Default> Evaluatable for T {}
 
 pub fn eval<T: Evaluatable>(
+    _workspace: &Workspace,
     _preamble: &str,
     _script: &str,
     _use_prelude: bool,

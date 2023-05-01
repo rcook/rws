@@ -155,7 +155,7 @@ pub fn do_init(workspace: &Workspace) -> Result<()> {
     match &workspace.init_command {
         Some(c) => {
             let working_dir = WorkingDirectory::change(&workspace.workspace_dir)?;
-            c.eval()?;
+            c.eval(workspace)?;
             drop(working_dir);
         }
         None => {}

@@ -75,7 +75,7 @@ impl Plan {
                 &project_dirs_alpha,
                 |project_dir| {
                     let working_dir = WorkingDirectory::change(&project_dir)?;
-                    let deps: Vec<String> = command.eval()?;
+                    let deps: Vec<String> = command.eval(&workspace)?;
                     drop(working_dir);
                     Ok(deps
                         .into_iter()
