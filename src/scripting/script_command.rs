@@ -33,6 +33,7 @@ pub trait Evaluatable: lua::Evaluatable + javascript::Evaluatable {}
 
 impl<T: lua::Evaluatable + javascript::Evaluatable> Evaluatable for T {}
 
+#[derive(Debug)]
 pub struct ScriptCommand {
     language: String,
     use_prelude: bool,

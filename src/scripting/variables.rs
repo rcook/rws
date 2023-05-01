@@ -21,6 +21,7 @@
 //
 use crate::config::ConfigObject;
 
+#[derive(Debug)]
 pub struct Variables {
     pub values: Vec<(String, ConfigObject)>,
 }

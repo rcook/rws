@@ -60,6 +60,7 @@ mod config_helper {
 }
 
 /// Source of dependency information
+#[derive(Debug)]
 pub enum DependencySource {
     /// Dependencies specified in configuration file
     Hash(ConfigHash),
@@ -70,6 +71,7 @@ pub enum DependencySource {
 }
 
 /// Workspace information derived from file system and configuration file
+#[derive(Debug)]
 pub struct Workspace {
     /// Workspace directory
     pub workspace_dir: PathBuf,
