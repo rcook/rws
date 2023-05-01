@@ -34,7 +34,7 @@ pub fn do_git(workspace: Workspace, run_info: &RunInfo) -> Result<()> {
     let git_info = GitInfo::from_environment()?;
     run_helper(&Plan::resolve(workspace)?, run_info, |cmd| {
         let mut command = Command::new(&git_info.executable_path);
-        for c in cmd.iter().skip(1) {
+        for c in cmd.iter() {
             command.arg(c);
         }
         command
