@@ -21,8 +21,9 @@
 //
 use anyhow::{anyhow, Result};
 use joat_git_url::GitUrl;
+use joatmon::{open_file, safe_create_file};
 use regex::Regex;
-use std::fs::{copy, File};
+use std::fs::copy;
 use std::io::prelude::*;
 use std::io::{BufReader, BufWriter};
 use std::path::{Path, PathBuf};
@@ -40,8 +41,8 @@ impl SubmoduleURLRewriter {
             temp_file: NamedTempFile::new()?,
         };
         copy(&rewriter.submodules_path, rewriter.temp_file.path())?;
-        let in_f = File::open(rewriter.temp_file.path())?;
-        let out_f = File::create(&rewriter.submodules_path)?;
+        let in_f = open_file(rewriter.temp_file.path())?;
+        let out_f = safe_create_file(&rewriter.submodules_path, false)?;
         let reader = BufReader::new(in_f);
         let mut writer = BufWriter::new(out_f);
         let re = Regex::new(r"(?P<prefix>\s*url\s*=\s*)(?P<url>.*)")?;

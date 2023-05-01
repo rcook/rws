@@ -21,11 +21,12 @@
 //
 use crate::git::GitInfo;
 use crate::result::LiftResult;
-use joatmon::{path_to_str, read_text_file};
+use anyhow::Result;
+use joatmon::{open_file, path_to_str, read_text_file};
 use percent_encoding::percent_decode_str;
 use rlua::prelude::LuaResult;
 use rlua::Variadic;
-use std::fs::{copy, File};
+use std::fs::copy;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::Command;
@@ -41,6 +42,21 @@ where
     E: std::error::Error + Send + Sync + 'static,
 {
     result.map_err(|e| rlua::Error::ExternalError(std::sync::Arc::new(e)))
+}
+
+#[derive(Debug)]
+struct WrappedAnyhowError(anyhow::Error);
+
+impl std::error::Error for WrappedAnyhowError {}
+
+impl std::fmt::Display for WrappedAnyhowError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.to_string())
+    }
+}
+
+fn lift_result<T>(result: Result<T>) -> LuaResult<T> {
+    result.map_err(|e| rlua::Error::ExternalError(std::sync::Arc::new(WrappedAnyhowError(e))))
 }
 
 pub mod git {
@@ -100,26 +116,30 @@ pub fn copy_file(from: String, to: String) -> LuaResult<()> {
 }
 
 pub mod copy_file_if_unchanged {
-    use super::guard_io;
-
+    use super::lift_result;
+    use anyhow::Result;
+    use joatmon::open_file;
     use rlua::prelude::LuaResult;
-    use std::fs::{copy, File};
+    use std::fs::copy;
     use std::io::Read;
     use std::path::Path;
 
     pub fn main(from: String, to: String) -> LuaResult<bool> {
+        lift_result(main_inner(from, to))
+    }
+
+    fn main_inner(from: String, to: String) -> Result<bool> {
         let from_path = Path::new(&from);
         let to_path = Path::new(&to);
-        let perform_copy = !to_path.is_file()
-            || guard_io(read_bytes(from_path))? != guard_io(read_bytes(to_path))?;
+        let perform_copy = !to_path.is_file() || read_bytes(from_path)? != read_bytes(to_path)?;
         if perform_copy {
-            guard_io(copy(from_path, to_path))?;
+            copy(from_path, to_path)?;
         }
         Ok(perform_copy)
     }
 
-    fn read_bytes(path: &Path) -> std::io::Result<Vec<u8>> {
-        let mut f = File::open(path)?;
+    fn read_bytes(path: &Path) -> Result<Vec<u8>> {
+        let mut f = open_file(path)?;
         let mut data = Vec::new();
         let _ = f.read_to_end(&mut data)?;
         Ok(data)
@@ -131,7 +151,7 @@ pub fn read_file(path: String) -> LuaResult<String> {
 }
 
 pub fn read_file_lines(path: String) -> LuaResult<Vec<String>> {
-    let f = guard_io(File::open(path))?;
+    let f = guard_io(open_file(path))?;
     guard_io(BufReader::new(f).lines().collect::<std::io::Result<_>>())
 }
 
