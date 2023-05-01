@@ -23,6 +23,7 @@ use anyhow::{anyhow, bail, Result};
 use std::path::PathBuf;
 use which::{which, Error};
 
+#[derive(Debug)]
 pub struct GitInfo {
     pub executable_path: PathBuf,
     pub version: String,
