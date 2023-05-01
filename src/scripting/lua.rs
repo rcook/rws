@@ -1,5 +1,3 @@
-use crate::result::LiftResult;
-
 // The MIT License (MIT)
 //
 // Copyright (c) 2020-3 Richard Cook
@@ -21,12 +19,13 @@ use crate::result::LiftResult;
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+use super::lift::lift_result;
 use super::prelude;
 use super::variables::Variables;
 use anyhow::Result;
-use rlua::{Context, FromLuaMulti, Lua};
+use rlua::prelude::{FromLuaMulti, Lua, LuaContext, LuaResult, LuaTable};
 
-pub trait Evaluatable: for<'lua> rlua::FromLuaMulti<'lua> {}
+pub trait Evaluatable: for<'lua> FromLuaMulti<'lua> {}
 
 impl<T: for<'lua> FromLuaMulti<'lua>> Evaluatable for T {}
 
@@ -49,7 +48,7 @@ pub fn eval<T: Evaluatable>(
     })
 }
 
-fn create_variables(lua_ctx: Context, variables: &Variables) -> Result<()> {
+fn create_variables(lua_ctx: LuaContext, variables: &Variables) -> Result<()> {
     let globals_table = lua_ctx.globals();
     for (name, config_object) in &variables.values {
         let value = config_object.to_lua(lua_ctx)?;
@@ -60,7 +59,7 @@ fn create_variables(lua_ctx: Context, variables: &Variables) -> Result<()> {
     Ok(())
 }
 
-fn create_git(lua_ctx: Context) -> Result<rlua::Table> {
+fn create_git(lua_ctx: LuaContext) -> Result<LuaTable> {
     let git = lua_ctx.create_table()?;
 
     git.set(
@@ -71,11 +70,11 @@ fn create_git(lua_ctx: Context) -> Result<rlua::Table> {
     Ok(git)
 }
 
-fn load_prelude(lua_ctx: Context) -> rlua::Result<()> {
+fn load_prelude(lua_ctx: LuaContext) -> LuaResult<()> {
     let prelude = lua_ctx.create_table()?;
 
     // Nested objects
-    prelude.set("git", create_git(lua_ctx).lift_result())?;
+    prelude.set("git", lift_result(create_git(lua_ctx))?)?;
 
     prelude.set(
         "current_dir",

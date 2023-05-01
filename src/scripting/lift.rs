@@ -19,12 +19,21 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-pub trait LiftResult<T> {
-    fn lift_result(&self) -> T;
+use anyhow::Result;
+use rlua::prelude::LuaResult;
+use std::sync::Arc;
+
+#[derive(Debug)]
+struct WrappedAnyhowError(anyhow::Error);
+
+impl std::error::Error for WrappedAnyhowError {}
+
+impl std::fmt::Display for WrappedAnyhowError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.to_string())
+    }
 }
 
-impl<T> LiftResult<T> for anyhow::Result<T> {
-    fn lift_result(&self) -> T {
-        todo!()
-    }
+pub fn lift_result<T>(result: Result<T>) -> LuaResult<T> {
+    result.map_err(|e| rlua::Error::ExternalError(Arc::new(WrappedAnyhowError(e))))
 }
