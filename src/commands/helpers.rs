@@ -19,76 +19,17 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::git::GitInfo;
 use crate::order::DirectoryOrder;
 use crate::run_info::RunInfo;
 use crate::util::reset_terminal;
-use crate::workspace::{Plan, Workspace};
+use crate::workspace::Plan;
 use anyhow::Result;
 use colored::Colorize;
-use joatmon::{path_to_str, WorkingDirectory};
+use joatmon::path_to_str;
 use std::path::PathBuf;
 use std::process::Command;
 
-pub fn do_git(workspace: Workspace, run_info: &RunInfo) -> Result<()> {
-    let git_info = GitInfo::from_environment()?;
-    run_helper(&Plan::resolve(workspace)?, run_info, |cmd| {
-        let mut command = Command::new(&git_info.executable_path);
-        for c in cmd.iter() {
-            command.arg(c);
-        }
-        command
-    })
-}
-
-pub fn do_info(plan: &Plan, show_env: bool) -> Result<()> {
-    println!(
-        "Workspace directory: {}",
-        path_to_str(&plan.workspace.workspace_dir).cyan()
-    );
-    println!(
-        "Workspace configuration file: {}",
-        plan.workspace
-            .config_path
-            .as_ref()
-            .map(|x| path_to_str(x).cyan())
-            .unwrap_or_else(|| "(none)".red().italic())
-    );
-
-    show_project_dirs("alpha", &plan.project_dirs_alpha);
-    match &plan.project_dirs_topo {
-        Some(ds) => show_project_dirs("topo", ds),
-        None => {}
-    }
-
-    if show_env {
-        println!();
-        match GitInfo::from_environment() {
-            Ok(git_info) => {
-                println!(
-                    "Path to Git: {}",
-                    path_to_str(&git_info.executable_path).cyan()
-                );
-                println!("Git version: {}", git_info.version.cyan())
-            }
-            _ => println!("Path to Git: {}", "(not found)".red().italic()),
-        }
-    }
-
-    Ok(())
-}
-
-pub fn do_run(workspace: Workspace, run_info: &RunInfo) -> Result<()> {
-    run_helper(&Plan::resolve(workspace)?, run_info, |cmd| {
-        let mut command = Command::new(&cmd[0]);
-        for c in cmd.iter().skip(1) {
-            command.arg(c);
-        }
-        command
-    })
-}
-
-fn show_project_dirs(order: &str, project_dirs: &[PathBuf]) {
+pub fn show_project_dirs(order: &str, project_dirs: &[PathBuf]) {
     if project_dirs.is_empty() {
         println!(
             "Project directories ({} order): {}",
@@ -103,7 +44,7 @@ fn show_project_dirs(order: &str, project_dirs: &[PathBuf]) {
     }
 }
 
-fn run_helper<F>(plan: &Plan, run_info: &RunInfo, f: F) -> Result<()>
+pub fn run_helper<F>(plan: &Plan, run_info: &RunInfo, f: F) -> Result<()>
 where
     F: Fn(&Vec<String>) -> Command,
 {
@@ -148,17 +89,5 @@ where
         )
     }
 
-    Ok(())
-}
-
-pub fn do_init(workspace: &Workspace) -> Result<()> {
-    match &workspace.init_command {
-        Some(c) => {
-            let working_dir = WorkingDirectory::change(&workspace.workspace_dir)?;
-            c.eval(workspace)?;
-            drop(working_dir);
-        }
-        None => {}
-    }
     Ok(())
 }
