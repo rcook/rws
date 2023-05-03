@@ -74,7 +74,7 @@ impl Plan {
             DependencySource::ScriptCommand(command) => Some(Self::topo_sort_project_dirs(
                 &project_dirs_alpha,
                 |project_dir| {
-                    let working_dir = WorkingDirectory::change(&project_dir)?;
+                    let working_dir = WorkingDirectory::change(project_dir)?;
                     let deps: Vec<String> = command.eval(&workspace)?;
                     drop(working_dir);
                     Ok(deps

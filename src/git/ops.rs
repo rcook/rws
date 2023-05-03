@@ -38,7 +38,7 @@ impl SubmoduleTracker {
 
     fn new(submodules_path: &Path, remote_git_url: &GitUrl) -> Result<Self> {
         Ok(Self {
-            rewriter: Some(SubmoduleURLRewriter::new(&submodules_path, remote_git_url)?),
+            rewriter: Some(SubmoduleURLRewriter::new(submodules_path, remote_git_url)?),
         })
     }
 }

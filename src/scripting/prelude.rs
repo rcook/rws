@@ -166,7 +166,7 @@ pub mod xpath {
 
     fn inner(namespaces_table: LuaTable, query: String, xml: String) -> Result<String> {
         let namespaces = decode_namespaces(namespaces_table)?;
-        Ok(query_xpath_as_string(&namespaces, &query, &xml)?)
+        query_xpath_as_string(&namespaces, &query, &xml)
     }
 
     fn decode_namespaces(namespaces_table: LuaTable) -> Result<Vec<XmlNamespace>> {
