@@ -20,12 +20,14 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::internal::{DependencySource, Workspace};
-use anyhow::{anyhow, bail, Result};
-use joatmon::{get_base_name, path_to_str, WorkingDirectory};
+use super::topo_order::compute_topo_order;
+use crate::config::ConfigHash;
+use crate::scripting::ScriptCommand;
+use anyhow::{anyhow, Result};
+use joatmon::{get_base_name, WorkingDirectory};
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
-use topological_sort::TopologicalSort;
 
 /// A build plan for a workspace
 pub struct Plan {
@@ -46,45 +48,19 @@ impl Plan {
         )?;
 
         let project_dirs_topo = match &workspace.dependency_source {
-            DependencySource::Hash(hash) => Some(Self::topo_sort_project_dirs(
-                &project_dirs_alpha,
-                |project_dir| {
-                    let project_name = get_base_name(project_dir)
-                        .ok_or_else(|| anyhow!("Invalid project directory"))?;
-                    match hash.get(project_name).and_then(|x| x.into_vec()) {
-                        Some(v) => (0..v.len())
-                            .map(|i| {
-                                v.get(i)
-                                    .into_string()
-                                    .ok_or_else(|| {
-                                        anyhow!(format!(
-                                            "Invalid dependency for project {}",
-                                            project_name
-                                        ))
-                                    })
-                                    .map(|s| {
-                                        String::from(path_to_str(&workspace.workspace_dir.join(s)))
-                                    })
-                            })
-                            .collect::<Result<Vec<_>>>(),
-                        None => Ok(Vec::new()),
-                    }
-                },
-            )?),
-            DependencySource::ScriptCommand(command) => Some(Self::topo_sort_project_dirs(
-                &project_dirs_alpha,
-                |project_dir| {
-                    let working_dir = WorkingDirectory::change(project_dir)?;
-                    let deps: Vec<String> = command.eval(&workspace)?;
-                    drop(working_dir);
-                    Ok(deps
-                        .into_iter()
-                        .map(|x| String::from(path_to_str(&workspace.workspace_dir.join(x))))
-                        .collect::<Vec<_>>())
-                },
-            )?),
+            DependencySource::Hash(hash) => {
+                Some(compute_topo_order(&project_dirs_alpha, |project_dir| {
+                    Self::get_precs_from_config_hash(hash, &workspace, project_dir)
+                })?)
+            }
+            DependencySource::ScriptCommand(command) => {
+                Some(compute_topo_order(&project_dirs_alpha, |project_dir| {
+                    Self::get_precs_from_script_command(command, &workspace, project_dir)
+                })?)
+            }
             DependencySource::None => None,
         };
+
         Ok(Self {
             workspace,
             project_dirs_alpha,
@@ -112,49 +88,37 @@ impl Plan {
         Ok(project_dirs_alpha)
     }
 
-    fn topo_sort_project_dirs<F>(project_dirs_alpha: &[PathBuf], f: F) -> Result<Vec<PathBuf>>
-    where
-        F: Fn(&Path) -> Result<Vec<String>>,
-    {
-        let mut ts = TopologicalSort::<String>::new();
-        for project_dir in project_dirs_alpha {
-            let deps = f(project_dir)?;
-
-            // TBD: Figure out how to store PathBuf/Path directly in TopologicalSort
-            let project_dirs_alpha_set = project_dirs_alpha.iter().collect::<HashSet<_>>();
-            for dep in &deps {
-                let p = Path::new(dep);
-                if !p.is_dir() {
-                    bail!("Project directory {} does not exist", path_to_str(p));
-                }
-
-                // TBD: Lots of copying happening here!
-                if !project_dirs_alpha_set.contains(&p.to_path_buf()) {
-                    bail!(
-                        "Project dependency {} is not a valid Git repository",
-                        path_to_str(p)
-                    );
-                }
-            }
-
-            // TBD: Don't convert to string etc.
-            ts.insert(String::from(path_to_str(project_dir)));
-
-            for dep in &deps {
-                // TBD: Don't convert to string etc.
-                ts.add_dependency(dep, path_to_str(project_dir))
-            }
+    fn get_precs_from_config_hash(
+        hash: &ConfigHash,
+        workspace: &Workspace,
+        project_dir: &Path,
+    ) -> Result<Vec<PathBuf>> {
+        let project_name = get_base_name(project_dir)
+            .ok_or_else(|| anyhow!("Invalid project directory {}", project_dir.display()))?;
+        match hash.get(project_name).and_then(|x| x.into_vec()) {
+            Some(v) => (0..v.len())
+                .map(|i| {
+                    v.get(i)
+                        .into_string()
+                        .ok_or_else(|| anyhow!("Invalid dependency for project {}", project_name))
+                        .map(|s| workspace.workspace_dir.join(s))
+                })
+                .collect::<Result<Vec<_>>>(),
+            None => Ok(Vec::new()),
         }
+    }
 
-        let mut project_dirs_topo = Vec::new();
-        while !ts.is_empty() {
-            let mut v = ts.pop_all();
-            v.sort();
-            for p in v {
-                project_dirs_topo.push(PathBuf::from(&p))
-            }
-        }
-
-        Ok(project_dirs_topo)
+    fn get_precs_from_script_command(
+        command: &ScriptCommand,
+        workspace: &Workspace,
+        project_dir: &Path,
+    ) -> Result<Vec<PathBuf>> {
+        let working_dir = WorkingDirectory::change(project_dir)?;
+        let deps: Vec<String> = command.eval(workspace)?;
+        drop(working_dir);
+        Ok(deps
+            .into_iter()
+            .map(|x| workspace.workspace_dir.join(x))
+            .collect::<Vec<_>>())
     }
 }

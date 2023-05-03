@@ -21,6 +21,7 @@
 //
 mod internal;
 mod plan;
+mod topo_order;
 
 pub use self::internal::Workspace;
 pub use self::plan::Plan;
