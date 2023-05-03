@@ -31,8 +31,6 @@ use std::path::{Path, PathBuf};
 
 /// A build plan for a workspace
 pub struct Plan {
-    /// Workspace
-    pub workspace: Workspace,
     /// Project directories in alphabetical order
     pub project_dirs_alpha: Vec<PathBuf>,
     /// Project directories in topological order
@@ -41,7 +39,7 @@ pub struct Plan {
 
 impl Plan {
     /// Create a plan from a workspace
-    pub fn resolve(workspace: Workspace) -> Result<Self> {
+    pub fn new(workspace: &Workspace) -> Result<Self> {
         let project_dirs_alpha = Self::get_project_dirs_alpha(
             &workspace.workspace_dir,
             &workspace.excluded_project_dirs,
@@ -50,19 +48,18 @@ impl Plan {
         let project_dirs_topo = match &workspace.dependency_source {
             DependencySource::Hash(hash) => {
                 Some(compute_topo_order(&project_dirs_alpha, |project_dir| {
-                    Self::get_precs_from_config_hash(hash, &workspace, project_dir)
+                    Self::get_precs_from_config_hash(hash, workspace, project_dir)
                 })?)
             }
             DependencySource::ScriptCommand(command) => {
                 Some(compute_topo_order(&project_dirs_alpha, |project_dir| {
-                    Self::get_precs_from_script_command(command, &workspace, project_dir)
+                    Self::get_precs_from_script_command(command, workspace, project_dir)
                 })?)
             }
             DependencySource::None => None,
         };
 
         Ok(Self {
-            workspace,
             project_dirs_alpha,
             project_dirs_topo,
         })

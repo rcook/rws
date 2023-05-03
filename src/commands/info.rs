@@ -21,19 +21,19 @@
 //
 use super::helpers::show_project_dirs;
 use crate::git::GitInfo;
-use crate::workspace::Plan;
+use crate::workspace::{Plan, Workspace};
 use anyhow::Result;
 use colored::Colorize;
 use joatmon::path_to_str;
 
-pub fn do_info(plan: &Plan, show_env: bool) -> Result<()> {
+pub fn do_info(workspace: &Workspace, plan: &Plan, show_env: bool) -> Result<()> {
     println!(
         "Workspace directory: {}",
-        path_to_str(&plan.workspace.workspace_dir).cyan()
+        path_to_str(&workspace.workspace_dir).cyan()
     );
     println!(
         "Workspace configuration file: {}",
-        plan.workspace
+        workspace
             .config_path
             .as_ref()
             .map(|x| path_to_str(x).cyan())

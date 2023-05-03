@@ -60,15 +60,15 @@ fn run() -> Result<()> {
             order,
             command,
             args,
-        } => do_git(workspace, &RunInfo::new(command, args, fail_fast, order))?,
-        Command::Info => do_info(&Plan::resolve(workspace)?, true)?,
+        } => do_git(&workspace, &RunInfo::new(command, args, fail_fast, order))?,
+        Command::Info => do_info(&workspace, &Plan::new(&workspace)?, true)?,
         Command::Init => do_init(&workspace)?,
         Command::Run {
             fail_fast,
             order,
             command,
             args,
-        } => do_run(workspace, &RunInfo::new(command, args, fail_fast, order))?,
+        } => do_run(&workspace, &RunInfo::new(command, args, fail_fast, order))?,
     }
     Ok(())
 }
