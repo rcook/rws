@@ -22,7 +22,7 @@
 use crate::order::DirectoryOrder;
 use clap::{Parser, Subcommand};
 use path_absolutize::Absolutize;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 const PACKAGE_NAME: &str = env!("CARGO_PKG_NAME");
 const PACKAGE_DESCRIPTION: &str = env!("CARGO_PKG_DESCRIPTION");
@@ -103,7 +103,7 @@ pub enum Command {
 }
 
 fn parse_absolute_path(s: &str) -> Result<PathBuf, String> {
-    PathBuf::from(s)
+    Path::new(s)
         .absolutize()
         .map_err(|_| String::from("invalid path"))
         .map(|x| x.to_path_buf())
