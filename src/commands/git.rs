@@ -20,15 +20,15 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::helpers::run_helper;
+use crate::command_info::CommandInfo;
 use crate::git::GitInfo;
-use crate::run_info::RunInfo;
 use crate::workspace::{Plan, Workspace};
 use anyhow::Result;
 use std::process::Command;
 
-pub fn do_git(workspace: &Workspace, run_info: &RunInfo) -> Result<()> {
+pub fn do_git(workspace: &Workspace, command_info: &CommandInfo) -> Result<()> {
     let git_info = GitInfo::from_environment()?;
-    run_helper(&Plan::new(workspace)?, run_info, |cmd| {
+    run_helper(&Plan::new(workspace)?, command_info, |cmd| {
         let mut command = Command::new(&git_info.executable_path);
         for c in cmd.iter() {
             command.arg(c);

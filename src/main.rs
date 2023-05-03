@@ -20,19 +20,19 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 mod args;
+mod command_info;
 mod commands;
 mod config;
 mod config_key;
 mod git;
 mod order;
-mod run_info;
 mod scripting;
 mod util;
 mod workspace;
 
 use crate::args::{Args, Command};
+use crate::command_info::CommandInfo;
 use crate::commands::{do_git, do_info, do_init, do_run};
-use crate::run_info::RunInfo;
 use crate::util::reset_terminal;
 use crate::workspace::Workspace;
 use anyhow::Result;
@@ -60,7 +60,10 @@ fn run() -> Result<()> {
             order,
             command,
             args,
-        } => do_git(&workspace, &RunInfo::new(command, args, fail_fast, order))?,
+        } => do_git(
+            &workspace,
+            &CommandInfo::new(command, args, fail_fast, order),
+        )?,
         Command::Info => do_info(&workspace, true)?,
         Command::Init => do_init(&workspace)?,
         Command::Run {
@@ -68,7 +71,10 @@ fn run() -> Result<()> {
             order,
             command,
             args,
-        } => do_run(&workspace, &RunInfo::new(command, args, fail_fast, order))?,
+        } => do_run(
+            &workspace,
+            &CommandInfo::new(command, args, fail_fast, order),
+        )?,
     }
     Ok(())
 }

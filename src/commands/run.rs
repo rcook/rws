@@ -20,13 +20,13 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::helpers::run_helper;
-use crate::run_info::RunInfo;
+use crate::command_info::CommandInfo;
 use crate::workspace::{Plan, Workspace};
 use anyhow::Result;
 use std::process::Command;
 
-pub fn do_run(workspace: &Workspace, run_info: &RunInfo) -> Result<()> {
-    run_helper(&Plan::new(workspace)?, run_info, |cmd| {
+pub fn do_run(workspace: &Workspace, command_info: &CommandInfo) -> Result<()> {
+    run_helper(&Plan::new(workspace)?, command_info, |cmd| {
         let mut command = Command::new(&cmd[0]);
         for c in cmd.iter().skip(1) {
             command.arg(c);

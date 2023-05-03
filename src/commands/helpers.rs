@@ -19,8 +19,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+use crate::command_info::CommandInfo;
 use crate::order::DirectoryOrder;
-use crate::run_info::RunInfo;
 use crate::util::reset_terminal;
 use crate::workspace::Plan;
 use anyhow::Result;
@@ -44,19 +44,22 @@ pub fn show_project_dirs(order: &str, project_dirs: &[PathBuf]) {
     }
 }
 
-pub fn run_helper<F>(plan: &Plan, run_info: &RunInfo, f: F) -> Result<()>
+pub fn run_helper<F>(plan: &Plan, command_info: &CommandInfo, f: F) -> Result<()>
 where
     F: Fn(&Vec<String>) -> Command,
 {
     let mut failure_count = 0;
-    let project_dirs = match (&run_info.order, &plan.project_dirs_topo) {
+    let project_dirs = match (&command_info.order, &plan.project_dirs_topo) {
         (DirectoryOrder::Topological, Some(ds)) => ds,
         _ => &plan.project_dirs_alpha,
     };
     for project_dir in project_dirs {
         let d = path_to_str(project_dir);
         println!("{}", d.cyan());
-        let exit_status = f(&run_info.cmd).current_dir(project_dir).spawn()?.wait()?;
+        let exit_status = f(&command_info.cmd)
+            .current_dir(project_dir)
+            .spawn()?
+            .wait()?;
         reset_terminal();
         if exit_status.success() {
             println!("{}", format!("Command succeeded in {}", d).green())
@@ -67,13 +70,13 @@ where
                     let m = format!("Command exited with status {} in {}", code, d);
                     println!(
                         "{}",
-                        if run_info.fail_fast {
+                        if command_info.fail_fast {
                             m.red()
                         } else {
                             m.yellow()
                         }
                     );
-                    if run_info.fail_fast {
+                    if command_info.fail_fast {
                         break;
                     }
                 }
@@ -82,7 +85,7 @@ where
         }
     }
 
-    if !run_info.fail_fast && failure_count > 0 {
+    if !command_info.fail_fast && failure_count > 0 {
         println!(
             "{}",
             format!("Command failed in {} project directories", failure_count).red()
