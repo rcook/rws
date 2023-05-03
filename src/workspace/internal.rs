@@ -87,38 +87,38 @@ pub struct Workspace {
 
 impl Workspace {
     /// Constructor
-    pub fn new(workspace_dir: Option<PathBuf>, config_path: Option<PathBuf>) -> Result<Self> {
+    pub fn new(workspace_dir: Option<&Path>, config_path: Option<&Path>) -> Result<Self> {
         match (workspace_dir, config_path) {
             (Some(d), Some(c)) => Self::known(d, Some(c)),
             (Some(d), None) => {
                 let p = d.join(WORKSPACE_CONFIG_FILE_NAME);
-                Self::known(d, if p.exists() { Some(p) } else { None })
+                Self::known(d, if p.exists() { Some(&p) } else { None })
             }
             (None, Some(c)) => Self::known(
-                c.parent()
-                    .ok_or_else(|| anyhow!("Invalid config path"))?
-                    .to_path_buf(),
+                c.to_path_buf()
+                    .parent()
+                    .ok_or_else(|| anyhow!("Invalid config path"))?,
                 Some(c),
             ),
             (None, None) => Self::find(&env::current_dir()?),
         }
     }
 
-    fn known(workspace_dir: PathBuf, config_path: Option<PathBuf>) -> Result<Self> {
+    fn known(workspace_dir: &Path, config_path: Option<&Path>) -> Result<Self> {
         match &config_path {
             Some(c) => match ConfigObject::read_config_file(c)? {
-                Some(config) => Self::read_config(workspace_dir, c.to_path_buf(), config),
+                Some(config) => Self::read_config(workspace_dir, c, config),
                 None => Ok(Self {
-                    workspace_dir,
-                    config_path,
+                    workspace_dir: workspace_dir.to_path_buf(),
+                    config_path: config_path.map(|x| x.to_path_buf()),
                     excluded_project_dirs: HashSet::new(),
                     dependency_source: DependencySource::None,
                     init_command: None,
                 }),
             },
             None => Ok(Self {
-                workspace_dir,
-                config_path,
+                workspace_dir: workspace_dir.to_path_buf(),
+                config_path: config_path.map(|x| x.to_path_buf()),
                 excluded_project_dirs: HashSet::new(),
                 dependency_source: DependencySource::None,
                 init_command: None,
@@ -132,7 +132,7 @@ impl Workspace {
             let config_path = p.join(WORKSPACE_CONFIG_FILE_NAME);
             if config_path.exists() {
                 match ConfigObject::read_config_file(&config_path)? {
-                    Some(config) => return Self::read_config(p.to_path_buf(), config_path, config),
+                    Some(config) => return Self::read_config(p, &config_path, config),
                     None => {
                         return Ok(Self {
                             workspace_dir: p.to_path_buf(),
@@ -160,8 +160,8 @@ impl Workspace {
     }
 
     fn read_config(
-        workspace_dir: PathBuf,
-        config_path: PathBuf,
+        workspace_dir: &Path,
+        config_path: &Path,
         config_object: ConfigObject,
     ) -> Result<Self> {
         use crate::config_key::*;
@@ -205,22 +205,22 @@ impl Workspace {
                 DEPENDENCY_COMMAND
             ),
             (Some(h), None) => Ok(Self {
-                workspace_dir,
-                config_path: Some(config_path),
+                workspace_dir: workspace_dir.to_path_buf(),
+                config_path: Some(config_path.to_path_buf()),
                 excluded_project_dirs,
                 dependency_source: DependencySource::Hash(h),
                 init_command,
             }),
             (None, Some(c)) => Ok(Self {
-                workspace_dir,
-                config_path: Some(config_path),
+                workspace_dir: workspace_dir.to_path_buf(),
+                config_path: Some(config_path.to_path_buf()),
                 excluded_project_dirs,
                 dependency_source: DependencySource::ScriptCommand(c),
                 init_command,
             }),
             (None, None) => Ok(Self {
-                workspace_dir,
-                config_path: Some(config_path),
+                workspace_dir: workspace_dir.to_path_buf(),
+                config_path: Some(config_path.to_path_buf()),
                 excluded_project_dirs,
                 dependency_source: DependencySource::None,
                 init_command,

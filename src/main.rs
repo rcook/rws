@@ -53,7 +53,7 @@ fn main() {
 fn run() -> Result<()> {
     reset_terminal();
     let args = Args::parse();
-    let workspace = Workspace::new(args.workspace_dir, args.config_path)?;
+    let workspace = Workspace::new(args.workspace_dir.as_deref(), args.config_path.as_deref())?;
     match args.command {
         Command::Git {
             fail_fast,
