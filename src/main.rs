@@ -34,7 +34,7 @@ use crate::args::{Args, Command};
 use crate::commands::{do_git, do_info, do_init, do_run};
 use crate::run_info::RunInfo;
 use crate::util::reset_terminal;
-use crate::workspace::{Plan, Workspace};
+use crate::workspace::Workspace;
 use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
@@ -61,7 +61,7 @@ fn run() -> Result<()> {
             command,
             args,
         } => do_git(&workspace, &RunInfo::new(command, args, fail_fast, order))?,
-        Command::Info => do_info(&workspace, &Plan::new(&workspace)?, true)?,
+        Command::Info => do_info(&workspace, true)?,
         Command::Init => do_init(&workspace)?,
         Command::Run {
             fail_fast,

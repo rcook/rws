@@ -26,7 +26,7 @@ use anyhow::Result;
 use colored::Colorize;
 use joatmon::path_to_str;
 
-pub fn do_info(workspace: &Workspace, plan: &Plan, show_env: bool) -> Result<()> {
+pub fn do_info(workspace: &Workspace, show_env: bool) -> Result<()> {
     println!(
         "Workspace directory: {}",
         path_to_str(&workspace.workspace_dir).cyan()
@@ -40,6 +40,7 @@ pub fn do_info(workspace: &Workspace, plan: &Plan, show_env: bool) -> Result<()>
             .unwrap_or_else(|| "(none)".red().italic())
     );
 
+    let plan = Plan::new(workspace)?;
     show_project_dirs("alpha", &plan.project_dirs_alpha);
     match &plan.project_dirs_topo {
         Some(ds) => show_project_dirs("topo", ds),
