@@ -20,9 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 mod javascript;
-mod lift;
 mod lua;
-mod prelude;
 mod script_command;
 mod variables;
 mod xml;

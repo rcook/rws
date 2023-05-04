@@ -20,7 +20,6 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::variables::Variables;
-use super::{javascript, lua};
 use crate::config::ConfigHash;
 use crate::workspace::Workspace;
 use anyhow::{anyhow, bail, Result};
@@ -30,9 +29,9 @@ mod config_value {
     pub const LUA: &str = "lua";
 }
 
-pub trait Evaluatable: lua::Evaluatable + javascript::Evaluatable {}
+pub trait Eval: super::lua::Eval + super::javascript::Eval {}
 
-impl<T: lua::Evaluatable + javascript::Evaluatable> Evaluatable for T {}
+impl<T: super::lua::Eval + super::javascript::Eval> Eval for T {}
 
 #[derive(Debug)]
 pub struct ScriptCommand {
@@ -109,16 +108,16 @@ impl ScriptCommand {
         })
     }
 
-    pub fn eval<T: Evaluatable>(&self, workspace: &Workspace) -> Result<T> {
+    pub fn eval<T: Eval>(&self, workspace: &Workspace) -> Result<T> {
         match self.language.as_str() {
-            config_value::JAVASCRIPT => javascript::eval(
+            config_value::JAVASCRIPT => super::javascript::eval(
                 workspace,
                 &self.preamble,
                 &self.script,
                 self.use_prelude,
                 &self.variables,
             ),
-            config_value::LUA => lua::eval(
+            config_value::LUA => super::lua::eval(
                 workspace,
                 &self.preamble,
                 &self.script,

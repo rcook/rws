@@ -19,23 +19,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use super::variables::Variables;
-use crate::workspace::Workspace;
-use anyhow::Result;
+mod eval;
+mod lift;
+mod prelude;
 
-pub trait Eval: Default {}
-
-impl<T: Default> Eval for T {}
-
-pub fn eval<T>(
-    _workspace: &Workspace,
-    _preamble: &str,
-    _script: &str,
-    _use_prelude: bool,
-    _variables: &Variables,
-) -> Result<T>
-where
-    T: Eval,
-{
-    unimplemented!("JavaScript not implemented yet!")
-}
+pub use self::eval::{eval, Eval};

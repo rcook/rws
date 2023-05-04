@@ -19,24 +19,27 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+use super::super::variables::Variables;
 use super::prelude;
-use super::variables::Variables;
 use crate::workspace::Workspace;
 use anyhow::Result;
 use joatmon::path_to_str;
 use rlua::prelude::{FromLuaMulti, Lua, LuaContext, LuaTable};
 
-pub trait Evaluatable: for<'lua> FromLuaMulti<'lua> {}
+pub trait Eval: for<'lua> FromLuaMulti<'lua> {}
 
-impl<T: for<'lua> FromLuaMulti<'lua>> Evaluatable for T {}
+impl<T: for<'lua> FromLuaMulti<'lua>> Eval for T {}
 
-pub fn eval<T: Evaluatable>(
+pub fn eval<T>(
     workspace: &Workspace,
     preamble: &str,
     script: &str,
     use_prelude: bool,
     variables: &Variables,
-) -> Result<T> {
+) -> Result<T>
+where
+    T: Eval,
+{
     Lua::new().context(|lua_ctx| {
         create_variables(lua_ctx, variables)?;
 
