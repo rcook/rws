@@ -20,6 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::super::variables::Variables;
+use super::lua_config::translate_config_to_lua;
 use super::prelude;
 use crate::workspace::Workspace;
 use anyhow::Result;
@@ -56,7 +57,7 @@ where
 fn create_variables(lua_ctx: LuaContext, variables: &Variables) -> Result<()> {
     let globals_table = lua_ctx.globals();
     for (name, config_object) in &variables.values {
-        let value = config_object.to_lua(lua_ctx)?;
+        let value = translate_config_to_lua(lua_ctx, config_object)?;
         let key = lua_ctx.create_string(&name)?;
         globals_table.set(key, value)?;
     }

@@ -21,14 +21,13 @@
 //
 use anyhow::{bail, Result};
 use joatmon::read_text_file;
-use rlua::{Context, Value};
 use std::path::Path;
 use yaml_rust::yaml::{Array, Hash, Yaml};
 use yaml_rust::YamlLoader;
 
 #[derive(Debug)]
 pub struct ConfigObject {
-    yaml: Yaml,
+    pub yaml: Yaml,
 }
 
 impl ConfigObject {
@@ -64,44 +63,6 @@ impl ConfigObject {
 
     fn new(yaml: Yaml) -> Self {
         Self { yaml }
-    }
-
-    pub fn to_lua<'a>(&self, lua_ctx: Context<'a>) -> Result<Value<'a>> {
-        Ok(Self::translate(lua_ctx, &self.yaml)?)
-    }
-
-    fn translate<'a>(lua_ctx: Context<'a>, yaml: &Yaml) -> rlua::Result<Value<'a>> {
-        match yaml {
-            Yaml::String(value) => lua_ctx.create_string(&value).map(Value::String),
-            Yaml::Array(value) => lua_ctx
-                .create_sequence_from(
-                    value
-                        .iter()
-                        .map(|x| Self::translate(lua_ctx, x))
-                        .collect::<rlua::Result<Vec<_>>>()?,
-                )
-                .map(Value::Table),
-            Yaml::Hash(value) => lua_ctx
-                .create_table_from(
-                    value
-                        .iter()
-                        .map(|(k, v)| {
-                            k.as_str()
-                                .ok_or_else(|| {
-                                    rlua::Error::RuntimeError(String::from("Invalid YAML"))
-                                })
-                                .and_then(|k_str| {
-                                    lua_ctx.create_string(k_str).and_then(|key| {
-                                        Self::translate(lua_ctx, v)
-                                            .map(|value| (Value::String(key), value))
-                                    })
-                                })
-                        })
-                        .collect::<rlua::Result<Vec<(Value, Value)>>>()?,
-                )
-                .map(Value::Table),
-            _ => unimplemented!("Unsupported YAML node type"),
-        }
     }
 }
 

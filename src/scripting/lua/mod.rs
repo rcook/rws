@@ -21,6 +21,7 @@
 //
 mod eval;
 mod lift;
+mod lua_config;
 mod prelude;
 
 pub use self::eval::{eval, Eval};
