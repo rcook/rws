@@ -27,10 +27,32 @@ use std::process::Command;
 
 pub fn do_run(workspace: &Workspace, command_info: &CommandInfo) -> Result<()> {
     run_helper(&Plan::new(workspace)?, command_info, |cmd| {
-        let mut command = Command::new(&cmd[0]);
-        for c in cmd.iter().skip(1) {
-            command.arg(c);
-        }
-        command
+        build_run_command(cmd)
     })
+}
+
+fn build_run_command(cmd: &[String]) -> Command {
+    let mut command = Command::new(&cmd[0]);
+    for c in cmd.iter().skip(1) {
+        command.arg(c);
+    }
+    command
+}
+
+#[cfg(test)]
+mod tests {
+    use super::build_run_command;
+
+    #[test]
+    fn build_run_command_basics() {
+        let cmd = vec![
+            String::from("one"),
+            String::from("two"),
+            String::from("three"),
+        ];
+        let command = build_run_command(&cmd);
+
+        assert_eq!("one", command.get_program());
+        assert_eq!(vec!["two", "three"], command.get_args().collect::<Vec<_>>());
+    }
 }

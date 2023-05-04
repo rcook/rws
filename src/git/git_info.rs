@@ -20,7 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use anyhow::{anyhow, bail, Result};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use which::{which, Error};
 
 #[derive(Debug)]
@@ -48,9 +48,13 @@ impl GitInfo {
 
         let version = parts[2].to_string();
 
-        Ok(GitInfo {
-            executable_path,
-            version,
-        })
+        Ok(Self::new(&executable_path, &version))
+    }
+
+    pub fn new(executable_path: &Path, version: &str) -> Self {
+        Self {
+            executable_path: executable_path.to_path_buf(),
+            version: String::from(version),
+        }
     }
 }

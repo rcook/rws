@@ -29,10 +29,38 @@ use std::process::Command;
 pub fn do_git(workspace: &Workspace, command_info: &CommandInfo) -> Result<()> {
     let git_info = GitInfo::from_environment()?;
     run_helper(&Plan::new(workspace)?, command_info, |cmd| {
-        let mut command = Command::new(&git_info.executable_path);
-        for c in cmd.iter() {
-            command.arg(c);
-        }
-        command
+        build_git_command(&git_info, cmd)
     })
+}
+
+fn build_git_command(git_info: &GitInfo, cmd: &[String]) -> Command {
+    let mut command = Command::new(&git_info.executable_path);
+    for c in cmd.iter() {
+        command.arg(c);
+    }
+    command
+}
+
+#[cfg(test)]
+mod tests {
+    use super::build_git_command;
+    use crate::git::GitInfo;
+    use std::path::Path;
+
+    #[test]
+    fn build_git_command_basics() {
+        let git_info = GitInfo::new(Path::new("GIT"), "VERSION");
+        let cmd = vec![
+            String::from("one"),
+            String::from("two"),
+            String::from("three"),
+        ];
+        let command = build_git_command(&git_info, &cmd);
+
+        assert_eq!("GIT", command.get_program());
+        assert_eq!(
+            vec!["one", "two", "three"],
+            command.get_args().collect::<Vec<_>>()
+        );
+    }
 }
