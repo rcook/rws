@@ -19,4 +19,40 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-pub type Object = serde_json::Value;
+use anyhow::{anyhow, Result};
+use serde_json::value::Index;
+use serde_json::Value;
+use std::fmt::Display;
+
+pub trait ObjectTrait {
+    fn get_required_bool<I>(&self, index: I) -> Result<bool>
+    where
+        I: Index + Display;
+    fn get_required_str<I>(&self, index: I) -> Result<&str>
+    where
+        I: Index + Display;
+}
+
+pub type Object = Value;
+
+impl ObjectTrait for Object {
+    fn get_required_bool<I>(&self, index: I) -> Result<bool>
+    where
+        I: Index + Display,
+    {
+        self.get(&index)
+            .ok_or(anyhow!("Required field {} missing", index))?
+            .as_bool()
+            .ok_or(anyhow!("Required field {} is not of expected type", index))
+    }
+
+    fn get_required_str<I>(&self, index: I) -> Result<&str>
+    where
+        I: Index + Display,
+    {
+        self.get(&index)
+            .ok_or(anyhow!("Required field {} missing", index))?
+            .as_str()
+            .ok_or(anyhow!("Required field {} is not of expected type", index))
+    }
+}

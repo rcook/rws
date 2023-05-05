@@ -19,15 +19,16 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+use super::super::prelude;
 use super::super::variables::Variables;
 use super::convert::from_lua;
 use super::lua_config::translate_config_to_lua;
-use super::prelude;
 use crate::workspace::Workspace;
 use anyhow::Result;
 use joatmon::path_to_str;
-use rlua::prelude::{FromLuaMulti, Lua, LuaContext, LuaTable};
-use rlua::ExternalResult;
+use rlua::prelude::{FromLuaMulti, Lua, LuaContext, LuaExternalResult, LuaTable, LuaValue};
+use rlua::Variadic;
+use std::path::Path;
 
 pub trait Eval: for<'lua> FromLuaMulti<'lua> {}
 
@@ -70,7 +71,10 @@ fn create_git(ctx: LuaContext) -> Result<LuaTable> {
 
     git.set(
         "clone",
-        ctx.create_function(|_, arg| prelude::git::clone(arg).to_lua_err())?,
+        ctx.create_function(|_ctx, value| -> rlua::Result<()> {
+            let obj = from_lua(value).to_lua_err()?;
+            prelude::git::clone(&obj).to_lua_err()
+        })?,
     )?;
 
     Ok(git)
@@ -89,61 +93,66 @@ fn load_prelude(ctx: LuaContext, workspace: &Workspace) -> Result<()> {
 
     prelude.set(
         "current_dir",
-        ctx.create_function(|_, ()| prelude::current_dir().to_lua_err())?,
+        ctx.create_function(|_ctx, ()| prelude::current_dir().to_lua_err())?,
     )?;
 
     prelude.set(
         "is_file",
-        ctx.create_function(|_, path| prelude::is_file(path).to_lua_err())?,
+        ctx.create_function(|_ctx, path: String| prelude::is_file(Path::new(&path)).to_lua_err())?,
     )?;
 
     prelude.set(
         "is_dir",
-        ctx.create_function(|_, path| prelude::is_dir(path).to_lua_err())?,
+        ctx.create_function(|_ctx, path: String| prelude::is_dir(Path::new(&path)).to_lua_err())?,
     )?;
 
     prelude.set(
         "copy_file",
-        ctx.create_function(|_, (from, to)| prelude::copy_file(from, to).to_lua_err())?,
+        ctx.create_function(|_ctx, (from, to): (String, String)| {
+            prelude::copy_file(Path::new(&from), Path::new(&to)).to_lua_err()
+        })?,
     )?;
 
     prelude.set(
         "copy_file_if_unchanged",
-        ctx.create_function(|_, (from, to)| {
-            prelude::copy_file_if_unchanged::main(from, to).to_lua_err()
+        ctx.create_function(|_ctx, (from, to): (String, String)| {
+            prelude::copy_file_if_unchanged::main(Path::new(&from), Path::new(&to)).to_lua_err()
         })?,
     )?;
 
     prelude.set(
         "read_file",
-        ctx.create_function(|_, path| prelude::read_file(path).to_lua_err())?,
+        ctx.create_function(|_ctx, path| prelude::read_file(path).to_lua_err())?,
     )?;
 
     prelude.set(
         "read_file_lines",
-        ctx.create_function(|_, path| prelude::read_file_lines(path).to_lua_err())?,
+        ctx.create_function(|_ctx, path| prelude::read_file_lines(path).to_lua_err())?,
     )?;
 
     prelude.set(
         "trim_string",
-        ctx.create_function(|_, str| prelude::trim_string(str).to_lua_err())?,
+        ctx.create_function(|_ctx, s| prelude::trim_string(s).to_lua_err())?,
     )?;
 
     prelude.set(
         "xpath",
-        ctx.create_function(|_, (namespaces_table, query, xml)| {
-            prelude::xpath::main(namespaces_table, query, xml).to_lua_err()
+        ctx.create_function(|_ctx, (namespaces, query, xml)| {
+            let namespace_objs_obj = from_lua(namespaces).to_lua_err()?;
+            prelude::xpath::main(&namespace_objs_obj, query, xml).to_lua_err()
         })?,
     )?;
 
     prelude.set(
         "git_clone",
-        ctx.create_function(|_, args| prelude::git_clone(args).to_lua_err())?,
+        ctx.create_function(|_ctx, args: Variadic<String>| {
+            prelude::git_clone(args.to_vec()).to_lua_err()
+        })?,
     )?;
 
     prelude.set(
         "percent_decode",
-        ctx.create_function(|_, str| prelude::percent_decode(str).to_lua_err())?,
+        ctx.create_function(|_ctx, s| prelude::percent_decode(s).to_lua_err())?,
     )?;
 
     prelude.set(
@@ -152,7 +161,7 @@ fn load_prelude(ctx: LuaContext, workspace: &Workspace) -> Result<()> {
             let obj = from_lua(value).to_lua_err()?;
             let s = prelude::inspect(&obj).to_lua_err()?;
             let lua_string = ctx.create_string(&s)?;
-            Ok(rlua::prelude::LuaValue::String(lua_string))
+            Ok(LuaValue::String(lua_string))
         })?,
     )?;
 

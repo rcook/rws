@@ -22,6 +22,7 @@
 mod javascript;
 mod lua;
 mod object;
+mod prelude;
 mod script_command;
 mod traits;
 mod variables;
