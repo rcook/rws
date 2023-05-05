@@ -26,7 +26,9 @@ use super::lua_config::translate_config_to_lua;
 use crate::workspace::Workspace;
 use anyhow::Result;
 use joatmon::path_to_str;
-use rlua::prelude::{FromLuaMulti, Lua, LuaContext, LuaExternalResult, LuaTable, LuaValue};
+use rlua::prelude::{
+    FromLuaMulti, Lua, LuaContext, LuaExternalResult, LuaResult, LuaTable, LuaValue,
+};
 use rlua::Variadic;
 use std::path::Path;
 
@@ -56,13 +58,24 @@ where
 }
 
 fn create_variables(ctx: LuaContext, variables: &Variables) -> Result<()> {
-    let globals_table = ctx.globals();
+    // Workspace variables go into global "namespace"...
+    let globals = ctx.globals();
+
+    // ... and are aliased under "vars"
+    let vars = ctx.create_table()?;
+
     for (name, config_object) in &variables.values {
+        // TBD: Figure out how to avoid create two of everything...
         let value = translate_config_to_lua(ctx, config_object)?;
         let key = ctx.create_string(&name)?;
-        globals_table.set(key, value)?;
+        globals.set(key, value)?;
+
+        let value = translate_config_to_lua(ctx, config_object)?;
+        let key = ctx.create_string(&name)?;
+        vars.set(key, value)?;
     }
 
+    ctx.globals().set("vars", vars)?;
     Ok(())
 }
 
@@ -71,7 +84,7 @@ fn create_git(ctx: LuaContext) -> Result<LuaTable> {
 
     git.set(
         "clone",
-        ctx.create_function(|_ctx, value| -> rlua::Result<()> {
+        ctx.create_function(|_ctx, value| -> LuaResult<()> {
             let obj = from_lua(value, true).to_lua_err()?;
             prelude::git::clone(&obj).to_lua_err()
         })?,
