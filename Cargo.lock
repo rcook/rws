@@ -915,6 +915,8 @@ dependencies = [
  "percent-encoding",
  "regex",
  "rlua",
+ "rstest",
+ "serde_json",
  "sxd-document",
  "sxd-xpath",
  "tempfile",

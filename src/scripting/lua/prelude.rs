@@ -158,3 +158,15 @@ pub fn git_clone(args: Variadic<String>) -> Result<()> {
 pub fn percent_decode(str: String) -> Result<String> {
     Ok(percent_decode_str(&str).decode_utf8_lossy().to_string())
 }
+
+pub fn inspect<'a>(
+    ctx: &rlua::Context<'a>,
+    value: rlua::prelude::LuaValue,
+) -> Result<rlua::prelude::LuaValue<'a>> {
+    use super::convert::from_lua;
+    use serde_json::to_string_pretty;
+    let json_value = from_lua(value)?;
+    let s = to_string_pretty(&json_value)?;
+    let lua_string = ctx.create_string(&s)?;
+    Ok(rlua::prelude::LuaValue::String(lua_string))
+}

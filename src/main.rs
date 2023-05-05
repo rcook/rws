@@ -44,7 +44,13 @@ fn main() {
     exit(match run() {
         Ok(_) => 0,
         Err(e) => {
-            println!("{}", format!("{}", e).bright_red());
+            // TBD: Figure out how to wrap Lua errors better!
+            match e.downcast_ref::<rlua::Error>() {
+                Some(lua_error) => {
+                    println!("{}", format!("Lua error: {:#?}", lua_error).red())
+                }
+                None => println!("{}", format!("{}", e).bright_red()),
+            }
             1
         }
     })

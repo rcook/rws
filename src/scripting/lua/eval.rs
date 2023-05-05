@@ -40,114 +40,117 @@ pub fn eval<T>(
     variables: &Variables,
 ) -> Result<T>
 where
-    T: Eval,
+    T: std::fmt::Debug + Eval,
 {
-    Lua::new().context(|lua_ctx| {
-        create_variables(lua_ctx, variables)?;
+    Lua::new().context(|ctx| {
+        create_variables(ctx, variables)?;
 
         if use_prelude {
-            load_prelude(lua_ctx, workspace)?;
+            load_prelude(ctx, workspace)?;
         }
 
-        Ok(lua_ctx
-            .load(&(preamble.to_string() + "\n\n" + script))
-            .eval()?)
+        Ok(ctx.load(&(preamble.to_string() + "\n\n" + script)).eval()?)
     })
 }
 
-fn create_variables(lua_ctx: LuaContext, variables: &Variables) -> Result<()> {
-    let globals_table = lua_ctx.globals();
+fn create_variables(ctx: LuaContext, variables: &Variables) -> Result<()> {
+    let globals_table = ctx.globals();
     for (name, config_object) in &variables.values {
-        let value = translate_config_to_lua(lua_ctx, config_object)?;
-        let key = lua_ctx.create_string(&name)?;
+        let value = translate_config_to_lua(ctx, config_object)?;
+        let key = ctx.create_string(&name)?;
         globals_table.set(key, value)?;
     }
 
     Ok(())
 }
 
-fn create_git(lua_ctx: LuaContext) -> Result<LuaTable> {
-    let git = lua_ctx.create_table()?;
+fn create_git(ctx: LuaContext) -> Result<LuaTable> {
+    let git = ctx.create_table()?;
 
     git.set(
         "clone",
-        lua_ctx.create_function(|_, arg| prelude::git::clone(arg).to_lua())?,
+        ctx.create_function(|_, arg| prelude::git::clone(arg).to_lua())?,
     )?;
 
     Ok(git)
 }
 
-fn load_prelude(lua_ctx: LuaContext, workspace: &Workspace) -> Result<()> {
-    let prelude = lua_ctx.create_table()?;
+fn load_prelude(ctx: LuaContext, workspace: &Workspace) -> Result<()> {
+    let prelude = ctx.create_table()?;
 
     // Nested objects
-    prelude.set("git", create_git(lua_ctx)?)?;
+    prelude.set("git", create_git(ctx)?)?;
 
     prelude.set(
         "workspace_dir",
-        lua_ctx.create_string(path_to_str(&workspace.workspace_dir))?,
+        ctx.create_string(path_to_str(&workspace.workspace_dir))?,
     )?;
 
     prelude.set(
         "current_dir",
-        lua_ctx.create_function(|_, ()| prelude::current_dir().to_lua())?,
+        ctx.create_function(|_, ()| prelude::current_dir().to_lua())?,
     )?;
 
     prelude.set(
         "is_file",
-        lua_ctx.create_function(|_, path| prelude::is_file(path).to_lua())?,
+        ctx.create_function(|_, path| prelude::is_file(path).to_lua())?,
     )?;
 
     prelude.set(
         "is_dir",
-        lua_ctx.create_function(|_, path| prelude::is_dir(path).to_lua())?,
+        ctx.create_function(|_, path| prelude::is_dir(path).to_lua())?,
     )?;
 
     prelude.set(
         "copy_file",
-        lua_ctx.create_function(|_, (from, to)| prelude::copy_file(from, to).to_lua())?,
+        ctx.create_function(|_, (from, to)| prelude::copy_file(from, to).to_lua())?,
     )?;
 
     prelude.set(
         "copy_file_if_unchanged",
-        lua_ctx.create_function(|_, (from, to)| {
+        ctx.create_function(|_, (from, to)| {
             prelude::copy_file_if_unchanged::main(from, to).to_lua()
         })?,
     )?;
 
     prelude.set(
         "read_file",
-        lua_ctx.create_function(|_, path| prelude::read_file(path).to_lua())?,
+        ctx.create_function(|_, path| prelude::read_file(path).to_lua())?,
     )?;
 
     prelude.set(
         "read_file_lines",
-        lua_ctx.create_function(|_, path| prelude::read_file_lines(path).to_lua())?,
+        ctx.create_function(|_, path| prelude::read_file_lines(path).to_lua())?,
     )?;
 
     prelude.set(
         "trim_string",
-        lua_ctx.create_function(|_, str| prelude::trim_string(str).to_lua())?,
+        ctx.create_function(|_, str| prelude::trim_string(str).to_lua())?,
     )?;
 
     prelude.set(
         "xpath",
-        lua_ctx.create_function(|_, (namespaces_table, query, xml)| {
+        ctx.create_function(|_, (namespaces_table, query, xml)| {
             prelude::xpath::main(namespaces_table, query, xml).to_lua()
         })?,
     )?;
 
     prelude.set(
         "git_clone",
-        lua_ctx.create_function(|_, args| prelude::git_clone(args).to_lua())?,
+        ctx.create_function(|_, args| prelude::git_clone(args).to_lua())?,
     )?;
 
     prelude.set(
         "percent_decode",
-        lua_ctx.create_function(|_, str| prelude::percent_decode(str).to_lua())?,
+        ctx.create_function(|_, str| prelude::percent_decode(str).to_lua())?,
     )?;
 
-    lua_ctx.globals().set("prelude", prelude)?;
+    prelude.set(
+        "inspect",
+        ctx.create_function(|ctx, value| prelude::inspect(&ctx, value).to_lua())?,
+    )?;
+
+    ctx.globals().set("prelude", prelude)?;
 
     Ok(())
 }

@@ -105,7 +105,10 @@ impl ScriptCommand {
         })
     }
 
-    pub fn eval<T: Eval>(&self, workspace: &Workspace) -> Result<T> {
+    pub fn eval<T: Eval>(&self, workspace: &Workspace) -> Result<T>
+    where
+        T: std::fmt::Debug,
+    {
         match self.language.as_str() {
             config_value::JAVASCRIPT => super::javascript::eval(
                 workspace,
