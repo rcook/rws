@@ -20,7 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use crate::config::ConfigObject;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use rlua::{Context, Value};
 use yaml_rust::yaml::Yaml;
 
@@ -28,37 +28,40 @@ pub fn translate_config_to_lua<'a>(
     lua_ctx: Context<'a>,
     config_object: &ConfigObject,
 ) -> Result<Value<'a>> {
-    Ok(translate_helper(lua_ctx, &config_object.yaml)?)
+    translate_helper(lua_ctx, &config_object.yaml)
 }
 
-fn translate_helper<'a>(lua_ctx: Context<'a>, yaml: &Yaml) -> rlua::Result<Value<'a>> {
+fn translate_helper<'a>(lua_ctx: Context<'a>, yaml: &Yaml) -> Result<Value<'a>> {
     match yaml {
-        Yaml::String(value) => lua_ctx.create_string(&value).map(Value::String),
-        Yaml::Array(value) => lua_ctx
+        Yaml::String(value) => Ok(lua_ctx.create_string(&value).map(Value::String)?),
+        Yaml::Array(value) => Ok(lua_ctx
             .create_sequence_from(
                 value
                     .iter()
                     .map(|x| translate_helper(lua_ctx, x))
-                    .collect::<rlua::Result<Vec<_>>>()?,
+                    .collect::<Result<Vec<_>>>()?,
             )
-            .map(Value::Table),
-        Yaml::Hash(value) => lua_ctx
+            .map(Value::Table)?),
+        Yaml::Hash(value) => Ok(lua_ctx
             .create_table_from(
                 value
                     .iter()
                     .map(|(k, v)| {
                         k.as_str()
-                            .ok_or_else(|| rlua::Error::RuntimeError(String::from("Invalid YAML")))
+                            .ok_or_else(|| anyhow!("Invalid YAML"))
                             .and_then(|k_str| {
-                                lua_ctx.create_string(k_str).and_then(|key| {
-                                    translate_helper(lua_ctx, v)
-                                        .map(|value| (Value::String(key), value))
-                                })
+                                lua_ctx
+                                    .create_string(k_str)
+                                    .map_err(|e| anyhow!(e))
+                                    .and_then(|key| {
+                                        translate_helper(lua_ctx, v)
+                                            .map(|value| (Value::String(key), value))
+                                    })
                             })
                     })
-                    .collect::<rlua::Result<Vec<(Value, Value)>>>()?,
+                    .collect::<Result<Vec<(Value, Value)>>>()?,
             )
-            .map(Value::Table),
+            .map(Value::Table)?),
         _ => unimplemented!("Unsupported YAML node type"),
     }
 }
