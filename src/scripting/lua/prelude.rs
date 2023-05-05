@@ -19,12 +19,10 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use super::lift::lift_result;
 use crate::git::GitInfo;
 use anyhow::Result;
 use joatmon::{open_file, path_to_str, read_text_file};
 use percent_encoding::percent_decode_str;
-use rlua::prelude::LuaResult;
 use rlua::Variadic;
 use std::fs::copy;
 use std::io::{BufRead, BufReader};
@@ -32,20 +30,15 @@ use std::path::Path;
 use std::process::Command;
 
 pub mod git {
-    use super::super::lift::lift_result;
     use crate::git::clone_recursive;
     use anyhow::{anyhow, Result};
     use joat_git_url::GitUrl;
     use joat_path::absolute_path;
-    use rlua::prelude::{LuaResult, LuaTable};
+    use rlua::prelude::LuaTable;
     use std::env::current_dir;
     use std::path::Path;
 
-    pub fn clone(arg: LuaTable) -> LuaResult<()> {
-        lift_result(inner(arg))
-    }
-
-    fn inner(arg: LuaTable) -> Result<()> {
+    pub fn clone(arg: LuaTable) -> Result<()> {
         let recurse = arg.get::<_, bool>("recurse")?;
         let url_str = arg.get::<_, String>("url")?;
         let url = GitUrl::parse(&url_str).ok_or_else(|| anyhow!("Could not parse Git URL"))?;
@@ -72,49 +65,31 @@ pub mod git {
     }
 }
 
-pub fn current_dir() -> LuaResult<String> {
-    fn inner() -> Result<String> {
-        Ok(path_to_str(&std::env::current_dir()?).to_string())
-    }
-    lift_result(inner())
+pub fn current_dir() -> Result<String> {
+    Ok(path_to_str(&std::env::current_dir()?).to_string())
 }
 
-pub fn is_file(path: String) -> LuaResult<bool> {
-    fn inner(path: String) -> Result<bool> {
-        Ok(Path::new(&path).is_file())
-    }
-    lift_result(inner(path))
+pub fn is_file(path: String) -> Result<bool> {
+    Ok(Path::new(&path).is_file())
 }
 
-pub fn is_dir(path: String) -> LuaResult<bool> {
-    fn inner(path: String) -> Result<bool> {
-        Ok(Path::new(&path).is_dir())
-    }
-    lift_result(inner(path))
+pub fn is_dir(path: String) -> Result<bool> {
+    Ok(Path::new(&path).is_dir())
 }
 
-pub fn copy_file(from: String, to: String) -> LuaResult<()> {
-    fn inner(from: String, to: String) -> Result<()> {
-        _ = copy(from, to)?;
-        Ok(())
-    }
-    lift_result(inner(from, to))
+pub fn copy_file(from: String, to: String) -> Result<()> {
+    _ = copy(from, to)?;
+    Ok(())
 }
 
 pub mod copy_file_if_unchanged {
-    use super::lift_result;
     use anyhow::Result;
     use joatmon::open_file;
-    use rlua::prelude::LuaResult;
     use std::fs::copy;
     use std::io::Read;
     use std::path::Path;
 
-    pub fn main(from: String, to: String) -> LuaResult<bool> {
-        lift_result(main_inner(from, to))
-    }
-
-    fn main_inner(from: String, to: String) -> Result<bool> {
+    pub fn main(from: String, to: String) -> Result<bool> {
         let from_path = Path::new(&from);
         let to_path = Path::new(&to);
         let perform_copy = !to_path.is_file() || read_bytes(from_path)? != read_bytes(to_path)?;
@@ -132,39 +107,25 @@ pub mod copy_file_if_unchanged {
     }
 }
 
-pub fn read_file(path: String) -> LuaResult<String> {
-    fn inner(path: String) -> Result<String> {
-        Ok(read_text_file(path)?)
-    }
-    lift_result(inner(path))
+pub fn read_file(path: String) -> Result<String> {
+    Ok(read_text_file(path)?)
 }
 
-pub fn read_file_lines(path: String) -> LuaResult<Vec<String>> {
-    fn inner(path: String) -> Result<Vec<String>> {
-        let f = open_file(path)?;
-        Ok(BufReader::new(f).lines().collect::<std::io::Result<_>>()?)
-    }
-    lift_result(inner(path))
+pub fn read_file_lines(path: String) -> Result<Vec<String>> {
+    let f = open_file(path)?;
+    Ok(BufReader::new(f).lines().collect::<std::io::Result<_>>()?)
 }
 
-pub fn trim_string(str: String) -> LuaResult<String> {
-    fn inner(str: String) -> Result<String> {
-        Ok(str.trim().to_string())
-    }
-    lift_result(inner(str))
+pub fn trim_string(str: String) -> Result<String> {
+    Ok(str.trim().to_string())
 }
 
 pub mod xpath {
-    use super::lift_result;
     use crate::scripting::xml::{query_xpath_as_string, XmlNamespace};
     use anyhow::Result;
-    use rlua::prelude::{LuaResult, LuaTable};
+    use rlua::prelude::LuaTable;
 
-    pub fn main(namespaces_table: LuaTable, query: String, xml: String) -> LuaResult<String> {
-        lift_result(inner(namespaces_table, query, xml))
-    }
-
-    fn inner(namespaces_table: LuaTable, query: String, xml: String) -> Result<String> {
+    pub fn main(namespaces_table: LuaTable, query: String, xml: String) -> Result<String> {
         let namespaces = decode_namespaces(namespaces_table)?;
         query_xpath_as_string(&namespaces, &query, &xml)
     }
@@ -181,22 +142,19 @@ pub mod xpath {
     }
 }
 
-pub fn git_clone(args: Variadic<String>) -> LuaResult<()> {
-    fn inner(args: Variadic<String>) -> Result<()> {
-        let git_info = GitInfo::from_environment()?;
-        let mut git_command = Command::new(git_info.executable_path);
-        git_command.arg("clone");
-        for arg in args {
-            git_command.arg(arg);
-        }
-
-        let mut child: std::process::Child = git_command.spawn()?;
-        _ = child.wait()?;
-        Ok(())
+pub fn git_clone(args: Variadic<String>) -> Result<()> {
+    let git_info = GitInfo::from_environment()?;
+    let mut git_command = Command::new(git_info.executable_path);
+    git_command.arg("clone");
+    for arg in args {
+        git_command.arg(arg);
     }
-    lift_result(inner(args))
+
+    let mut child: std::process::Child = git_command.spawn()?;
+    _ = child.wait()?;
+    Ok(())
 }
 
-pub fn percent_decode(str: String) -> LuaResult<String> {
+pub fn percent_decode(str: String) -> Result<String> {
     Ok(percent_decode_str(&str).decode_utf8_lossy().to_string())
 }

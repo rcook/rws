@@ -19,7 +19,6 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use anyhow::Result;
 use rlua::prelude::LuaResult;
 use std::sync::Arc;
 
@@ -34,6 +33,12 @@ impl std::fmt::Display for WrappedAnyhowError {
     }
 }
 
-pub fn lift_result<T>(result: Result<T>) -> LuaResult<T> {
-    result.map_err(|e| rlua::Error::ExternalError(Arc::new(WrappedAnyhowError(e))))
+pub trait LiftToLua<T> {
+    fn to_lua(self) -> LuaResult<T>;
+}
+
+impl<T> LiftToLua<T> for anyhow::Result<T> {
+    fn to_lua(self) -> LuaResult<T> {
+        self.map_err(|e| rlua::Error::ExternalError(Arc::new(WrappedAnyhowError(e))))
+    }
 }
