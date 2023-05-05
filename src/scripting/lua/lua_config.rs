@@ -21,28 +21,28 @@
 //
 use crate::config::ConfigObject;
 use anyhow::{anyhow, Result};
-use rlua::{Context, Value};
+use rlua::prelude::{LuaContext, LuaValue};
 use yaml_rust::yaml::Yaml;
 
 pub fn translate_config_to_lua<'a>(
-    lua_ctx: Context<'a>,
+    ctx: LuaContext<'a>,
     config_object: &ConfigObject,
-) -> Result<Value<'a>> {
-    translate_helper(lua_ctx, &config_object.yaml)
+) -> Result<LuaValue<'a>> {
+    translate_helper(ctx, &config_object.yaml)
 }
 
-fn translate_helper<'a>(lua_ctx: Context<'a>, yaml: &Yaml) -> Result<Value<'a>> {
+fn translate_helper<'a>(ctx: LuaContext<'a>, yaml: &Yaml) -> Result<LuaValue<'a>> {
     match yaml {
-        Yaml::String(value) => Ok(lua_ctx.create_string(&value).map(Value::String)?),
-        Yaml::Array(value) => Ok(lua_ctx
+        Yaml::String(value) => Ok(ctx.create_string(&value).map(LuaValue::String)?),
+        Yaml::Array(value) => Ok(ctx
             .create_sequence_from(
                 value
                     .iter()
-                    .map(|x| translate_helper(lua_ctx, x))
+                    .map(|x| translate_helper(ctx, x))
                     .collect::<Result<Vec<_>>>()?,
             )
-            .map(Value::Table)?),
-        Yaml::Hash(value) => Ok(lua_ctx
+            .map(LuaValue::Table)?),
+        Yaml::Hash(value) => Ok(ctx
             .create_table_from(
                 value
                     .iter()
@@ -50,18 +50,17 @@ fn translate_helper<'a>(lua_ctx: Context<'a>, yaml: &Yaml) -> Result<Value<'a>> 
                         k.as_str()
                             .ok_or_else(|| anyhow!("Invalid YAML"))
                             .and_then(|k_str| {
-                                lua_ctx
-                                    .create_string(k_str)
+                                ctx.create_string(k_str)
                                     .map_err(|e| anyhow!(e))
                                     .and_then(|key| {
-                                        translate_helper(lua_ctx, v)
-                                            .map(|value| (Value::String(key), value))
+                                        translate_helper(ctx, v)
+                                            .map(|value| (LuaValue::String(key), value))
                                     })
                             })
                     })
-                    .collect::<Result<Vec<(Value, Value)>>>()?,
+                    .collect::<Result<Vec<(LuaValue, LuaValue)>>>()?,
             )
-            .map(Value::Table)?),
+            .map(LuaValue::Table)?),
         _ => unimplemented!("Unsupported YAML node type"),
     }
 }
@@ -104,10 +103,10 @@ return inspect(INPUT)
         let mut docs = YamlLoader::load_from_str(yaml_text)?;
         assert_eq!(1, docs.len());
         let yaml = docs.remove(0);
-        Lua::new().context(|lua_ctx| -> Result<String> {
-            let value = translate_helper(lua_ctx, &yaml)?;
-            lua_ctx.globals().set("INPUT", value)?;
-            Ok(lua_ctx.load(inspect_script).eval()?)
+        Lua::new().context(|ctx| -> Result<String> {
+            let value = translate_helper(ctx, &yaml)?;
+            ctx.globals().set("INPUT", value)?;
+            Ok(ctx.load(inspect_script).eval()?)
         })
     }
 

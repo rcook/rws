@@ -38,6 +38,7 @@ use crate::workspace::Workspace;
 use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
+use rlua::prelude::LuaError;
 use std::process::exit;
 
 fn main() {
@@ -45,7 +46,7 @@ fn main() {
         Ok(_) => 0,
         Err(e) => {
             // TBD: Figure out how to wrap Lua errors better!
-            match e.downcast_ref::<rlua::Error>() {
+            match e.downcast_ref::<LuaError>() {
                 Some(lua_error) => {
                     println!("{}", format!("Lua error: {:#?}", lua_error).red())
                 }

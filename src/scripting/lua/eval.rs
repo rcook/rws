@@ -29,7 +29,7 @@ use joatmon::path_to_str;
 use rlua::prelude::{
     FromLuaMulti, Lua, LuaContext, LuaExternalResult, LuaResult, LuaTable, LuaValue,
 };
-use rlua::Variadic;
+use rlua::Variadic as LuaVariadic;
 use std::path::Path;
 
 pub trait Eval: for<'lua> FromLuaMulti<'lua> {}
@@ -158,7 +158,7 @@ fn load_prelude(ctx: LuaContext, workspace: &Workspace) -> Result<()> {
 
     prelude.set(
         "git_clone",
-        ctx.create_function(|_ctx, args: Variadic<String>| {
+        ctx.create_function(|_ctx, args: LuaVariadic<String>| {
             prelude::git_clone(args.to_vec()).to_lua_err()
         })?,
     )?;

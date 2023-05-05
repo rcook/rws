@@ -126,7 +126,7 @@ mod tests {
     use super::{lua_to_object, object_to_lua};
     use crate::scripting::object::Object;
     use anyhow::Result;
-    use rlua::Lua;
+    use rlua::prelude::Lua;
     use rstest::rstest;
     use serde_json::json;
     use serde_json::Value::*;
