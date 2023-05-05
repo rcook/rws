@@ -19,6 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+use super::super::object::Object;
 use crate::git::GitInfo;
 use anyhow::Result;
 use joatmon::{open_file, path_to_str, read_text_file};
@@ -159,14 +160,6 @@ pub fn percent_decode(str: String) -> Result<String> {
     Ok(percent_decode_str(&str).decode_utf8_lossy().to_string())
 }
 
-pub fn inspect<'a>(
-    ctx: &rlua::Context<'a>,
-    value: rlua::prelude::LuaValue,
-) -> Result<rlua::prelude::LuaValue<'a>> {
-    use super::convert::from_lua;
-    use serde_json::to_string_pretty;
-    let json_value = from_lua(value)?;
-    let s = to_string_pretty(&json_value)?;
-    let lua_string = ctx.create_string(&s)?;
-    Ok(rlua::prelude::LuaValue::String(lua_string))
+pub fn inspect(obj: &Object) -> Result<String> {
+    Ok(serde_json::to_string_pretty(obj)?)
 }

@@ -20,6 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::super::variables::Variables;
+use super::convert::from_lua;
 use super::lua_config::translate_config_to_lua;
 use super::prelude;
 use crate::workspace::Workspace;
@@ -147,7 +148,12 @@ fn load_prelude(ctx: LuaContext, workspace: &Workspace) -> Result<()> {
 
     prelude.set(
         "inspect",
-        ctx.create_function(|ctx, value| prelude::inspect(&ctx, value).to_lua_err())?,
+        ctx.create_function(|ctx, value| {
+            let obj = from_lua(value).to_lua_err()?;
+            let s = prelude::inspect(&obj).to_lua_err()?;
+            let lua_string = ctx.create_string(&s)?;
+            Ok(rlua::prelude::LuaValue::String(lua_string))
+        })?,
     )?;
 
     ctx.globals().set("prelude", prelude)?;
