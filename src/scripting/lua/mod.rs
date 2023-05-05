@@ -21,7 +21,6 @@
 //
 mod convert;
 mod eval;
-mod lift;
 mod lua_config;
 mod prelude;
 

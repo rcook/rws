@@ -20,13 +20,13 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::super::variables::Variables;
-use super::lift::LiftToLua;
 use super::lua_config::translate_config_to_lua;
 use super::prelude;
 use crate::workspace::Workspace;
 use anyhow::Result;
 use joatmon::path_to_str;
 use rlua::prelude::{FromLuaMulti, Lua, LuaContext, LuaTable};
+use rlua::ExternalResult;
 
 pub trait Eval: for<'lua> FromLuaMulti<'lua> {}
 
@@ -69,7 +69,7 @@ fn create_git(ctx: LuaContext) -> Result<LuaTable> {
 
     git.set(
         "clone",
-        ctx.create_function(|_, arg| prelude::git::clone(arg).to_lua())?,
+        ctx.create_function(|_, arg| prelude::git::clone(arg).to_lua_err())?,
     )?;
 
     Ok(git)
@@ -88,66 +88,66 @@ fn load_prelude(ctx: LuaContext, workspace: &Workspace) -> Result<()> {
 
     prelude.set(
         "current_dir",
-        ctx.create_function(|_, ()| prelude::current_dir().to_lua())?,
+        ctx.create_function(|_, ()| prelude::current_dir().to_lua_err())?,
     )?;
 
     prelude.set(
         "is_file",
-        ctx.create_function(|_, path| prelude::is_file(path).to_lua())?,
+        ctx.create_function(|_, path| prelude::is_file(path).to_lua_err())?,
     )?;
 
     prelude.set(
         "is_dir",
-        ctx.create_function(|_, path| prelude::is_dir(path).to_lua())?,
+        ctx.create_function(|_, path| prelude::is_dir(path).to_lua_err())?,
     )?;
 
     prelude.set(
         "copy_file",
-        ctx.create_function(|_, (from, to)| prelude::copy_file(from, to).to_lua())?,
+        ctx.create_function(|_, (from, to)| prelude::copy_file(from, to).to_lua_err())?,
     )?;
 
     prelude.set(
         "copy_file_if_unchanged",
         ctx.create_function(|_, (from, to)| {
-            prelude::copy_file_if_unchanged::main(from, to).to_lua()
+            prelude::copy_file_if_unchanged::main(from, to).to_lua_err()
         })?,
     )?;
 
     prelude.set(
         "read_file",
-        ctx.create_function(|_, path| prelude::read_file(path).to_lua())?,
+        ctx.create_function(|_, path| prelude::read_file(path).to_lua_err())?,
     )?;
 
     prelude.set(
         "read_file_lines",
-        ctx.create_function(|_, path| prelude::read_file_lines(path).to_lua())?,
+        ctx.create_function(|_, path| prelude::read_file_lines(path).to_lua_err())?,
     )?;
 
     prelude.set(
         "trim_string",
-        ctx.create_function(|_, str| prelude::trim_string(str).to_lua())?,
+        ctx.create_function(|_, str| prelude::trim_string(str).to_lua_err())?,
     )?;
 
     prelude.set(
         "xpath",
         ctx.create_function(|_, (namespaces_table, query, xml)| {
-            prelude::xpath::main(namespaces_table, query, xml).to_lua()
+            prelude::xpath::main(namespaces_table, query, xml).to_lua_err()
         })?,
     )?;
 
     prelude.set(
         "git_clone",
-        ctx.create_function(|_, args| prelude::git_clone(args).to_lua())?,
+        ctx.create_function(|_, args| prelude::git_clone(args).to_lua_err())?,
     )?;
 
     prelude.set(
         "percent_decode",
-        ctx.create_function(|_, str| prelude::percent_decode(str).to_lua())?,
+        ctx.create_function(|_, str| prelude::percent_decode(str).to_lua_err())?,
     )?;
 
     prelude.set(
         "inspect",
-        ctx.create_function(|ctx, value| prelude::inspect(&ctx, value).to_lua())?,
+        ctx.create_function(|ctx, value| prelude::inspect(&ctx, value).to_lua_err())?,
     )?;
 
     ctx.globals().set("prelude", prelude)?;
