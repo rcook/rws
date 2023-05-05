@@ -27,7 +27,7 @@ use serde_json::{Map, Number, Value};
 use std::string::String as StdString;
 
 #[allow(unused)]
-pub fn to_lua<'a>(ctx: &LuaContext<'a>, obj: &Object) -> Result<LuaValue<'a>> {
+pub fn object_to_lua<'a>(ctx: &LuaContext<'a>, obj: &Object) -> Result<LuaValue<'a>> {
     use serde_json::Value::*;
 
     Ok(match obj {
@@ -49,7 +49,7 @@ pub fn to_lua<'a>(ctx: &LuaContext<'a>, obj: &Object) -> Result<LuaValue<'a>> {
             ctx.create_sequence_from(
                 values
                     .iter()
-                    .map(|value| to_lua(ctx, value))
+                    .map(|value| object_to_lua(ctx, value))
                     .collect::<Result<Vec<_>>>()?,
             )?,
         ),
@@ -60,7 +60,7 @@ pub fn to_lua<'a>(ctx: &LuaContext<'a>, obj: &Object) -> Result<LuaValue<'a>> {
                         ctx.create_string(k)
                             .map_err(|e| anyhow!(e))
                             .and_then(|key| {
-                                to_lua(ctx, v).map(|value| (LuaValue::String(key), value))
+                                object_to_lua(ctx, v).map(|value| (LuaValue::String(key), value))
                             })
                     })
                     .collect::<Result<Vec<(LuaValue, LuaValue)>>>()?,
@@ -69,7 +69,7 @@ pub fn to_lua<'a>(ctx: &LuaContext<'a>, obj: &Object) -> Result<LuaValue<'a>> {
     })
 }
 
-pub fn from_lua(value: LuaValue, sub: bool) -> Result<Object> {
+pub fn lua_to_object(value: LuaValue, sub: bool) -> Result<Object> {
     Ok(match value {
         Nil => Value::Null,
         Boolean(value) => Value::Bool(value),
@@ -83,7 +83,7 @@ pub fn from_lua(value: LuaValue, sub: bool) -> Result<Object> {
                 .ok_or(anyhow!("Cannot convert {} to JSON numeric value", value))?,
         ),
         String(value) => Value::String(StdString::from(value.to_str()?)),
-        Table(table) => from_lua_table(table, sub)?,
+        Table(table) => lua_table_to_object(table, sub)?,
         Function(_value) => match sub {
             true => Value::String(StdString::from("(FUNCTION)")),
             false => bail!("cannot convert Function"),
@@ -103,19 +103,19 @@ pub fn from_lua(value: LuaValue, sub: bool) -> Result<Object> {
     })
 }
 
-fn from_lua_table(table: LuaTable, sub: bool) -> Result<Object> {
+fn lua_table_to_object(table: LuaTable, sub: bool) -> Result<Object> {
     if table.raw_len() == 0 {
         let mut map = Map::new();
         for p in table.pairs::<StdString, LuaValue>() {
             let (key, value) = p?;
-            map.insert(key, from_lua(value, sub)?);
+            map.insert(key, lua_to_object(value, sub)?);
         }
         Ok(Value::Object(map))
     } else {
         let mut values = Vec::new();
         for entry in table.sequence_values::<LuaValue>() {
             let value = entry?;
-            values.push(from_lua(value, sub)?);
+            values.push(lua_to_object(value, sub)?);
         }
         Ok(Value::Array(values))
     }
@@ -123,7 +123,7 @@ fn from_lua_table(table: LuaTable, sub: bool) -> Result<Object> {
 
 #[cfg(test)]
 mod tests {
-    use super::{from_lua, to_lua};
+    use super::{lua_to_object, object_to_lua};
     use crate::scripting::object::Object;
     use anyhow::Result;
     use rlua::Lua;
@@ -146,8 +146,8 @@ mod tests {
     #[case(json![{"key0": 123, "key1": "HELLO"}])]
     fn roundtrip(#[case] input: Object) -> Result<()> {
         let output = Lua::new().context(|ctx| -> Result<Object> {
-            let lua = to_lua(&ctx, &input)?;
-            let output = from_lua(lua, false)?;
+            let lua = object_to_lua(&ctx, &input)?;
+            let output = lua_to_object(lua, false)?;
             Ok(output)
         })?;
         assert_eq!(input, output);
