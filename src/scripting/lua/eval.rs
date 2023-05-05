@@ -72,7 +72,7 @@ fn create_git(ctx: LuaContext) -> Result<LuaTable> {
     git.set(
         "clone",
         ctx.create_function(|_ctx, value| -> rlua::Result<()> {
-            let obj = from_lua(value).to_lua_err()?;
+            let obj = from_lua(value, true).to_lua_err()?;
             prelude::git::clone(&obj).to_lua_err()
         })?,
     )?;
@@ -138,7 +138,7 @@ fn load_prelude(ctx: LuaContext, workspace: &Workspace) -> Result<()> {
     prelude.set(
         "xpath",
         ctx.create_function(|_ctx, (namespaces, query, xml)| {
-            let namespace_objs_obj = from_lua(namespaces).to_lua_err()?;
+            let namespace_objs_obj = from_lua(namespaces, true).to_lua_err()?;
             prelude::xpath::main(&namespace_objs_obj, query, xml).to_lua_err()
         })?,
     )?;
@@ -158,7 +158,7 @@ fn load_prelude(ctx: LuaContext, workspace: &Workspace) -> Result<()> {
     prelude.set(
         "inspect",
         ctx.create_function(|ctx, value| {
-            let obj = from_lua(value).to_lua_err()?;
+            let obj = from_lua(value, true).to_lua_err()?;
             let s = prelude::inspect(&obj).to_lua_err()?;
             let lua_string = ctx.create_string(&s)?;
             Ok(LuaValue::String(lua_string))

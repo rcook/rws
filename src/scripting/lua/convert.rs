@@ -21,13 +21,13 @@
 //
 use super::super::object::Object;
 use anyhow::{anyhow, bail, Result};
-use rlua::prelude::LuaNil;
 use rlua::prelude::LuaValue::{self, *};
+use rlua::prelude::{LuaContext, LuaNil, LuaTable};
 use serde_json::{Map, Number, Value};
 use std::string::String as StdString;
 
 #[allow(unused)]
-pub fn to_lua<'a>(ctx: &rlua::Context<'a>, obj: &Object) -> Result<LuaValue<'a>> {
+pub fn to_lua<'a>(ctx: &LuaContext<'a>, obj: &Object) -> Result<LuaValue<'a>> {
     use serde_json::Value::*;
 
     Ok(match obj {
@@ -69,38 +69,53 @@ pub fn to_lua<'a>(ctx: &rlua::Context<'a>, obj: &Object) -> Result<LuaValue<'a>>
     })
 }
 
-pub fn from_lua(value: rlua::prelude::LuaValue) -> Result<Object> {
+pub fn from_lua(value: LuaValue, sub: bool) -> Result<Object> {
     Ok(match value {
         Nil => Value::Null,
         Boolean(value) => Value::Bool(value),
-        LightUserData(_value) => bail!("cannot convert LightUserData"),
+        LightUserData(_value) => match sub {
+            true => Value::String(StdString::from("(LIGHT_USER_DATA)")),
+            false => bail!("cannot convert LightUserData"),
+        },
         Integer(value) => Value::Number(Number::from(value)),
         Number(value) => Value::Number(
             Number::from_f64(value)
                 .ok_or(anyhow!("Cannot convert {} to JSON numeric value", value))?,
         ),
         String(value) => Value::String(StdString::from(value.to_str()?)),
-        Table(table) => from_lua_table(table)?,
-        Function(_value) => bail!("cannot convert Function"),
-        Thread(_value) => bail!("cannot convert Thread"),
-        UserData(_value) => bail!("cannot convert UserData"),
-        Error(_value) => bail!("cannot convert Error"),
+        Table(table) => from_lua_table(table, sub)?,
+        Function(_value) => match sub {
+            true => Value::String(StdString::from("(FUNCTION)")),
+            false => bail!("cannot convert Function"),
+        },
+        Thread(_value) => match sub {
+            true => Value::String(StdString::from("(THREAD)")),
+            false => bail!("cannot convert Thread"),
+        },
+        UserData(_value) => match sub {
+            true => Value::String(StdString::from("(USER_DATA)")),
+            false => bail!("cannot convert UserData"),
+        },
+        Error(_value) => match sub {
+            true => Value::String(StdString::from("(ERROR)")),
+            false => bail!("cannot convert Error"),
+        },
     })
 }
 
-fn from_lua_table(table: rlua::prelude::LuaTable) -> Result<Object> {
+fn from_lua_table(table: LuaTable, sub: bool) -> Result<Object> {
     if table.raw_len() == 0 {
         let mut map = Map::new();
         for p in table.pairs::<StdString, LuaValue>() {
             let (key, value) = p?;
-            map.insert(key, from_lua(value)?);
+            map.insert(key, from_lua(value, sub)?);
         }
         Ok(Value::Object(map))
     } else {
         let mut values = Vec::new();
         for entry in table.sequence_values::<LuaValue>() {
             let value = entry?;
-            values.push(from_lua(value)?);
+            values.push(from_lua(value, sub)?);
         }
         Ok(Value::Array(values))
     }
@@ -132,7 +147,7 @@ mod tests {
     fn roundtrip(#[case] input: Object) -> Result<()> {
         let output = Lua::new().context(|ctx| -> Result<Object> {
             let lua = to_lua(&ctx, &input)?;
-            let output = from_lua(lua)?;
+            let output = from_lua(lua, false)?;
             Ok(output)
         })?;
         assert_eq!(input, output);
