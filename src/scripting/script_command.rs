@@ -19,6 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+use super::traits::Eval;
 use super::variables::Variables;
 use crate::config::ConfigHash;
 use crate::workspace::Workspace;
@@ -28,10 +29,6 @@ mod config_value {
     pub const JAVASCRIPT: &str = "javascript";
     pub const LUA: &str = "lua";
 }
-
-pub trait Eval: super::lua::Eval + super::javascript::Eval {}
-
-impl<T: super::lua::Eval + super::javascript::Eval> Eval for T {}
 
 #[derive(Debug)]
 pub struct ScriptCommand {
