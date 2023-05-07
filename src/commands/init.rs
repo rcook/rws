@@ -19,18 +19,18 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+use crate::scripting::ScriptCommand;
 use crate::workspace::Workspace;
 use anyhow::Result;
 use joatmon::WorkingDirectory;
 
 pub fn do_init(workspace: &Workspace) -> Result<()> {
-    match &workspace.init_command {
-        Some(c) => {
+    if let Some(d) = &workspace.definition {
+        if let Some(command) = &d.init_command {
             let working_dir = WorkingDirectory::change(&workspace.workspace_dir)?;
-            c.eval(workspace)?;
+            ScriptCommand::new(workspace.definition.as_ref(), command)?.eval(workspace)?;
             drop(working_dir);
         }
-        None => {}
     }
     Ok(())
 }

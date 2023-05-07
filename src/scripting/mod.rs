@@ -19,13 +19,10 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-mod javascript;
 mod lua;
-mod object;
 mod prelude;
 mod script_command;
 mod traits;
-mod variables;
 mod xml;
 
 pub use self::script_command::ScriptCommand;

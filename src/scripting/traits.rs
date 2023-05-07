@@ -19,6 +19,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-pub trait Eval: super::lua::Eval + super::javascript::Eval {}
+//pub trait Eval: super::lua::Eval + super::javascript::Eval {}
+pub trait Eval: super::lua::Eval {}
 
-impl<T: super::lua::Eval + super::javascript::Eval> Eval for T {}
+//impl<T: super::lua::Eval + super::javascript::Eval> Eval for T {}
+impl<T: super::lua::Eval> Eval for T {}

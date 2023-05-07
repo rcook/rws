@@ -19,16 +19,16 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use super::super::object::Object;
+use super::values::YamlValue;
 use anyhow::{anyhow, bail, Result};
 use rlua::prelude::LuaValue::{self, *};
 use rlua::prelude::{LuaContext, LuaNil, LuaTable};
-use serde_json::{Map, Number, Value};
+use serde_yaml::{Mapping, Number, Value};
 use std::string::String as StdString;
 
 #[allow(unused)]
-pub fn object_to_lua<'a>(ctx: &LuaContext<'a>, obj: &Object) -> Result<LuaValue<'a>> {
-    use serde_json::Value::*;
+pub fn yaml_to_lua<'a>(ctx: &LuaContext<'a>, obj: &YamlValue) -> Result<LuaValue<'a>> {
+    use serde_yaml::Value::*;
 
     Ok(match obj {
         Null => LuaNil,
@@ -45,31 +45,39 @@ pub fn object_to_lua<'a>(ctx: &LuaContext<'a>, obj: &Object) -> Result<LuaValue<
             }
         }
         String(value) => LuaValue::String(ctx.create_string(value)?),
-        Array(values) => LuaValue::Table(
+        Sequence(values) => LuaValue::Table(
             ctx.create_sequence_from(
                 values
                     .iter()
-                    .map(|value| object_to_lua(ctx, value))
+                    .map(|value| yaml_to_lua(ctx, value))
                     .collect::<Result<Vec<_>>>()?,
             )?,
         ),
-        Object(map) => LuaValue::Table(
+        Mapping(mapping) => LuaValue::Table(
             ctx.create_table_from(
-                map.iter()
+                mapping
+                    .iter()
                     .map(|(k, v)| {
-                        ctx.create_string(k)
-                            .map_err(|e| anyhow!(e))
-                            .and_then(|key| {
-                                object_to_lua(ctx, v).map(|value| (LuaValue::String(key), value))
+                        k.as_str()
+                            .ok_or(anyhow!("Unsupported key type in YAML"))
+                            .and_then(|k_str| {
+                                ctx.create_string(k_str)
+                                    .map_err(|e| anyhow!(e))
+                                    .and_then(|key| {
+                                        yaml_to_lua(ctx, v)
+                                            .map(|value| (LuaValue::String(key), value))
+                                    })
                             })
                     })
                     .collect::<Result<Vec<(LuaValue, LuaValue)>>>()?,
             )?,
         ),
+        Tagged(_) => bail!("Cannot convert tagged YAML to Lua"),
     })
 }
 
-pub fn lua_to_object(value: LuaValue, sub: bool) -> Result<Object> {
+#[allow(unused)]
+pub fn lua_to_yaml(value: LuaValue, sub: bool) -> Result<YamlValue> {
     Ok(match value {
         Nil => Value::Null,
         Boolean(value) => Value::Bool(value),
@@ -78,12 +86,9 @@ pub fn lua_to_object(value: LuaValue, sub: bool) -> Result<Object> {
             false => bail!("cannot convert LightUserData"),
         },
         Integer(value) => Value::Number(Number::from(value)),
-        Number(value) => Value::Number(
-            Number::from_f64(value)
-                .ok_or(anyhow!("Cannot convert {} to JSON numeric value", value))?,
-        ),
+        Number(value) => Value::Number(Number::from(value)),
         String(value) => Value::String(StdString::from(value.to_str()?)),
-        Table(table) => lua_table_to_object(table, sub)?,
+        Table(table) => lua_table_to_yaml(table, sub)?,
         Function(_value) => match sub {
             true => Value::String(StdString::from("(FUNCTION)")),
             false => bail!("cannot convert Function"),
@@ -103,34 +108,33 @@ pub fn lua_to_object(value: LuaValue, sub: bool) -> Result<Object> {
     })
 }
 
-fn lua_table_to_object(table: LuaTable, sub: bool) -> Result<Object> {
+fn lua_table_to_yaml(table: LuaTable, sub: bool) -> Result<YamlValue> {
     if table.raw_len() == 0 {
-        let mut map = Map::new();
+        let mut mapping = Mapping::new();
         for p in table.pairs::<StdString, LuaValue>() {
             let (key, value) = p?;
-            map.insert(key, lua_to_object(value, sub)?);
+            mapping.insert(Value::String(key), lua_to_yaml(value, sub)?);
         }
-        Ok(Value::Object(map))
+        Ok(Value::Mapping(mapping))
     } else {
         let mut values = Vec::new();
         for entry in table.sequence_values::<LuaValue>() {
             let value = entry?;
-            values.push(lua_to_object(value, sub)?);
+            values.push(lua_to_yaml(value, sub)?);
         }
-        Ok(Value::Array(values))
+        Ok(Value::Sequence(values))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{lua_to_object, object_to_lua};
-    use crate::scripting::object::Object;
+    use super::super::values::YamlValue;
+    use super::{lua_to_yaml, yaml_to_lua};
     use anyhow::Result;
     use rlua::prelude::Lua;
     use rstest::rstest;
-    use serde_json::json;
-    use serde_json::Value::*;
-    use serde_json::{Map, Number};
+    use serde_yaml::Value::*;
+    use serde_yaml::{Mapping, Number};
     use std::string::String as StdString;
 
     #[rstest]
@@ -139,18 +143,66 @@ mod tests {
     #[case(Bool(false))]
     #[case(Number(Number::from(123)))]
     #[case(Number(Number::from(123u64)))]
-    #[case(Number(Number::from_f64(1.23).expect("must succeed")))]
+    #[case(Number(Number::from(1.23)))]
     #[case(String(StdString::from("HELLO")))]
-    #[case(Array(vec![Bool(true), String(StdString::from("HELLO")), Number(Number::from(123))]))]
-    #[case(Object(Map::new()))]
-    #[case(json![{"key0": 123, "key1": "HELLO"}])]
-    fn roundtrip(#[case] input: Object) -> Result<()> {
-        let output = Lua::new().context(|ctx| -> Result<Object> {
-            let lua = object_to_lua(&ctx, &input)?;
-            let output = lua_to_object(lua, false)?;
+    #[case(Sequence(vec![Bool(true), String(StdString::from("HELLO")), Number(Number::from(123))]))]
+    #[case(Mapping(Mapping::new()))]
+    #[case(serde_yaml::from_str("key0: 123\nkey1: HELLO\n").expect("must succeed"))]
+    fn roundtrip(#[case] input: YamlValue) -> Result<()> {
+        let output = Lua::new().context(|ctx| -> Result<YamlValue> {
+            let lua = yaml_to_lua(&ctx, &input)?;
+            let output = lua_to_yaml(lua, false)?;
             Ok(output)
         })?;
         assert_eq!(input, output);
+        Ok(())
+    }
+
+    #[test]
+    fn variable() -> Result<()> {
+        let input = r#"aaa:
+  - bbb
+  - ccc
+  - ddd:
+      eee:
+      fff: hello"#;
+        let inspect_script = r#"
+function inspect(obj)
+    if type(obj) == "table" then
+        local s = "{ "
+        local idx = 0
+        for key, value in pairs(obj) do
+            if idx > 0 then
+                s = s .. ", "
+            end
+
+            if not (type(k) ~= "number") then
+                key = "\"" .. key .. "\""
+            end
+
+            s = s .. "[" .. key .. "] = " .. inspect(value)
+
+            idx = idx + 1
+        end
+        return s .. " }"
+    else
+        return tostring(obj)
+    end
+end
+
+return inspect(INPUT)
+"#;
+
+        let obj = serde_yaml::from_str::<YamlValue>(input)?;
+        let output = Lua::new().context(|ctx| -> Result<StdString> {
+            let lua = yaml_to_lua(&ctx, &obj)?;
+            ctx.globals().set("INPUT", lua)?;
+            Ok(ctx.load(inspect_script).eval()?)
+        })?;
+        assert_eq!(
+            "{ [aaa] = { [1] = bbb, [2] = ccc, [3] = { [ddd] = { [fff] = hello } } } }",
+            output
+        );
         Ok(())
     }
 }

@@ -19,13 +19,5 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-pub const DEFAULT_LANGUAGE: &str = "default_language";
-pub const DEPENDENCIES: &str = "dependencies";
-pub const DEPENDENCY_COMMAND: &str = "dependency_command";
-pub const EXCLUDED_PROJECTS: &str = "excluded_projects";
-pub const INIT_COMMAND: &str = "init_command";
-pub const LANGUAGE: &str = "language";
-pub const PREAMBLE: &str = "preamble";
-pub const SCRIPT: &str = "script";
-pub const USE_PRELUDE: &str = "use_prelude";
-pub const VARIABLES: &str = "variables";
+pub type JsonValue = serde_json::Value;
+pub type YamlValue = serde_yaml::Value;

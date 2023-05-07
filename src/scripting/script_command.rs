@@ -20,19 +20,15 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::traits::Eval;
-use super::variables::Variables;
-use crate::config::ConfigHash;
+use crate::config::{Command, Definition, Language, Variables};
 use crate::workspace::Workspace;
-use anyhow::{anyhow, bail, Result};
-
-mod config_value {
-    pub const JAVASCRIPT: &str = "javascript";
-    pub const LUA: &str = "lua";
-}
+use anyhow::Result;
+use std::collections::HashMap;
+use std::fmt::Debug;
 
 #[derive(Debug)]
 pub struct ScriptCommand {
-    language: String,
+    language: Language,
     use_prelude: bool,
     preamble: String,
     script: String,
@@ -40,61 +36,39 @@ pub struct ScriptCommand {
 }
 
 impl ScriptCommand {
-    pub fn new(root_hash: &ConfigHash, command_hash: &ConfigHash) -> Result<Self> {
-        use crate::config_key::*;
-        use config_value::*;
+    pub fn new(definition: Option<&Definition>, command: &Command) -> Result<Self> {
+        let default_language = definition
+            .and_then(|d| d.default_language.clone())
+            .unwrap_or(Language::Lua);
 
-        let language_default = root_hash
-            .get(DEFAULT_LANGUAGE)
-            .and_then(|x| x.into_string())
-            .unwrap_or_else(|| String::from(LUA));
-        let language = command_hash
-            .get(LANGUAGE)
-            .and_then(|x| x.into_string())
-            .unwrap_or(language_default);
+        let language = command
+            .language
+            .as_ref()
+            .unwrap_or(&default_language)
+            .clone();
 
-        let variables = Self::get_variables(root_hash)?;
+        let language_config_opt = match &language {
+            Language::Lua => definition.and_then(|d| d.lua_config.clone()),
+        };
 
-        let language_hash_key = format!("{}-config", language);
-        let language_hash_opt = root_hash
-            .get(&language_hash_key)
-            .and_then(|x| x.into_hash());
-
-        let (preamble, use_prelude) = match language_hash_opt {
-            Some(language_hash) => {
-                let preamble = language_hash
-                    .get(PREAMBLE)
-                    .and_then(|x| x.into_string())
-                    .unwrap_or_else(|| String::from(""));
-                let use_prelude_default = language_hash
-                    .get(USE_PRELUDE)
-                    .and_then(|x| x.into_bool())
-                    .unwrap_or(true);
-                let use_prelude = command_hash
-                    .get(USE_PRELUDE)
-                    .and_then(|x| x.into_bool())
-                    .unwrap_or(use_prelude_default);
+        let (preamble, use_prelude) = match language_config_opt {
+            Some(language_config) => {
+                let preamble = language_config.preamble.unwrap_or(String::from(""));
+                let default_use_prelude = language_config.use_prelude.unwrap_or(true);
+                let use_prelude = command.use_prelude.unwrap_or(default_use_prelude);
                 (preamble, use_prelude)
             }
             None => {
-                let use_prelude = command_hash
-                    .get(USE_PRELUDE)
-                    .and_then(|x| x.into_bool())
-                    .unwrap_or(true);
+                let use_prelude = command.use_prelude.unwrap_or(true);
                 (String::from(""), use_prelude)
             }
         };
 
-        let script = command_hash
-            .get(SCRIPT)
-            .and_then(|x| x.into_string())
-            .ok_or_else(|| {
-                anyhow!(
-                    "\"{}\" element missing required \"{}\" field in workspace configuration",
-                    DEPENDENCY_COMMAND,
-                    SCRIPT
-                )
-            })?;
+        let script = command.script.clone();
+
+        let variables = definition
+            .and_then(|d| d.variables.clone())
+            .unwrap_or(HashMap::new());
 
         Ok(ScriptCommand {
             language,
@@ -107,40 +81,16 @@ impl ScriptCommand {
 
     pub fn eval<T: Eval>(&self, workspace: &Workspace) -> Result<T>
     where
-        T: std::fmt::Debug,
+        T: Debug,
     {
-        match self.language.as_str() {
-            config_value::JAVASCRIPT => super::javascript::eval(
+        match self.language {
+            Language::Lua => super::lua::eval(
                 workspace,
                 &self.preamble,
                 &self.script,
                 self.use_prelude,
                 &self.variables,
             ),
-            config_value::LUA => super::lua::eval(
-                workspace,
-                &self.preamble,
-                &self.script,
-                self.use_prelude,
-                &self.variables,
-            ),
-            language => bail!("Unsupported language \"{}\"", language),
         }
-    }
-
-    fn get_variables(root_hash: &ConfigHash) -> Result<Variables> {
-        use crate::config_key::*;
-
-        let mut values = Vec::new();
-        if let Some(h) = root_hash.get(VARIABLES).and_then(|x| x.into_hash()) {
-            let keys = h.keys().ok_or_else(|| {
-                anyhow!("Invalid keys in \"{}\" configuration element", VARIABLES)
-            })?;
-            for k in keys {
-                let obj = h.get(&k).expect("Unreachable");
-                values.push((k, obj));
-            }
-        };
-        Ok(Variables::new(values))
     }
 }

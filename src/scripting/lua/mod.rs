@@ -20,7 +20,5 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 mod eval;
-mod lua_config;
-mod marshal;
 
 pub use self::eval::{eval, Eval};

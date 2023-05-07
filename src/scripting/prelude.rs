@@ -19,8 +19,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use super::object::Object;
 use crate::git::GitInfo;
+use crate::marshal::JsonValue;
 use anyhow::Result;
 use joatmon::{open_file, path_to_str, read_text_file};
 use percent_encoding::percent_decode_str;
@@ -31,14 +31,14 @@ use std::process::Command;
 
 pub mod git {
     use crate::git::clone_recursive;
-    use crate::scripting::object::{Object, ObjectTrait};
+    use crate::marshal::{JsonValue, RequiredFields};
     use anyhow::{anyhow, Result};
     use joat_git_url::GitUrl;
     use joat_path::absolute_path;
     use std::env::current_dir;
     use std::path::Path;
 
-    pub fn clone(obj: &Object) -> Result<()> {
+    pub fn clone(obj: &JsonValue) -> Result<()> {
         let recurse = obj.get_required_bool("recurse")?;
         let url_str = obj.get_required_str("url")?;
         let dir_str = obj.get_required_str("dir")?;
@@ -121,16 +121,16 @@ pub fn trim_string(s: String) -> Result<String> {
 }
 
 pub mod xpath {
-    use crate::scripting::object::{Object, ObjectTrait};
+    use crate::marshal::{JsonValue, RequiredFields};
     use crate::scripting::xml::{query_xpath_as_string, XmlNamespace};
     use anyhow::{anyhow, Result};
 
-    pub fn main(namespace_objs_obj: &Object, query: String, xml: String) -> Result<String> {
+    pub fn main(namespace_objs_obj: &JsonValue, query: String, xml: String) -> Result<String> {
         let namespaces = decode_namespaces(namespace_objs_obj)?;
         query_xpath_as_string(&namespaces, &query, &xml)
     }
 
-    fn decode_namespaces(namespace_objs_obj: &Object) -> Result<Vec<XmlNamespace>> {
+    fn decode_namespaces(namespace_objs_obj: &JsonValue) -> Result<Vec<XmlNamespace>> {
         let namespace_objs = namespace_objs_obj
             .as_array()
             .ok_or(anyhow!("Must be an array"))?;
@@ -163,6 +163,6 @@ pub fn percent_decode(s: String) -> Result<String> {
     Ok(percent_decode_str(&s).decode_utf8_lossy().to_string())
 }
 
-pub fn inspect(obj: &Object) -> Result<String> {
+pub fn inspect(obj: &JsonValue) -> Result<String> {
     Ok(serde_json::to_string_pretty(obj)?)
 }

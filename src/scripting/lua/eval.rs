@@ -20,9 +20,9 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::super::prelude;
-use super::super::variables::Variables;
-use super::lua_config::translate_config_to_lua;
-use super::marshal::lua_to_object;
+use crate::config::Variables;
+use crate::marshal::lua_to_json;
+use crate::marshal::yaml_to_lua;
 use crate::workspace::Workspace;
 use anyhow::Result;
 use joatmon::path_to_str;
@@ -30,6 +30,7 @@ use rlua::prelude::{
     FromLuaMulti, Lua, LuaContext, LuaExternalResult, LuaResult, LuaTable, LuaValue,
 };
 use rlua::Variadic as LuaVariadic;
+use std::fmt::Debug;
 use std::path::Path;
 
 pub trait Eval: for<'lua> FromLuaMulti<'lua> {}
@@ -44,7 +45,7 @@ pub fn eval<T>(
     variables: &Variables,
 ) -> Result<T>
 where
-    T: std::fmt::Debug + Eval,
+    T: Debug + Eval,
 {
     Lua::new().context(|ctx| {
         create_variables(ctx, variables)?;
@@ -64,13 +65,13 @@ fn create_variables(ctx: LuaContext, variables: &Variables) -> Result<()> {
     // ... and are aliased under "vars"
     let vars = ctx.create_table()?;
 
-    for (name, config_object) in &variables.values {
+    for (name, var) in variables {
         // TBD: Figure out how to avoid create two of everything...
-        let value = translate_config_to_lua(ctx, config_object)?;
+        let value = yaml_to_lua(&ctx, var)?;
         let key = ctx.create_string(&name)?;
         globals.set(key, value)?;
 
-        let value = translate_config_to_lua(ctx, config_object)?;
+        let value = yaml_to_lua(&ctx, var)?;
         let key = ctx.create_string(&name)?;
         vars.set(key, value)?;
     }
@@ -85,7 +86,7 @@ fn create_git(ctx: LuaContext) -> Result<LuaTable> {
     git.set(
         "clone",
         ctx.create_function(|_ctx, value| -> LuaResult<()> {
-            let obj = lua_to_object(value, true).to_lua_err()?;
+            let obj = lua_to_json(value, true).to_lua_err()?;
             prelude::git::clone(&obj).to_lua_err()
         })?,
     )?;
@@ -151,7 +152,7 @@ fn load_prelude(ctx: LuaContext, workspace: &Workspace) -> Result<()> {
     prelude.set(
         "xpath",
         ctx.create_function(|_ctx, (namespaces, query, xml)| {
-            let namespace_objs_obj = lua_to_object(namespaces, true).to_lua_err()?;
+            let namespace_objs_obj = lua_to_json(namespaces, true).to_lua_err()?;
             prelude::xpath::main(&namespace_objs_obj, query, xml).to_lua_err()
         })?,
     )?;
@@ -171,7 +172,7 @@ fn load_prelude(ctx: LuaContext, workspace: &Workspace) -> Result<()> {
     prelude.set(
         "inspect",
         ctx.create_function(|ctx, value| {
-            let obj = lua_to_object(value, true).to_lua_err()?;
+            let obj = lua_to_json(value, true).to_lua_err()?;
             let s = prelude::inspect(&obj).to_lua_err()?;
             let lua_string = ctx.create_string(&s)?;
             Ok(LuaValue::String(lua_string))

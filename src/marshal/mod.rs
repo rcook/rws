@@ -19,15 +19,12 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::config::ConfigObject;
+mod json;
+mod required_fields;
+mod values;
+mod yaml;
 
-#[derive(Debug)]
-pub struct Variables {
-    pub values: Vec<(String, ConfigObject)>,
-}
-
-impl Variables {
-    pub fn new(values: Vec<(String, ConfigObject)>) -> Self {
-        Self { values }
-    }
-}
+pub use self::json::{json_to_lua, lua_to_json};
+pub use self::required_fields::RequiredFields;
+pub use self::values::{JsonValue, YamlValue};
+pub use self::yaml::{lua_to_yaml, yaml_to_lua};

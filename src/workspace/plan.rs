@@ -19,9 +19,9 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use super::internal::{DependencySource, Workspace};
+use super::internal::Workspace;
 use super::topo_order::compute_topo_order;
-use crate::config::ConfigHash;
+use crate::config::{Command, DependencySource, FixedDependencies};
 use crate::scripting::ScriptCommand;
 use anyhow::{anyhow, Result};
 use joatmon::{get_base_name, WorkingDirectory};
@@ -40,25 +40,39 @@ pub struct Plan {
 impl Plan {
     /// Create a plan from a workspace
     pub fn new(workspace: &Workspace) -> Result<Self> {
-        let project_dirs_alpha = Self::get_project_dirs_alpha(
-            &workspace.workspace_dir,
-            &workspace.excluded_project_dirs,
-        )?;
+        let exclude_project_dirs = HashSet::from_iter(
+            workspace
+                .definition
+                .as_ref()
+                .and_then(|d| d.excluded_projects.as_ref())
+                .unwrap_or(&Vec::new())
+                .iter()
+                .map(|s| workspace.workspace_dir.join(s)),
+        );
 
-        let project_dirs_topo = match &workspace.dependency_source {
-            DependencySource::Hash(hash) => {
-                Some(compute_topo_order(&project_dirs_alpha, |project_dir| {
-                    Self::get_precs_from_config_hash(hash, workspace, project_dir)
-                })?)
-            }
-            DependencySource::ScriptCommand(command) => {
-                Some(compute_topo_order(&project_dirs_alpha, |project_dir| {
-                    Self::get_precs_from_script_command(command, workspace, project_dir)
-                })?)
-            }
-            DependencySource::None => None,
+        let project_dirs_alpha =
+            Self::get_project_dirs_alpha(&workspace.workspace_dir, &exclude_project_dirs)?;
+
+        let project_dirs_topo = match &workspace.definition {
+            Some(d) => match &d.dependency_source {
+                Some(DependencySource::Fixed(fixed_dependencies)) => {
+                    Some(compute_topo_order(&project_dirs_alpha, |project_dir| {
+                        Self::get_precs_from_config_hash(
+                            fixed_dependencies,
+                            workspace,
+                            project_dir,
+                        )
+                    })?)
+                }
+                Some(DependencySource::ScriptCommand(command)) => {
+                    Some(compute_topo_order(&project_dirs_alpha, |project_dir| {
+                        Self::get_precs_from_script_command(command, workspace, project_dir)
+                    })?)
+                }
+                None => None,
+            },
+            None => None,
         };
-
         Ok(Self {
             project_dirs_alpha,
             project_dirs_topo,
@@ -86,32 +100,31 @@ impl Plan {
     }
 
     fn get_precs_from_config_hash(
-        hash: &ConfigHash,
+        fixed_dependencies: &FixedDependencies,
         workspace: &Workspace,
         project_dir: &Path,
     ) -> Result<Vec<PathBuf>> {
         let project_name = get_base_name(project_dir)
             .ok_or_else(|| anyhow!("Invalid project directory {}", project_dir.display()))?;
-        match hash.get(project_name).and_then(|x| x.into_vec()) {
-            Some(v) => (0..v.len())
-                .map(|i| {
-                    v.get(i)
-                        .into_string()
-                        .ok_or_else(|| anyhow!("Invalid dependency for project {}", project_name))
-                        .map(|s| workspace.workspace_dir.join(s))
-                })
-                .collect::<Result<Vec<_>>>(),
-            None => Ok(Vec::new()),
-        }
+
+        Ok(fixed_dependencies
+            .get(project_name)
+            .map(|ps| {
+                ps.iter()
+                    .map(|p| workspace.workspace_dir.join(p))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or(Vec::new()))
     }
 
     fn get_precs_from_script_command(
-        command: &ScriptCommand,
+        command: &Command,
         workspace: &Workspace,
         project_dir: &Path,
     ) -> Result<Vec<PathBuf>> {
         let working_dir = WorkingDirectory::change(project_dir)?;
-        let deps: Vec<String> = command.eval(workspace)?;
+        let cmd = ScriptCommand::new(workspace.definition.as_ref(), command)?;
+        let deps: Vec<String> = cmd.eval(workspace)?;
         drop(working_dir);
         Ok(deps
             .into_iter()
