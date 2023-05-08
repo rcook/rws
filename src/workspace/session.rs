@@ -20,7 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use crate::config::Definition;
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, Result};
 use joatmon::{find_sentinel_file, read_yaml_file};
 use std::env;
 use std::path::{Path, PathBuf};
@@ -44,21 +44,24 @@ impl Session {
     /// Constructor
     pub fn new(
         cwd: &Path,
-        workspace_dir: Option<&Path>,
-        config_path: Option<&Path>,
+        workspace_dir_opt: Option<&Path>,
+        config_path_opt: Option<&Path>,
     ) -> Result<Self> {
-        match (workspace_dir, config_path) {
-            (Some(d), Some(c)) => Self::known(cwd, d, Some(c)),
-            (Some(d), None) => {
-                let p = d.join(WORKSPACE_CONFIG_FILE_NAME);
-                Self::known(cwd, d, if p.exists() { Some(&p) } else { None })
+        match (workspace_dir_opt, config_path_opt) {
+            (Some(workspace_dir), Some(config_path)) => {
+                Self::known(cwd, workspace_dir, Some(config_path))
             }
-            (None, Some(c)) => Self::known(
+            (Some(workspace_dir), None) => {
+                let p = workspace_dir.join(WORKSPACE_CONFIG_FILE_NAME);
+                Self::known(cwd, workspace_dir, if p.exists() { Some(&p) } else { None })
+            }
+            (None, Some(config_path)) => Self::known(
                 cwd,
-                c.to_path_buf()
+                config_path
+                    .to_path_buf()
                     .parent()
                     .ok_or_else(|| anyhow!("Invalid config path"))?,
-                Some(c),
+                Some(config_path),
             ),
             (None, None) => Self::find(cwd, &env::current_dir()?),
         }
@@ -85,14 +88,13 @@ impl Session {
         Ok(
             match find_sentinel_file(WORKSPACE_CONFIG_FILE_NAME, search_dir, Some(5)) {
                 Some(config_path) => {
-                    let mut workspace_dir = config_path.clone();
-                    if !workspace_dir.pop() {
-                        bail!("Failed to obtain workspace directory")
-                    }
                     let definition = read_yaml_file(&config_path)?;
                     Self {
                         cwd: cwd.to_path_buf(),
-                        workspace_dir,
+                        workspace_dir: config_path
+                            .parent()
+                            .ok_or(anyhow!("Failed to obtain workspace directory"))?
+                            .to_path_buf(),
                         config_path: Some(config_path),
                         definition: Some(definition),
                     }
