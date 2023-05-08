@@ -54,10 +54,10 @@ pub struct ShellCommandInfo {
     )]
     pub project_order: ProjectOrder,
 
-    #[arg(help = "Program to run in environment")]
+    #[arg(help = "Program or subcommand to run in environment")]
     pub command: String,
 
-    #[arg(help = "Zero or more arguments to pass to program")]
+    #[arg(help = "Zero or more arguments to pass to program or subcommand")]
     #[clap(trailing_var_arg = true, allow_hyphen_values = true)]
     pub args: Vec<String>,
 }
