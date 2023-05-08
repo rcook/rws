@@ -19,7 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-#![allow(unused)]
+use crate::marshal::YamlValue;
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -44,7 +44,7 @@ pub struct Definition {
     pub dependency_source: Option<DependencySource>,
 }
 
-pub type Variables = HashMap<String, serde_yaml::Value>;
+pub type Variables = HashMap<String, YamlValue>;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct LanguageConfig {
@@ -87,9 +87,10 @@ pub type StaticDependencies = HashMap<String, Vec<String>>;
 #[cfg(test)]
 mod tests {
     use super::{Command, Definition, DependencySource, Language};
+    use crate::marshal::YamlValue;
     use anyhow::Result;
     use rstest::rstest;
-    use serde_yaml::{from_str, Value};
+    use serde_yaml::from_str;
     use std::collections::HashMap;
 
     #[test]
@@ -132,12 +133,12 @@ dependency_command:
 
         let variables = definition.variables.expect("must be present");
         assert_eq!(3, variables.len());
-        assert_eq!(Value::String(String::from("VALUE0")), variables["KEY0"]);
-        assert_eq!(Value::String(String::from("VALUE1")), variables["KEY1"]);
+        assert_eq!(YamlValue::String(String::from("VALUE0")), variables["KEY0"]);
+        assert_eq!(YamlValue::String(String::from("VALUE1")), variables["KEY1"]);
         assert_eq!(
-            Value::Sequence(vec![
-                Value::String(String::from("one")),
-                Value::String(String::from("two"))
+            YamlValue::Sequence(vec![
+                YamlValue::String(String::from("one")),
+                YamlValue::String(String::from("two"))
             ]),
             variables["KEY2"]
         );
