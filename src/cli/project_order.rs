@@ -22,7 +22,7 @@
 use clap::ValueEnum;
 
 #[derive(Clone, Debug, PartialEq, ValueEnum)]
-pub enum DirectoryOrder {
+pub enum ProjectOrder {
     #[clap(name = "alpha")]
     Alphabetical,
     #[clap(name = "topo")]

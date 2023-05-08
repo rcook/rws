@@ -19,7 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::cli::DirectoryOrder;
+use crate::cli::ProjectOrder;
 use crate::util::reset_terminal;
 use crate::workspace::Plan;
 use anyhow::Result;
@@ -30,11 +30,16 @@ use std::process::Command;
 pub struct ShellRunner {
     pub cmd: Vec<String>,
     pub fail_fast: bool,
-    pub order: DirectoryOrder,
+    pub project_order: ProjectOrder,
 }
 
 impl ShellRunner {
-    pub fn new(command: String, args: Vec<String>, fail_fast: bool, order: DirectoryOrder) -> Self {
+    pub fn new(
+        command: String,
+        args: Vec<String>,
+        fail_fast: bool,
+        project_order: ProjectOrder,
+    ) -> Self {
         let mut cmd = Vec::new();
         cmd.push(command);
         for arg in args {
@@ -44,7 +49,7 @@ impl ShellRunner {
         Self {
             cmd,
             fail_fast,
-            order,
+            project_order,
         }
     }
 
@@ -53,8 +58,8 @@ impl ShellRunner {
         F: Fn(&Vec<String>) -> Command,
     {
         let mut failure_count = 0;
-        let project_dirs = match (&self.order, &plan.project_dirs_topo) {
-            (DirectoryOrder::Topological, Some(ds)) => ds,
+        let project_dirs = match (&self.project_order, &plan.project_dirs_topo) {
+            (ProjectOrder::Topological, Some(ds)) => ds,
             _ => &plan.project_dirs_alpha,
         };
         for project_dir in project_dirs {

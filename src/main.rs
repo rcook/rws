@@ -69,18 +69,24 @@ fn run() -> Result<()> {
     match args.subcommand {
         Subcommand::Git {
             fail_fast,
-            order,
+            project_order,
             command,
             args,
-        } => do_git(&session, &ShellRunner::new(command, args, fail_fast, order))?,
+        } => do_git(
+            &session,
+            &ShellRunner::new(command, args, fail_fast, project_order),
+        )?,
         Subcommand::Info => do_info(&session, true)?,
         Subcommand::Init => do_init(&session)?,
         Subcommand::Run {
             fail_fast,
-            order,
+            project_order,
             command,
             args,
-        } => do_run(&session, &ShellRunner::new(command, args, fail_fast, order))?,
+        } => do_run(
+            &session,
+            &ShellRunner::new(command, args, fail_fast, project_order),
+        )?,
     }
     Ok(())
 }

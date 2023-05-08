@@ -21,10 +21,10 @@
 //
 mod args;
 mod constants;
-mod directory_order;
 mod funcs;
+mod project_order;
 mod subcommand;
 
 pub use self::args::Args;
-pub use self::directory_order::DirectoryOrder;
+pub use self::project_order::ProjectOrder;
 pub use self::subcommand::Subcommand;

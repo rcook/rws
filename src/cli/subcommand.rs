@@ -19,7 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use super::directory_order::DirectoryOrder;
+use super::project_order::ProjectOrder;
 use clap::Subcommand as ClapSubcommand;
 
 #[derive(ClapSubcommand, Debug)]
@@ -33,13 +33,13 @@ pub enum Subcommand {
         fail_fast: bool,
 
         #[arg(
-            help = "Directory traversal order",
+            help = "Project traversal order",
             short = 'o',
             long = "order",
-            default_value_t = DirectoryOrder::Topological,
+            default_value_t = ProjectOrder::Topological,
             value_enum
         )]
-        order: DirectoryOrder,
+        project_order: ProjectOrder,
 
         #[arg(help = "Program to run in environment")]
         command: String,
@@ -61,13 +61,13 @@ pub enum Subcommand {
         fail_fast: bool,
 
         #[arg(
-            help = "Directory traversal order",
+            help = "Project traversal order",
             short = 'o',
             long = "order",
-            default_value_t = DirectoryOrder::Topological,
+            default_value_t = ProjectOrder::Topological,
             value_enum
         )]
-        order: DirectoryOrder,
+        project_order: ProjectOrder,
 
         #[arg(help = "Program to run in environment")]
         command: String,
