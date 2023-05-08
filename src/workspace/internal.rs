@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use crate::config::Definition;
-use anyhow::{anyhow, Result};
-use joatmon::read_yaml_file;
+use anyhow::{anyhow, bail, Result};
+use joatmon::{find_sentinel_file, read_yaml_file};
 use std::env;
 use std::path::{Path, PathBuf};
 
@@ -73,26 +73,26 @@ impl Workspace {
     }
 
     fn find(search_dir: &Path) -> Result<Self> {
-        let mut p = search_dir;
-        loop {
-            let config_path = p.join(WORKSPACE_CONFIG_FILE_NAME);
-            if config_path.exists() {
-                return Ok(Self {
-                    workspace_dir: p.to_path_buf(),
-                    config_path: Some(config_path.clone()),
-                    definition: Some(read_yaml_file(&config_path)?),
-                });
-            }
-            match p.parent() {
-                Some(parent) => p = parent,
-                None => {
-                    return Ok(Self {
-                        workspace_dir: search_dir.to_path_buf(),
-                        config_path: None,
-                        definition: None,
-                    })
+        Ok(
+            match find_sentinel_file(WORKSPACE_CONFIG_FILE_NAME, search_dir, Some(5)) {
+                Some(config_path) => {
+                    let mut workspace_dir = config_path.clone();
+                    if !workspace_dir.pop() {
+                        bail!("Failed to obtain workspace directory")
+                    }
+                    let definition = read_yaml_file(&config_path)?;
+                    Self {
+                        workspace_dir,
+                        config_path: Some(config_path),
+                        definition: Some(definition),
+                    }
                 }
-            }
-        }
+                None => Self {
+                    workspace_dir: search_dir.to_path_buf(),
+                    config_path: None,
+                    definition: None,
+                },
+            },
+        )
     }
 }
