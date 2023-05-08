@@ -95,31 +95,4 @@ impl Workspace {
             }
         }
     }
-
-    /*
-    fn read_config(
-        workspace_dir: &Path,
-        config_path: &Path,
-        config_object: ConfigObject,
-    ) -> Result<Self> {
-        let definition = &config_object.definition;
-        let variables = definition.variables;
-        let excluded_project_dirs = definition
-            .excluded_projects
-            .map(|ps| HashSet::from_iter(ps.iter().map(|p| workspace_dir.join(p))))
-            .unwrap_or_default();
-        let init_command = definition.init_command;
-        let dependency_source = &definition.dependency_source;
-
-        Ok(Self {
-            workspace_dir: workspace_dir.to_path_buf(),
-            config_path: Some(config_path.to_path_buf()),
-            definition: Some(config_object.definition),
-            variables,
-            excluded_project_dirs,
-            init_command,
-            dependency_source,
-        })
-    }
-    */
 }
