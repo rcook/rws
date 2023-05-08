@@ -1,4 +1,3 @@
-use crate::cli::ShellCommandInfo;
 // The MIT License (MIT)
 //
 // Copyright (c) 2020-3 Richard Cook
@@ -20,6 +19,7 @@ use crate::cli::ShellCommandInfo;
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+use crate::cli::ShellCommandInfo;
 use crate::shell_runner::ShellRunner;
 use crate::workspace::{Plan, Session};
 use anyhow::Result;
