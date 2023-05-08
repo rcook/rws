@@ -21,7 +21,6 @@
 //
 use super::directory_order::DirectoryOrder;
 use clap::Subcommand as ClapSubcommand;
-use std::fmt::Debug;
 
 #[derive(ClapSubcommand, Debug)]
 pub enum Subcommand {

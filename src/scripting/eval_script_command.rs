@@ -23,7 +23,6 @@ use super::traits::Eval;
 use crate::config::{Command, Language, Variables};
 use crate::workspace::Session;
 use anyhow::Result;
-use std::fmt::Debug;
 
 const DEFAULT_LANGUAGE: Language = Language::Lua;
 const DEFAULT_PREAMBLE: &str = "";
@@ -35,7 +34,7 @@ fn default_variables() -> Variables {
 
 pub fn eval_script_command<T>(session: &Session, command: &Command) -> Result<T>
 where
-    T: Debug + Eval,
+    T: Eval,
 {
     let default_language = session
         .definition

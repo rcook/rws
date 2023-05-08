@@ -30,7 +30,6 @@ use rlua::prelude::{
     FromLuaMulti, Lua, LuaContext, LuaExternalResult, LuaResult, LuaTable, LuaValue,
 };
 use rlua::Variadic as LuaVariadic;
-use std::fmt::Debug;
 use std::path::Path;
 
 pub trait Eval: for<'lua> FromLuaMulti<'lua> {}
@@ -45,7 +44,7 @@ pub fn eval<T>(
     variables: &Variables,
 ) -> Result<T>
 where
-    T: Debug + Eval,
+    T: Eval,
 {
     Lua::new().context(|ctx| {
         create_variables(ctx, variables)?;
