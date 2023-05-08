@@ -21,7 +21,7 @@
 //
 use super::internal::Workspace;
 use super::topo_order::compute_topo_order;
-use crate::config::{Command, DependencySource, FixedDependencies};
+use crate::config::{Command, DependencySource, StaticDependencies};
 use crate::scripting::ScriptCommand;
 use anyhow::{anyhow, Result};
 use joatmon::{get_base_name, WorkingDirectory};
@@ -55,16 +55,16 @@ impl Plan {
 
         let project_dirs_topo = match &workspace.definition {
             Some(d) => match &d.dependency_source {
-                Some(DependencySource::Fixed(fixed_dependencies)) => {
+                Some(DependencySource::Static(static_dependencies)) => {
                     Some(compute_topo_order(&project_dirs_alpha, |project_dir| {
                         Self::get_precs_from_config_hash(
-                            fixed_dependencies,
+                            static_dependencies,
                             workspace,
                             project_dir,
                         )
                     })?)
                 }
-                Some(DependencySource::ScriptCommand(command)) => {
+                Some(DependencySource::Command(command)) => {
                     Some(compute_topo_order(&project_dirs_alpha, |project_dir| {
                         Self::get_precs_from_script_command(command, workspace, project_dir)
                     })?)
@@ -100,14 +100,14 @@ impl Plan {
     }
 
     fn get_precs_from_config_hash(
-        fixed_dependencies: &FixedDependencies,
+        static_dependencies: &StaticDependencies,
         workspace: &Workspace,
         project_dir: &Path,
     ) -> Result<Vec<PathBuf>> {
         let project_name = get_base_name(project_dir)
             .ok_or_else(|| anyhow!("Invalid project directory {}", project_dir.display()))?;
 
-        Ok(fixed_dependencies
+        Ok(static_dependencies
             .get(project_name)
             .map(|ps| {
                 ps.iter()

@@ -76,13 +76,13 @@ pub struct Command {
 #[derive(Debug, Deserialize, PartialEq)]
 pub enum DependencySource {
     #[serde(rename = "dependencies")]
-    Fixed(FixedDependencies),
+    Static(StaticDependencies),
 
     #[serde(rename = "dependency_command")]
-    ScriptCommand(Command),
+    Command(Command),
 }
 
-pub type FixedDependencies = HashMap<String, Vec<String>>;
+pub type StaticDependencies = HashMap<String, Vec<String>>;
 
 #[cfg(test)]
 mod tests {
@@ -163,7 +163,7 @@ print("Hello from init_command")
         );
 
         let dependency_command = match definition.dependency_source {
-            Some(DependencySource::ScriptCommand(c)) => c,
+            Some(DependencySource::Command(command)) => command,
             _ => panic!("Expected dependency_command"),
         };
         assert!(dependency_command.language.is_none());
@@ -187,7 +187,7 @@ end
 
     #[rstest]
     #[case(
-        Some(DependencySource::Fixed(HashMap::from([
+        Some(DependencySource::Static(HashMap::from([
             (String::from("aaa"), vec![String::from("bbb"), String::from("ccc")]),
             (String::from("ddd"), vec![String::from("eee"), String::from("fff")])
         ]))),
@@ -200,7 +200,7 @@ end
     - fff"#
     )]
     #[case(
-        Some(DependencySource::ScriptCommand(Command{language:None, use_prelude:None, script: String::from("SCRIPT")})),
+        Some(DependencySource::Command(Command{language:None, use_prelude:None, script: String::from("SCRIPT")})),
         r#"dependency_command:
   script: SCRIPT"#
     )]
