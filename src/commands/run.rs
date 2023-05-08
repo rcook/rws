@@ -26,10 +26,10 @@ use anyhow::Result;
 use std::process::Command;
 
 pub fn do_run(session: &Session, shell_command_info: &ShellCommandInfo) -> Result<()> {
-    ShellRunner::new(shell_command_info).run(&Plan::new(session)?, |cmd| build_run_command(cmd))
+    ShellRunner::new(shell_command_info).run(&Plan::new(session)?, build_command)
 }
 
-fn build_run_command(cmd: &[String]) -> Command {
+fn build_command(cmd: &[String]) -> Command {
     let mut command = Command::new(&cmd[0]);
     for c in cmd.iter().skip(1) {
         command.arg(c);
@@ -39,7 +39,7 @@ fn build_run_command(cmd: &[String]) -> Command {
 
 #[cfg(test)]
 mod tests {
-    use super::build_run_command;
+    use super::build_command;
 
     #[test]
     fn build_run_command_basics() {
@@ -48,7 +48,8 @@ mod tests {
             String::from("two"),
             String::from("three"),
         ];
-        let command = build_run_command(&cmd);
+
+        let command = build_command(&cmd);
 
         assert_eq!("one", command.get_program());
         assert_eq!(vec!["two", "three"], command.get_args().collect::<Vec<_>>());

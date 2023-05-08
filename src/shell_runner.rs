@@ -48,9 +48,9 @@ impl ShellRunner {
         }
     }
 
-    pub fn run<F>(&self, plan: &Plan, f: F) -> Result<()>
+    pub fn run<F>(&self, plan: &Plan, build_command: F) -> Result<()>
     where
-        F: Fn(&Vec<String>) -> Command,
+        F: Fn(&[String]) -> Command,
     {
         let mut failure_count = 0;
         let project_dirs = match (&self.project_order, &plan.project_dirs_topo) {
@@ -60,7 +60,10 @@ impl ShellRunner {
         for project_dir in project_dirs {
             let d = path_to_str(project_dir);
             println!("{}", d.cyan());
-            let exit_status = f(&self.cmd).current_dir(project_dir).spawn()?.wait()?;
+            let exit_status = build_command(&self.cmd)
+                .current_dir(project_dir)
+                .spawn()?
+                .wait()?;
             reset_terminal();
             if exit_status.success() {
                 println!("{}", format!("Command succeeded in {}", d).green())

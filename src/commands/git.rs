@@ -28,12 +28,11 @@ use std::process::Command;
 
 pub fn do_git(session: &Session, shell_command_info: &ShellCommandInfo) -> Result<()> {
     let git_info = GitInfo::from_environment()?;
-    ShellRunner::new(shell_command_info).run(&Plan::new(session)?, |cmd| {
-        build_git_command(&git_info, cmd)
-    })
+    ShellRunner::new(shell_command_info)
+        .run(&Plan::new(session)?, |cmd| build_command(&git_info, cmd))
 }
 
-fn build_git_command(git_info: &GitInfo, cmd: &[String]) -> Command {
+fn build_command(git_info: &GitInfo, cmd: &[String]) -> Command {
     let mut command = Command::new(&git_info.executable_path);
     for c in cmd.iter() {
         command.arg(c);
@@ -43,7 +42,7 @@ fn build_git_command(git_info: &GitInfo, cmd: &[String]) -> Command {
 
 #[cfg(test)]
 mod tests {
-    use super::build_git_command;
+    use super::build_command;
     use crate::git::GitInfo;
     use std::path::Path;
 
@@ -55,7 +54,8 @@ mod tests {
             String::from("two"),
             String::from("three"),
         ];
-        let command = build_git_command(&git_info, &cmd);
+
+        let command = build_command(&git_info, &cmd);
 
         assert_eq!("GIT", command.get_program());
         assert_eq!(
