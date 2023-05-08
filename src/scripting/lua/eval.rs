@@ -20,10 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::super::prelude;
-use crate::config::Variables;
-use crate::marshal::lua_to_json;
-use crate::marshal::yaml_to_lua;
-use crate::workspace::Session;
+use crate::marshal::{lua_to_json, yaml_to_lua};
+use crate::workspace::{Session, Variables};
 use anyhow::Result;
 use joatmon::path_to_str;
 use rlua::prelude::{

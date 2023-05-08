@@ -21,7 +21,6 @@
 //
 mod cli;
 mod commands;
-mod config;
 mod git;
 mod marshal;
 mod scripting;

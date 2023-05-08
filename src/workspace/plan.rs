@@ -21,8 +21,8 @@
 //
 use super::session::Session;
 use super::topo_order::compute_topo_order;
-use crate::config::{Command, DependencySource, StaticDependencies};
 use crate::scripting::eval_script_command;
+use crate::workspace::{Command, DependencySource, StaticDependencies};
 use anyhow::{anyhow, Result};
 use joatmon::{get_base_name, WorkingDirectory};
 use std::collections::HashSet;
@@ -42,7 +42,7 @@ impl Plan {
     pub fn new(session: &Session) -> Result<Self> {
         let exclude_project_dirs = HashSet::from_iter(
             session
-                .definition
+                .config
                 .as_ref()
                 .and_then(|d| d.excluded_projects.as_ref())
                 .unwrap_or(&Vec::new())
@@ -53,8 +53,8 @@ impl Plan {
         let project_dirs_alpha =
             Self::get_project_dirs_alpha(&session.workspace_dir, &exclude_project_dirs)?;
 
-        let project_dirs_topo = match &session.definition {
-            Some(d) => match &d.dependency_source {
+        let project_dirs_topo = match &session.config {
+            Some(c) => match &c.dependency_source {
                 Some(DependencySource::Static(static_dependencies)) => {
                     Some(compute_topo_order(&project_dirs_alpha, |project_dir| {
                         Self::get_precs_from_config_hash(static_dependencies, session, project_dir)

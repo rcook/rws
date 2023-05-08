@@ -25,8 +25,8 @@ use anyhow::Result;
 use joatmon::WorkingDirectory;
 
 pub fn do_init(session: &Session) -> Result<()> {
-    if let Some(d) = &session.definition {
-        if let Some(command) = &d.init_command {
+    if let Some(config) = &session.config {
+        if let Some(command) = &config.init_command {
             let working_dir = WorkingDirectory::change(&session.workspace_dir)?;
             eval_script_command(session, command)?;
             drop(working_dir);

@@ -19,9 +19,10 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::config::{Command, Definition, Language, LanguageConfig, Variables};
 use crate::marshal::YamlValue;
-use crate::workspace::{Session, WORKSPACE_CONFIG_FILE_NAME};
+use crate::workspace::{
+    Command, Config, Language, LanguageConfig, Session, Variables, WORKSPACE_CONFIG_FILE_NAME,
+};
 use anyhow::{bail, Result};
 use joatmon::safe_write_file;
 
@@ -38,7 +39,7 @@ pub fn do_new(session: &Session) -> Result<()> {
         )
     }
 
-    let definition = Definition {
+    let config = Config {
         default_language: Some(Language::Lua),
         dependency_source: None,
         excluded_projects: None,
@@ -63,7 +64,7 @@ pub fn do_new(session: &Session) -> Result<()> {
         ])),
     };
 
-    let yaml_str = serde_yaml::to_string(&definition)?;
+    let yaml_str = serde_yaml::to_string(&config)?;
     safe_write_file(&config_path, yaml_str, false)?;
     Ok(())
 }

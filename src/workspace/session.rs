@@ -19,7 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::config::Definition;
+use super::config::Config;
 use anyhow::{anyhow, Result};
 use joatmon::{find_sentinel_file, read_yaml_file};
 use std::env;
@@ -36,8 +36,8 @@ pub struct Session {
     pub workspace_dir: PathBuf,
     /// Configuration path
     pub config_path: Option<PathBuf>,
-    /// Definition
-    pub definition: Option<Definition>,
+    /// Configuration
+    pub config: Option<Config>,
 }
 
 impl Session {
@@ -73,13 +73,13 @@ impl Session {
                 cwd: cwd.to_path_buf(),
                 workspace_dir: workspace_dir.to_path_buf(),
                 config_path: Some(config_path.to_path_buf()),
-                definition: Some(read_yaml_file(config_path)?),
+                config: Some(read_yaml_file(config_path)?),
             }),
             None => Ok(Self {
                 cwd: cwd.to_path_buf(),
                 workspace_dir: workspace_dir.to_path_buf(),
                 config_path: None,
-                definition: None,
+                config: None,
             }),
         }
     }
@@ -88,7 +88,7 @@ impl Session {
         Ok(
             match find_sentinel_file(WORKSPACE_CONFIG_FILE_NAME, search_dir, Some(5)) {
                 Some(config_path) => {
-                    let definition = read_yaml_file(&config_path)?;
+                    let config = read_yaml_file(&config_path)?;
                     Self {
                         cwd: cwd.to_path_buf(),
                         workspace_dir: config_path
@@ -96,14 +96,14 @@ impl Session {
                             .ok_or(anyhow!("Failed to obtain workspace directory"))?
                             .to_path_buf(),
                         config_path: Some(config_path),
-                        definition: Some(definition),
+                        config: Some(config),
                     }
                 }
                 None => Self {
                     cwd: cwd.to_path_buf(),
                     workspace_dir: search_dir.to_path_buf(),
                     config_path: None,
-                    definition: None,
+                    config: None,
                 },
             },
         )

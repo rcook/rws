@@ -20,8 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::traits::Eval;
-use crate::config::{Command, Language, Variables};
-use crate::workspace::Session;
+use crate::workspace::{Command, Language, Session, Variables};
 use anyhow::Result;
 
 const DEFAULT_LANGUAGE: Language = Language::Lua;
@@ -37,7 +36,7 @@ where
     T: Eval,
 {
     let default_language = session
-        .definition
+        .config
         .as_ref()
         .and_then(|d| d.default_language.clone())
         .unwrap_or(DEFAULT_LANGUAGE);
@@ -49,10 +48,7 @@ where
         .clone();
 
     let language_config_opt = match &language {
-        Language::Lua => session
-            .definition
-            .as_ref()
-            .and_then(|d| d.lua_config.clone()),
+        Language::Lua => session.config.as_ref().and_then(|d| d.lua_config.clone()),
     };
 
     let (preamble, use_prelude) = match language_config_opt {
@@ -73,7 +69,7 @@ where
     let script = command.script.clone();
 
     let variables = session
-        .definition
+        .config
         .as_ref()
         .and_then(|d| d.variables.clone())
         .unwrap_or(default_variables());

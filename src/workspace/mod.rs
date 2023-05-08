@@ -19,9 +19,13 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+mod config;
 mod plan;
 mod session;
 mod topo_order;
 
+pub use self::config::{
+    Command, Config, DependencySource, Language, LanguageConfig, StaticDependencies, Variables,
+};
 pub use self::plan::Plan;
 pub use self::session::{Session, WORKSPACE_CONFIG_FILE_NAME};

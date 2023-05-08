@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Definition {
+pub struct Config {
     #[serde(rename = "variables", skip_serializing_if = "Option::is_none")]
     pub variables: Option<Variables>,
 
@@ -86,7 +86,7 @@ pub type StaticDependencies = HashMap<String, Vec<String>>;
 
 #[cfg(test)]
 mod tests {
-    use super::{Command, Definition, DependencySource, Language};
+    use super::{Command, Config, DependencySource, Language};
     use crate::marshal::YamlValue;
     use anyhow::Result;
     use rstest::rstest;
@@ -129,9 +129,9 @@ dependency_command:
       return { }
     end
 "#;
-        let definition = from_str::<Definition>(input)?;
+        let config = from_str::<Config>(input)?;
 
-        let variables = definition.variables.expect("must be present");
+        let variables = config.variables.expect("must be present");
         assert_eq!(3, variables.len());
         assert_eq!(YamlValue::String(String::from("VALUE0")), variables["KEY0"]);
         assert_eq!(YamlValue::String(String::from("VALUE1")), variables["KEY1"]);
@@ -143,13 +143,13 @@ dependency_command:
             variables["KEY2"]
         );
 
-        let default_language = definition.default_language.expect("must be present");
+        let default_language = config.default_language.expect("must be present");
         assert_eq!(Language::Lua, default_language);
 
-        let excluded_projects = definition.excluded_projects.expect("must be present");
+        let excluded_projects = config.excluded_projects.expect("must be present");
         assert_eq!(vec!["project0", "project1"], excluded_projects);
 
-        let init_command = definition.init_command.expect("must be present");
+        let init_command = config.init_command.expect("must be present");
         assert_eq!(
             Language::Lua,
             init_command.language.expect("must be present")
@@ -162,7 +162,7 @@ print("Hello from init_command")
             init_command.script,
         );
 
-        let dependency_command = match definition.dependency_source {
+        let dependency_command = match config.dependency_source {
             Some(DependencySource::Command(command)) => command,
             _ => panic!("Expected dependency_command"),
         };
@@ -209,8 +209,8 @@ end
         #[case] expected_dependency_source: Option<DependencySource>,
         #[case] input: &str,
     ) -> Result<()> {
-        let definition = from_str::<Definition>(input)?;
-        assert_eq!(expected_dependency_source, definition.dependency_source);
+        let config = from_str::<Config>(input)?;
+        assert_eq!(expected_dependency_source, config.dependency_source);
         Ok(())
     }
 }
