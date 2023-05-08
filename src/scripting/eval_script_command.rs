@@ -20,11 +20,18 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::traits::Eval;
-use crate::config::{Command, Language};
+use crate::config::{Command, Language, Variables};
 use crate::workspace::Session;
 use anyhow::Result;
-use std::collections::HashMap;
 use std::fmt::Debug;
+
+const DEFAULT_LANGUAGE: Language = Language::Lua;
+const DEFAULT_PREAMBLE: &str = "";
+const DEFAULT_USE_PRELUDE: bool = true;
+
+fn default_variables() -> Variables {
+    Variables::new()
+}
 
 pub fn eval_script_command<T>(session: &Session, command: &Command) -> Result<T>
 where
@@ -34,7 +41,7 @@ where
         .definition
         .as_ref()
         .and_then(|d| d.default_language.clone())
-        .unwrap_or(Language::Lua);
+        .unwrap_or(DEFAULT_LANGUAGE);
 
     let language = command
         .language
@@ -51,14 +58,16 @@ where
 
     let (preamble, use_prelude) = match language_config_opt {
         Some(language_config) => {
-            let preamble = language_config.preamble.unwrap_or(String::from(""));
-            let default_use_prelude = language_config.use_prelude.unwrap_or(true);
+            let preamble = language_config
+                .preamble
+                .unwrap_or(String::from(DEFAULT_PREAMBLE));
+            let default_use_prelude = language_config.use_prelude.unwrap_or(DEFAULT_USE_PRELUDE);
             let use_prelude = command.use_prelude.unwrap_or(default_use_prelude);
             (preamble, use_prelude)
         }
         None => {
-            let use_prelude = command.use_prelude.unwrap_or(true);
-            (String::from(""), use_prelude)
+            let use_prelude = command.use_prelude.unwrap_or(DEFAULT_USE_PRELUDE);
+            (String::from(DEFAULT_PREAMBLE), use_prelude)
         }
     };
 
@@ -68,7 +77,7 @@ where
         .definition
         .as_ref()
         .and_then(|d| d.variables.clone())
-        .unwrap_or(HashMap::new());
+        .unwrap_or(default_variables());
 
     match language {
         Language::Lua => super::lua::eval(session, &preamble, &script, use_prelude, &variables),
