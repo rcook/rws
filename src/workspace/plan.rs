@@ -22,7 +22,7 @@
 use super::internal::Workspace;
 use super::topo_order::compute_topo_order;
 use crate::config::{Command, DependencySource, StaticDependencies};
-use crate::scripting::ScriptCommand;
+use crate::scripting::eval_script_command;
 use anyhow::{anyhow, Result};
 use joatmon::{get_base_name, WorkingDirectory};
 use std::collections::HashSet;
@@ -123,8 +123,7 @@ impl Plan {
         project_dir: &Path,
     ) -> Result<Vec<PathBuf>> {
         let working_dir = WorkingDirectory::change(project_dir)?;
-        let cmd = ScriptCommand::new(workspace.definition.as_ref(), command)?;
-        let deps: Vec<String> = cmd.eval(workspace)?;
+        let deps = eval_script_command::<Vec<String>>(workspace, command)?;
         drop(working_dir);
         Ok(deps
             .into_iter()

@@ -19,10 +19,10 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+mod eval_script_command;
 mod lua;
 mod prelude;
-mod script_command;
 mod traits;
 mod xml;
 
-pub use self::script_command::ScriptCommand;
+pub use self::eval_script_command::eval_script_command;
