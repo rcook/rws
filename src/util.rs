@@ -19,10 +19,10 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-#[cfg(windows)]
-use colored::control::set_virtual_terminal;
-
 pub fn reset_terminal() {
     #[cfg(windows)]
-    set_virtual_terminal(true).expect("set_virtual_terminal failed");
+    {
+        use colored::control::set_virtual_terminal;
+        set_virtual_terminal(true).expect("set_virtual_terminal failed");
+    }
 }
