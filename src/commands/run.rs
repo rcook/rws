@@ -19,16 +19,13 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use super::helpers::run_helper;
-use crate::command_info::CommandInfo;
+use crate::shell_runner::ShellRunner;
 use crate::workspace::{Plan, Session};
 use anyhow::Result;
 use std::process::Command;
 
-pub fn do_run(session: &Session, command_info: &CommandInfo) -> Result<()> {
-    run_helper(&Plan::new(session)?, command_info, |cmd| {
-        build_run_command(cmd)
-    })
+pub fn do_run(session: &Session, shell_runner: &ShellRunner) -> Result<()> {
+    shell_runner.run(&Plan::new(session)?, |cmd| build_run_command(cmd))
 }
 
 fn build_run_command(cmd: &[String]) -> Command {

@@ -20,18 +20,18 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 mod cli;
-mod command_info;
 mod commands;
 mod config;
 mod git;
 mod marshal;
 mod scripting;
+mod shell_runner;
 mod util;
 mod workspace;
 
 use crate::cli::{Args, Subcommand};
-use crate::command_info::CommandInfo;
 use crate::commands::{do_git, do_info, do_init, do_run};
+use crate::shell_runner::ShellRunner;
 use crate::util::reset_terminal;
 use crate::workspace::Session;
 use anyhow::Result;
@@ -72,7 +72,7 @@ fn run() -> Result<()> {
             order,
             command,
             args,
-        } => do_git(&session, &CommandInfo::new(command, args, fail_fast, order))?,
+        } => do_git(&session, &ShellRunner::new(command, args, fail_fast, order))?,
         Subcommand::Info => do_info(&session, true)?,
         Subcommand::Init => do_init(&session)?,
         Subcommand::Run {
@@ -80,7 +80,7 @@ fn run() -> Result<()> {
             order,
             command,
             args,
-        } => do_run(&session, &CommandInfo::new(command, args, fail_fast, order))?,
+        } => do_run(&session, &ShellRunner::new(command, args, fail_fast, order))?,
     }
     Ok(())
 }
