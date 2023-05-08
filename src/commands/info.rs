@@ -21,7 +21,7 @@
 //
 use super::helpers::show_project_dirs;
 use crate::git::GitInfo;
-use crate::session::{Plan, Session};
+use crate::workspace::{Plan, Session};
 use anyhow::Result;
 use colored::Colorize;
 

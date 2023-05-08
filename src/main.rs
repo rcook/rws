@@ -27,14 +27,14 @@ mod git;
 mod marshal;
 mod order;
 mod scripting;
-mod session;
 mod util;
+mod workspace;
 
 use crate::args::{Args, Command};
 use crate::command_info::CommandInfo;
 use crate::commands::{do_git, do_info, do_init, do_run};
-use crate::session::Session;
 use crate::util::reset_terminal;
+use crate::workspace::Session;
 use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;

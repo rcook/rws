@@ -21,7 +21,7 @@
 //
 use super::helpers::run_helper;
 use crate::command_info::CommandInfo;
-use crate::session::{Plan, Session};
+use crate::workspace::{Plan, Session};
 use anyhow::Result;
 use std::process::Command;
 

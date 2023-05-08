@@ -20,7 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use crate::scripting::eval_script_command;
-use crate::session::Session;
+use crate::workspace::Session;
 use anyhow::Result;
 use joatmon::WorkingDirectory;
 

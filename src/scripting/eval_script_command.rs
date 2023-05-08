@@ -21,7 +21,7 @@
 //
 use super::traits::Eval;
 use crate::config::{Command, Language};
-use crate::session::Session;
+use crate::workspace::Session;
 use anyhow::Result;
 use std::collections::HashMap;
 use std::fmt::Debug;

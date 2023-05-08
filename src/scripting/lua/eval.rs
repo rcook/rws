@@ -23,7 +23,7 @@ use super::super::prelude;
 use crate::config::Variables;
 use crate::marshal::lua_to_json;
 use crate::marshal::yaml_to_lua;
-use crate::session::Session;
+use crate::workspace::Session;
 use anyhow::Result;
 use joatmon::path_to_str;
 use rlua::prelude::{
