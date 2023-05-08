@@ -35,9 +35,9 @@ use std::path::PathBuf;
     after_help = format!("{}\n{}", PACKAGE_HOME_PAGE, PACKAGE_BUILD_VERSION.map(|x| format!("\n{}", x)).unwrap_or(String::from("")))
 )]
 pub struct Args {
-    #[arg(global = true, short = 'c', long = "config", value_parser = parse_absolute_path)]
+    #[arg(global = true, short = 'c', long = "config", help = "Path to workspace configuration file", value_parser = parse_absolute_path)]
     pub config_path: Option<PathBuf>,
-    #[arg(global = true, short = 'd', long = "dir", value_parser = parse_absolute_path)]
+    #[arg(global = true, short = 'd', long = "dir", help = "Path to workspace directory", value_parser = parse_absolute_path)]
     pub workspace_dir: Option<PathBuf>,
     #[command(subcommand)]
     pub subcommand: Subcommand,
