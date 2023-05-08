@@ -23,7 +23,6 @@ use crate::git::GitInfo;
 use crate::workspace::{Plan, Session};
 use anyhow::Result;
 use colored::Colorize;
-use joatmon::path_to_str;
 use std::path::PathBuf;
 
 pub fn do_info(session: &Session, show_env: bool) -> Result<()> {
@@ -79,7 +78,7 @@ fn show_project_dirs(order: &str, project_dirs: &[PathBuf]) {
     } else {
         println!("Project directories ({} order):", order);
         for project_dir in project_dirs {
-            println!("  {}", path_to_str(project_dir).cyan())
+            println!("  {}", format!("{}", project_dir.display()).cyan())
         }
     }
 }
