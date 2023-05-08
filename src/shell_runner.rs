@@ -24,7 +24,6 @@ use crate::util::reset_terminal;
 use crate::workspace::Plan;
 use anyhow::Result;
 use colored::Colorize;
-use joatmon::path_to_str;
 use std::process::Command;
 
 pub struct ShellRunner {
@@ -58,26 +57,35 @@ impl ShellRunner {
             _ => &plan.project_dirs_alpha,
         };
         for project_dir in project_dirs {
-            let d = path_to_str(project_dir);
-            println!("{}", d.cyan());
+            println!("{}", format!("{}", project_dir.display()).cyan());
             let exit_status = build_command(&self.cmd)
                 .current_dir(project_dir)
                 .spawn()?
                 .wait()?;
             reset_terminal();
             if exit_status.success() {
-                println!("{}", format!("Command succeeded in {}", d).green())
+                println!(
+                    "{}",
+                    format!("Command succeeded in {}", project_dir.display()).green()
+                )
             } else {
                 failure_count += 1;
                 match exit_status.code() {
                     Some(code) => {
-                        let m = format!("Command exited with status {} in {}", code, d);
+                        let m = format!(
+                            "Command exited with status {} in {}",
+                            code,
+                            project_dir.display()
+                        );
                         println!("{}", if self.fail_fast { m.red() } else { m.yellow() });
                         if self.fail_fast {
                             break;
                         }
                     }
-                    None => println!("{}", format!("Command terminated by signal in {}", d).red()),
+                    None => println!(
+                        "{}",
+                        format!("Command terminated by signal in {}", project_dir.display()).red()
+                    ),
                 }
             }
         }
