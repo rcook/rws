@@ -91,7 +91,6 @@ mod tests {
     use rstest::rstest;
     use serde_yaml::{from_str, Value};
     use std::collections::HashMap;
-    use topological_sort::DependencyLink;
 
     #[test]
     fn basics() -> Result<()> {
