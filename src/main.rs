@@ -30,7 +30,7 @@ mod util;
 mod workspace;
 
 use crate::cli::{Args, Subcommand};
-use crate::commands::{do_git, do_info, do_init, do_run};
+use crate::commands::{do_git, do_info, do_init, do_new, do_run};
 use crate::util::reset_terminal;
 use crate::workspace::Session;
 use anyhow::Result;
@@ -69,6 +69,7 @@ fn run() -> Result<()> {
         Subcommand::Git(shell_command_info) => do_git(&session, &shell_command_info)?,
         Subcommand::Info => do_info(&session, true)?,
         Subcommand::Init => do_init(&session)?,
+        Subcommand::New => do_new(&session)?,
         Subcommand::Run(shell_command_info) => do_run(&session, &shell_command_info)?,
     }
     Ok(())

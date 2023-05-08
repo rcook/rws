@@ -24,4 +24,4 @@ mod session;
 mod topo_order;
 
 pub use self::plan::Plan;
-pub use self::session::Session;
+pub use self::session::{Session, WORKSPACE_CONFIG_FILE_NAME};

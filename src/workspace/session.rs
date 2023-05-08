@@ -25,7 +25,7 @@ use joatmon::{find_sentinel_file, read_yaml_file};
 use std::env;
 use std::path::{Path, PathBuf};
 
-const WORKSPACE_CONFIG_FILE_NAME: &str = "rws-workspace.yaml";
+pub const WORKSPACE_CONFIG_FILE_NAME: &str = "rws-workspace.yaml";
 
 /// Workspace information derived from file system and configuration file
 #[derive(Debug)]

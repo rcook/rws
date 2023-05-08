@@ -22,9 +22,11 @@
 mod git;
 mod info;
 mod init;
+mod new;
 mod run;
 
 pub use self::git::do_git;
 pub use self::info::do_info;
 pub use self::init::do_init;
+pub use self::new::do_new;
 pub use self::run::do_run;

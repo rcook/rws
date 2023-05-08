@@ -20,24 +20,24 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use crate::marshal::YamlValue;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Definition {
-    #[serde(rename = "variables")]
+    #[serde(rename = "variables", skip_serializing_if = "Option::is_none")]
     pub variables: Option<Variables>,
 
-    #[serde(rename = "lua_config")]
+    #[serde(rename = "lua_config", skip_serializing_if = "Option::is_none")]
     pub lua_config: Option<LanguageConfig>,
 
-    #[serde(rename = "default_language")]
+    #[serde(rename = "default_language", skip_serializing_if = "Option::is_none")]
     pub default_language: Option<Language>,
 
-    #[serde(rename = "excluded_projects")]
+    #[serde(rename = "excluded_projects", skip_serializing_if = "Option::is_none")]
     pub excluded_projects: Option<Vec<String>>,
 
-    #[serde(rename = "init_command")]
+    #[serde(rename = "init_command", skip_serializing_if = "Option::is_none")]
     pub init_command: Option<Command>,
 
     #[serde(flatten)]
@@ -46,34 +46,34 @@ pub struct Definition {
 
 pub type Variables = HashMap<String, YamlValue>;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct LanguageConfig {
-    #[serde(rename = "preamble")]
+    #[serde(rename = "preamble", skip_serializing_if = "Option::is_none")]
     pub preamble: Option<String>,
 
-    #[serde(rename = "use_prelude")]
+    #[serde(rename = "use_prelude", skip_serializing_if = "Option::is_none")]
     pub use_prelude: Option<bool>,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum Language {
     #[serde(rename = "lua")]
     Lua,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 pub struct Command {
-    #[serde(rename = "language")]
+    #[serde(rename = "language", skip_serializing_if = "Option::is_none")]
     pub language: Option<Language>,
 
-    #[serde(rename = "use_prelude")]
+    #[serde(rename = "use_prelude", skip_serializing_if = "Option::is_none")]
     pub use_prelude: Option<bool>,
 
     #[serde(rename = "script")]
     pub script: String,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 pub enum DependencySource {
     #[serde(rename = "dependencies")]
     Static(StaticDependencies),

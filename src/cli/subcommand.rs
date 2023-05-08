@@ -36,6 +36,9 @@ pub enum Subcommand {
     #[command(name = "init", about = "Initialize workspace")]
     Init,
 
+    #[command(name = "new", about = "Create new workspace")]
+    New,
+
     #[command(name = "run", about = "Run command in each project directory")]
     Run(ShellCommandInfo),
 }
