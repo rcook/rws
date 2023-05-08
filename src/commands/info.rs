@@ -24,19 +24,23 @@ use crate::git::GitInfo;
 use crate::session::{Plan, Session};
 use anyhow::Result;
 use colored::Colorize;
-use joatmon::path_to_str;
 
 pub fn do_info(session: &Session, show_env: bool) -> Result<()> {
     println!(
+        "Current working directory: {}",
+        format!("{}", session.cwd.display()).cyan()
+    );
+
+    println!(
         "Workspace directory: {}",
-        path_to_str(&session.workspace_dir).cyan()
+        format!("{}", session.workspace_dir.display()).cyan()
     );
     println!(
         "Workspace configuration file: {}",
         session
             .config_path
             .as_ref()
-            .map(|x| path_to_str(x).cyan())
+            .map(|x| format!("{}", x.display()).cyan())
             .unwrap_or_else(|| "(none)".red().italic())
     );
 
@@ -53,7 +57,7 @@ pub fn do_info(session: &Session, show_env: bool) -> Result<()> {
             Ok(git_info) => {
                 println!(
                     "Path to Git: {}",
-                    path_to_str(&git_info.executable_path).cyan()
+                    format!("{}", git_info.executable_path.display()).cyan()
                 );
                 println!("Git version: {}", git_info.version.cyan())
             }
