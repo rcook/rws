@@ -19,11 +19,12 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use super::helpers::show_project_dirs;
 use crate::git::GitInfo;
 use crate::workspace::{Plan, Session};
 use anyhow::Result;
 use colored::Colorize;
+use joatmon::path_to_str;
+use std::path::PathBuf;
 
 pub fn do_info(session: &Session, show_env: bool) -> Result<()> {
     println!(
@@ -66,4 +67,19 @@ pub fn do_info(session: &Session, show_env: bool) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn show_project_dirs(order: &str, project_dirs: &[PathBuf]) {
+    if project_dirs.is_empty() {
+        println!(
+            "Project directories ({} order): {}",
+            order,
+            "(none)".red().italic()
+        );
+    } else {
+        println!("Project directories ({} order):", order);
+        for project_dir in project_dirs {
+            println!("  {}", path_to_str(project_dir).cyan())
+        }
+    }
 }
