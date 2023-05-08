@@ -1,3 +1,4 @@
+use crate::cli::ShellCommandInfo;
 // The MIT License (MIT)
 //
 // Copyright (c) 2020-3 Richard Cook
@@ -24,8 +25,8 @@ use crate::workspace::{Plan, Session};
 use anyhow::Result;
 use std::process::Command;
 
-pub fn do_run(session: &Session, shell_runner: &ShellRunner) -> Result<()> {
-    shell_runner.run(&Plan::new(session)?, |cmd| build_run_command(cmd))
+pub fn do_run(session: &Session, shell_command_info: &ShellCommandInfo) -> Result<()> {
+    ShellRunner::new(shell_command_info).run(&Plan::new(session)?, |cmd| build_run_command(cmd))
 }
 
 fn build_run_command(cmd: &[String]) -> Command {

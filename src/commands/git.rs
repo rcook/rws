@@ -19,15 +19,16 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+use crate::cli::ShellCommandInfo;
 use crate::git::GitInfo;
 use crate::shell_runner::ShellRunner;
 use crate::workspace::{Plan, Session};
 use anyhow::Result;
 use std::process::Command;
 
-pub fn do_git(session: &Session, shell_runner: &ShellRunner) -> Result<()> {
+pub fn do_git(session: &Session, shell_command_info: &ShellCommandInfo) -> Result<()> {
     let git_info = GitInfo::from_environment()?;
-    shell_runner.run(&Plan::new(session)?, |cmd| {
+    ShellRunner::new(shell_command_info).run(&Plan::new(session)?, |cmd| {
         build_git_command(&git_info, cmd)
     })
 }

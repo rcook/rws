@@ -20,7 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use super::project_order::ProjectOrder;
-use clap::Subcommand as ClapSubcommand;
+use clap::{Args, Subcommand as ClapSubcommand};
 
 #[derive(ClapSubcommand, Debug)]
 pub enum Subcommand {
@@ -28,26 +28,7 @@ pub enum Subcommand {
         name = "git",
         about = "Run Git command in each project directory using system Git command"
     )]
-    Git {
-        #[arg(help = "Fail fast", short = 'f', long = "fail-fast")]
-        fail_fast: bool,
-
-        #[arg(
-            help = "Project traversal order",
-            short = 'o',
-            long = "order",
-            default_value_t = ProjectOrder::Topological,
-            value_enum
-        )]
-        project_order: ProjectOrder,
-
-        #[arg(help = "Program to run in environment")]
-        command: String,
-
-        #[arg(help = "Zero or more arguments to pass to program")]
-        #[clap(trailing_var_arg = true, allow_hyphen_values = true)]
-        args: Vec<String>,
-    },
+    Git(ShellCommandInfo),
 
     #[command(name = "info", about = "Print workspace and environment information")]
     Info,
@@ -56,24 +37,27 @@ pub enum Subcommand {
     Init,
 
     #[command(name = "run", about = "Run command in each project directory")]
-    Run {
-        #[arg(help = "Fail fast", short = 'f', long = "fail-fast")]
-        fail_fast: bool,
+    Run(ShellCommandInfo),
+}
 
-        #[arg(
-            help = "Project traversal order",
-            short = 'o',
-            long = "order",
-            default_value_t = ProjectOrder::Topological,
-            value_enum
-        )]
-        project_order: ProjectOrder,
+#[derive(Args, Debug)]
+pub struct ShellCommandInfo {
+    #[arg(help = "Fail fast", short = 'f', long = "fail-fast")]
+    pub fail_fast: bool,
 
-        #[arg(help = "Program to run in environment")]
-        command: String,
+    #[arg(
+        help = "Project traversal order",
+        short = 'o',
+        long = "order",
+        default_value_t = ProjectOrder::Topological,
+        value_enum
+    )]
+    pub project_order: ProjectOrder,
 
-        #[arg(help = "Zero or more arguments to pass to program")]
-        #[clap(trailing_var_arg = true, allow_hyphen_values = true)]
-        args: Vec<String>,
-    },
+    #[arg(help = "Program to run in environment")]
+    pub command: String,
+
+    #[arg(help = "Zero or more arguments to pass to program")]
+    #[clap(trailing_var_arg = true, allow_hyphen_values = true)]
+    pub args: Vec<String>,
 }

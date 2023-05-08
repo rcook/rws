@@ -19,7 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::cli::ProjectOrder;
+use crate::cli::{ProjectOrder, ShellCommandInfo};
 use crate::util::reset_terminal;
 use crate::workspace::Plan;
 use anyhow::Result;
@@ -34,22 +34,17 @@ pub struct ShellRunner {
 }
 
 impl ShellRunner {
-    pub fn new(
-        command: String,
-        args: Vec<String>,
-        fail_fast: bool,
-        project_order: ProjectOrder,
-    ) -> Self {
+    pub fn new(shell_command_info: &ShellCommandInfo) -> Self {
         let mut cmd = Vec::new();
-        cmd.push(command);
-        for arg in args {
-            cmd.push(arg);
+        cmd.push(shell_command_info.command.clone());
+        for arg in &shell_command_info.args {
+            cmd.push(arg.clone());
         }
 
         Self {
             cmd,
-            fail_fast,
-            project_order,
+            fail_fast: shell_command_info.fail_fast,
+            project_order: shell_command_info.project_order.clone(),
         }
     }
 

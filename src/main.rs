@@ -31,7 +31,6 @@ mod workspace;
 
 use crate::cli::{Args, Subcommand};
 use crate::commands::{do_git, do_info, do_init, do_run};
-use crate::shell_runner::ShellRunner;
 use crate::util::reset_terminal;
 use crate::workspace::Session;
 use anyhow::Result;
@@ -67,26 +66,10 @@ fn run() -> Result<()> {
         args.config_path.as_deref(),
     )?;
     match args.subcommand {
-        Subcommand::Git {
-            fail_fast,
-            project_order,
-            command,
-            args,
-        } => do_git(
-            &session,
-            &ShellRunner::new(command, args, fail_fast, project_order),
-        )?,
+        Subcommand::Git(shell_command_info) => do_git(&session, &shell_command_info)?,
         Subcommand::Info => do_info(&session, true)?,
         Subcommand::Init => do_init(&session)?,
-        Subcommand::Run {
-            fail_fast,
-            project_order,
-            command,
-            args,
-        } => do_run(
-            &session,
-            &ShellRunner::new(command, args, fail_fast, project_order),
-        )?,
+        Subcommand::Run(shell_command_info) => do_run(&session, &shell_command_info)?,
     }
     Ok(())
 }

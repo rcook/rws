@@ -27,4 +27,4 @@ mod subcommand;
 
 pub use self::args::Args;
 pub use self::project_order::ProjectOrder;
-pub use self::subcommand::Subcommand;
+pub use self::subcommand::{ShellCommandInfo, Subcommand};
