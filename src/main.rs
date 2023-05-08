@@ -19,18 +19,17 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-mod args;
+mod cli;
 mod command_info;
 mod commands;
 mod config;
 mod git;
 mod marshal;
-mod order;
 mod scripting;
 mod util;
 mod workspace;
 
-use crate::args::{Args, Command};
+use crate::cli::{Args, Subcommand};
 use crate::command_info::CommandInfo;
 use crate::commands::{do_git, do_info, do_init, do_run};
 use crate::util::reset_terminal;
@@ -67,16 +66,16 @@ fn run() -> Result<()> {
         args.workspace_dir.as_deref(),
         args.config_path.as_deref(),
     )?;
-    match args.command {
-        Command::Git {
+    match args.subcommand {
+        Subcommand::Git {
             fail_fast,
             order,
             command,
             args,
         } => do_git(&session, &CommandInfo::new(command, args, fail_fast, order))?,
-        Command::Info => do_info(&session, true)?,
-        Command::Init => do_init(&session)?,
-        Command::Run {
+        Subcommand::Info => do_info(&session, true)?,
+        Subcommand::Init => do_init(&session)?,
+        Subcommand::Run {
             fail_fast,
             order,
             command,

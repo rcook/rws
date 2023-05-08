@@ -19,26 +19,12 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::cli::DirectoryOrder;
+mod args;
+mod constants;
+mod directory_order;
+mod funcs;
+mod subcommand;
 
-pub struct CommandInfo {
-    pub cmd: Vec<String>,
-    pub fail_fast: bool,
-    pub order: DirectoryOrder,
-}
-
-impl CommandInfo {
-    pub fn new(command: String, args: Vec<String>, fail_fast: bool, order: DirectoryOrder) -> Self {
-        let mut cmd = Vec::new();
-        cmd.push(command);
-        for arg in args {
-            cmd.push(arg);
-        }
-
-        Self {
-            cmd,
-            fail_fast,
-            order,
-        }
-    }
-}
+pub use self::args::Args;
+pub use self::directory_order::DirectoryOrder;
+pub use self::subcommand::Subcommand;

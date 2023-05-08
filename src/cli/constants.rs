@@ -19,26 +19,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::cli::DirectoryOrder;
-
-pub struct CommandInfo {
-    pub cmd: Vec<String>,
-    pub fail_fast: bool,
-    pub order: DirectoryOrder,
-}
-
-impl CommandInfo {
-    pub fn new(command: String, args: Vec<String>, fail_fast: bool, order: DirectoryOrder) -> Self {
-        let mut cmd = Vec::new();
-        cmd.push(command);
-        for arg in args {
-            cmd.push(arg);
-        }
-
-        Self {
-            cmd,
-            fail_fast,
-            order,
-        }
-    }
-}
+pub const PACKAGE_NAME: &str = env!("CARGO_PKG_NAME");
+pub const PACKAGE_DESCRIPTION: &str = env!("CARGO_PKG_DESCRIPTION");
+pub const PACKAGE_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const PACKAGE_HOME_PAGE: &str = env!("CARGO_PKG_HOMEPAGE");
+pub const PACKAGE_BUILD_VERSION: Option<&str> = option_env!("RUST_TOOL_ACTION_BUILD_VERSION");

@@ -19,26 +19,26 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::cli::DirectoryOrder;
+use super::constants::{
+    PACKAGE_BUILD_VERSION, PACKAGE_DESCRIPTION, PACKAGE_HOME_PAGE, PACKAGE_NAME, PACKAGE_VERSION,
+};
+use super::funcs::parse_absolute_path;
+use super::subcommand::Subcommand;
+use clap::Parser;
+use std::path::PathBuf;
 
-pub struct CommandInfo {
-    pub cmd: Vec<String>,
-    pub fail_fast: bool,
-    pub order: DirectoryOrder,
-}
-
-impl CommandInfo {
-    pub fn new(command: String, args: Vec<String>, fail_fast: bool, order: DirectoryOrder) -> Self {
-        let mut cmd = Vec::new();
-        cmd.push(command);
-        for arg in args {
-            cmd.push(arg);
-        }
-
-        Self {
-            cmd,
-            fail_fast,
-            order,
-        }
-    }
+#[derive(Parser, Debug)]
+#[command(
+    name = PACKAGE_NAME,
+    version = PACKAGE_VERSION,
+    about = format!("{} {}", PACKAGE_DESCRIPTION, PACKAGE_VERSION),
+    after_help = format!("{}\n{}", PACKAGE_HOME_PAGE, PACKAGE_BUILD_VERSION.map(|x| format!("\n{}", x)).unwrap_or(String::from("")))
+)]
+pub struct Args {
+    #[arg(global = true, short = 'c', long = "config", value_parser = parse_absolute_path)]
+    pub config_path: Option<PathBuf>,
+    #[arg(global = true, short = 'd', long = "dir", value_parser = parse_absolute_path)]
+    pub workspace_dir: Option<PathBuf>,
+    #[command(subcommand)]
+    pub subcommand: Subcommand,
 }

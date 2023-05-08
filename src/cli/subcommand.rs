@@ -19,35 +19,12 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use crate::order::DirectoryOrder;
-use clap::{Parser, Subcommand};
-use path_absolutize::Absolutize;
-use std::path::{Path, PathBuf};
+use super::directory_order::DirectoryOrder;
+use clap::Subcommand as ClapSubcommand;
+use std::fmt::Debug;
 
-const PACKAGE_NAME: &str = env!("CARGO_PKG_NAME");
-const PACKAGE_DESCRIPTION: &str = env!("CARGO_PKG_DESCRIPTION");
-const PACKAGE_VERSION: &str = env!("CARGO_PKG_VERSION");
-const PACKAGE_HOME_PAGE: &str = env!("CARGO_PKG_HOMEPAGE");
-const PACKAGE_BUILD_VERSION: Option<&str> = option_env!("RUST_TOOL_ACTION_BUILD_VERSION");
-
-#[derive(Parser, Debug)]
-#[command(
-    name = PACKAGE_NAME,
-    version = PACKAGE_VERSION,
-    about = format!("{} {}", PACKAGE_DESCRIPTION, PACKAGE_VERSION),
-    after_help = format!("{}\n{}", PACKAGE_HOME_PAGE, PACKAGE_BUILD_VERSION.map(|x| format!("\n{}", x)).unwrap_or(String::from("")))
-)]
-pub struct Args {
-    #[arg(global = true, short = 'c', long = "config", value_parser = parse_absolute_path)]
-    pub config_path: Option<PathBuf>,
-    #[arg(global = true, short = 'd', long = "dir", value_parser = parse_absolute_path)]
-    pub workspace_dir: Option<PathBuf>,
-    #[command(subcommand)]
-    pub command: Command,
-}
-
-#[derive(Debug, Subcommand)]
-pub enum Command {
+#[derive(ClapSubcommand, Debug)]
+pub enum Subcommand {
     #[command(
         name = "git",
         about = "Run Git command in each project directory using system Git command"
@@ -100,11 +77,4 @@ pub enum Command {
         #[clap(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
     },
-}
-
-fn parse_absolute_path(s: &str) -> Result<PathBuf, String> {
-    Path::new(s)
-        .absolutize()
-        .map_err(|_| String::from("invalid path"))
-        .map(|x| x.to_path_buf())
 }
