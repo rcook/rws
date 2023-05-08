@@ -20,12 +20,12 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use crate::cli::ShellCommandInfo;
-use crate::shell_runner::ShellRunner;
+use crate::shell_runner::{ShellResult, ShellRunner};
 use crate::workspace::{Plan, Session};
 use anyhow::Result;
 use std::process::Command;
 
-pub fn do_run(session: &Session, shell_command_info: &ShellCommandInfo) -> Result<()> {
+pub fn do_run(session: &Session, shell_command_info: &ShellCommandInfo) -> Result<ShellResult> {
     ShellRunner::new(shell_command_info).run(&Plan::new(session)?, build_command)
 }
 

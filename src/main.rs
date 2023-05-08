@@ -30,6 +30,7 @@ mod workspace;
 
 use crate::cli::{Args, Subcommand};
 use crate::commands::{do_git, do_info, do_init, do_new, do_run};
+use crate::shell_runner::{ShellResult, FAILURE_EXIT_CODE};
 use crate::util::reset_terminal;
 use crate::workspace::Session;
 use anyhow::Result;
@@ -41,7 +42,7 @@ use std::process::exit;
 
 fn main() {
     exit(match run() {
-        Ok(_) => 0,
+        Ok(shell_result) => shell_result.exit_code(),
         Err(e) => {
             // TBD: Figure out how to wrap Lua errors better!
             match e.downcast_ref::<LuaError>() {
@@ -50,12 +51,12 @@ fn main() {
                 }
                 None => println!("{}", format!("{}", e).bright_red()),
             }
-            1
+            FAILURE_EXIT_CODE
         }
     })
 }
 
-fn run() -> Result<()> {
+fn run() -> Result<ShellResult> {
     reset_terminal();
     let args = Args::parse();
     let cwd = current_dir()?;
@@ -64,12 +65,20 @@ fn run() -> Result<()> {
         args.workspace_dir.as_deref(),
         args.config_path.as_deref(),
     )?;
-    match args.subcommand {
+    Ok(match args.subcommand {
         Subcommand::Git(shell_command_info) => do_git(&session, &shell_command_info)?,
-        Subcommand::Info => do_info(&session, true)?,
-        Subcommand::Init => do_init(&session)?,
-        Subcommand::New => do_new(&session)?,
+        Subcommand::Info => {
+            do_info(&session, true)?;
+            ShellResult::Success
+        }
+        Subcommand::Init => {
+            do_init(&session)?;
+            ShellResult::Success
+        }
+        Subcommand::New => {
+            do_new(&session)?;
+            ShellResult::Success
+        }
         Subcommand::Run(shell_command_info) => do_run(&session, &shell_command_info)?,
-    }
-    Ok(())
+    })
 }

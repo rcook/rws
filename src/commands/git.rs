@@ -21,12 +21,12 @@
 //
 use crate::cli::ShellCommandInfo;
 use crate::git::GitInfo;
-use crate::shell_runner::ShellRunner;
+use crate::shell_runner::{ShellResult, ShellRunner};
 use crate::workspace::{Plan, Session};
 use anyhow::Result;
 use std::process::Command;
 
-pub fn do_git(session: &Session, shell_command_info: &ShellCommandInfo) -> Result<()> {
+pub fn do_git(session: &Session, shell_command_info: &ShellCommandInfo) -> Result<ShellResult> {
     let git_info = GitInfo::from_environment()?;
     ShellRunner::new(shell_command_info)
         .run(&Plan::new(session)?, |cmd| build_command(&git_info, cmd))

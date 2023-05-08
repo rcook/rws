@@ -26,6 +26,23 @@ use anyhow::Result;
 use colored::Colorize;
 use std::process::Command;
 
+pub const SUCCESS_EXIT_CODE: i32 = 0;
+pub const FAILURE_EXIT_CODE: i32 = 1;
+
+pub enum ShellResult {
+    Success,
+    Failure,
+}
+
+impl ShellResult {
+    pub fn exit_code(&self) -> i32 {
+        match self {
+            Self::Success => SUCCESS_EXIT_CODE,
+            Self::Failure => FAILURE_EXIT_CODE,
+        }
+    }
+}
+
 pub struct ShellRunner {
     pub cmd: Vec<String>,
     pub fail_fast: bool,
@@ -47,7 +64,7 @@ impl ShellRunner {
         }
     }
 
-    pub fn run<F>(&self, plan: &Plan, build_command: F) -> Result<()>
+    pub fn run<F>(&self, plan: &Plan, build_command: F) -> Result<ShellResult>
     where
         F: Fn(&[String]) -> Command,
     {
@@ -94,9 +111,13 @@ impl ShellRunner {
             println!(
                 "{}",
                 format!("Command failed in {} project directories", failure_count).red()
-            )
+            );
         }
 
-        Ok(())
+        Ok(if failure_count > 0 {
+            ShellResult::Failure
+        } else {
+            ShellResult::Success
+        })
     }
 }
