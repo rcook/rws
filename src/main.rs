@@ -41,6 +41,7 @@ use std::env::current_dir;
 use std::process::exit;
 
 fn main() {
+    reset_terminal();
     exit(match run() {
         Ok(shell_result) => shell_result.exit_code(),
         Err(e) => {
@@ -56,8 +57,7 @@ fn main() {
     })
 }
 
-fn run() -> Result<ShellResult> {
-    reset_terminal();
+fn get_session() -> Result<(Args, Session)> {
     let args = Args::parse();
     let cwd = current_dir()?;
     let session = Session::new(
@@ -65,6 +65,11 @@ fn run() -> Result<ShellResult> {
         args.workspace_dir.as_deref(),
         args.config_path.as_deref(),
     )?;
+    Ok((args, session))
+}
+
+fn run() -> Result<ShellResult> {
+    let (args, session) = get_session()?;
     Ok(match args.subcommand {
         Subcommand::Git(shell_command_info) => do_git(&session, &shell_command_info)?,
         Subcommand::Info => {
