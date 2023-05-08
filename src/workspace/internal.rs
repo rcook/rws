@@ -30,6 +30,8 @@ const WORKSPACE_CONFIG_FILE_NAME: &str = "rws-workspace.yaml";
 /// Workspace information derived from file system and configuration file
 #[derive(Debug)]
 pub struct Workspace {
+    /// Current working directory
+    pub cwd: PathBuf,
     /// Workspace directory
     pub workspace_dir: PathBuf,
     /// Configuration path
@@ -40,31 +42,38 @@ pub struct Workspace {
 
 impl Workspace {
     /// Constructor
-    pub fn new(workspace_dir: Option<&Path>, config_path: Option<&Path>) -> Result<Self> {
+    pub fn new(
+        cwd: &Path,
+        workspace_dir: Option<&Path>,
+        config_path: Option<&Path>,
+    ) -> Result<Self> {
         match (workspace_dir, config_path) {
-            (Some(d), Some(c)) => Self::known(d, Some(c)),
+            (Some(d), Some(c)) => Self::known(cwd, d, Some(c)),
             (Some(d), None) => {
                 let p = d.join(WORKSPACE_CONFIG_FILE_NAME);
-                Self::known(d, if p.exists() { Some(&p) } else { None })
+                Self::known(cwd, d, if p.exists() { Some(&p) } else { None })
             }
             (None, Some(c)) => Self::known(
+                cwd,
                 c.to_path_buf()
                     .parent()
                     .ok_or_else(|| anyhow!("Invalid config path"))?,
                 Some(c),
             ),
-            (None, None) => Self::find(&env::current_dir()?),
+            (None, None) => Self::find(cwd, &env::current_dir()?),
         }
     }
 
-    fn known(workspace_dir: &Path, config_path_opt: Option<&Path>) -> Result<Self> {
+    fn known(cwd: &Path, workspace_dir: &Path, config_path_opt: Option<&Path>) -> Result<Self> {
         match config_path_opt {
             Some(config_path) => Ok(Self {
+                cwd: cwd.to_path_buf(),
                 workspace_dir: workspace_dir.to_path_buf(),
                 config_path: Some(config_path.to_path_buf()),
                 definition: Some(read_yaml_file(config_path)?),
             }),
             None => Ok(Self {
+                cwd: cwd.to_path_buf(),
                 workspace_dir: workspace_dir.to_path_buf(),
                 config_path: None,
                 definition: None,
@@ -72,7 +81,7 @@ impl Workspace {
         }
     }
 
-    fn find(search_dir: &Path) -> Result<Self> {
+    fn find(cwd: &Path, search_dir: &Path) -> Result<Self> {
         Ok(
             match find_sentinel_file(WORKSPACE_CONFIG_FILE_NAME, search_dir, Some(5)) {
                 Some(config_path) => {
@@ -82,12 +91,14 @@ impl Workspace {
                     }
                     let definition = read_yaml_file(&config_path)?;
                     Self {
+                        cwd: cwd.to_path_buf(),
                         workspace_dir,
                         config_path: Some(config_path),
                         definition: Some(definition),
                     }
                 }
                 None => Self {
+                    cwd: cwd.to_path_buf(),
                     workspace_dir: search_dir.to_path_buf(),
                     config_path: None,
                     definition: None,

@@ -39,6 +39,7 @@ use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
 use rlua::prelude::LuaError;
+use std::env::current_dir;
 use std::process::exit;
 
 fn main() {
@@ -60,7 +61,12 @@ fn main() {
 fn run() -> Result<()> {
     reset_terminal();
     let args = Args::parse();
-    let workspace = Workspace::new(args.workspace_dir.as_deref(), args.config_path.as_deref())?;
+    let cwd = current_dir()?;
+    let workspace = Workspace::new(
+        &cwd,
+        args.workspace_dir.as_deref(),
+        args.config_path.as_deref(),
+    )?;
     match args.command {
         Command::Git {
             fail_fast,
