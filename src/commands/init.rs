@@ -20,15 +20,15 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 use crate::scripting::eval_script_command;
-use crate::workspace::Workspace;
+use crate::session::Session;
 use anyhow::Result;
 use joatmon::WorkingDirectory;
 
-pub fn do_init(workspace: &Workspace) -> Result<()> {
-    if let Some(d) = &workspace.definition {
+pub fn do_init(session: &Session) -> Result<()> {
+    if let Some(d) = &session.definition {
         if let Some(command) = &d.init_command {
-            let working_dir = WorkingDirectory::change(&workspace.workspace_dir)?;
-            eval_script_command(workspace, command)?;
+            let working_dir = WorkingDirectory::change(&session.workspace_dir)?;
+            eval_script_command(session, command)?;
             drop(working_dir);
         }
     }

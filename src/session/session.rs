@@ -29,7 +29,7 @@ const WORKSPACE_CONFIG_FILE_NAME: &str = "rws-workspace.yaml";
 
 /// Workspace information derived from file system and configuration file
 #[derive(Debug)]
-pub struct Workspace {
+pub struct Session {
     /// Current working directory
     pub cwd: PathBuf,
     /// Workspace directory
@@ -40,7 +40,7 @@ pub struct Workspace {
     pub definition: Option<Definition>,
 }
 
-impl Workspace {
+impl Session {
     /// Constructor
     pub fn new(
         cwd: &Path,

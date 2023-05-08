@@ -19,7 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-use super::internal::Workspace;
+use super::session::Session;
 use super::topo_order::compute_topo_order;
 use crate::config::{Command, DependencySource, StaticDependencies};
 use crate::scripting::eval_script_command;
@@ -39,34 +39,30 @@ pub struct Plan {
 
 impl Plan {
     /// Create a plan from a workspace
-    pub fn new(workspace: &Workspace) -> Result<Self> {
+    pub fn new(session: &Session) -> Result<Self> {
         let exclude_project_dirs = HashSet::from_iter(
-            workspace
+            session
                 .definition
                 .as_ref()
                 .and_then(|d| d.excluded_projects.as_ref())
                 .unwrap_or(&Vec::new())
                 .iter()
-                .map(|s| workspace.workspace_dir.join(s)),
+                .map(|s| session.workspace_dir.join(s)),
         );
 
         let project_dirs_alpha =
-            Self::get_project_dirs_alpha(&workspace.workspace_dir, &exclude_project_dirs)?;
+            Self::get_project_dirs_alpha(&session.workspace_dir, &exclude_project_dirs)?;
 
-        let project_dirs_topo = match &workspace.definition {
+        let project_dirs_topo = match &session.definition {
             Some(d) => match &d.dependency_source {
                 Some(DependencySource::Static(static_dependencies)) => {
                     Some(compute_topo_order(&project_dirs_alpha, |project_dir| {
-                        Self::get_precs_from_config_hash(
-                            static_dependencies,
-                            workspace,
-                            project_dir,
-                        )
+                        Self::get_precs_from_config_hash(static_dependencies, session, project_dir)
                     })?)
                 }
                 Some(DependencySource::Command(command)) => {
                     Some(compute_topo_order(&project_dirs_alpha, |project_dir| {
-                        Self::get_precs_from_script_command(command, workspace, project_dir)
+                        Self::get_precs_from_script_command(command, session, project_dir)
                     })?)
                 }
                 None => None,
@@ -101,7 +97,7 @@ impl Plan {
 
     fn get_precs_from_config_hash(
         static_dependencies: &StaticDependencies,
-        workspace: &Workspace,
+        session: &Session,
         project_dir: &Path,
     ) -> Result<Vec<PathBuf>> {
         let project_name = get_base_name(project_dir)
@@ -111,7 +107,7 @@ impl Plan {
             .get(project_name)
             .map(|ps| {
                 ps.iter()
-                    .map(|p| workspace.workspace_dir.join(p))
+                    .map(|p| session.workspace_dir.join(p))
                     .collect::<Vec<_>>()
             })
             .unwrap_or(Vec::new()))
@@ -119,15 +115,15 @@ impl Plan {
 
     fn get_precs_from_script_command(
         command: &Command,
-        workspace: &Workspace,
+        session: &Session,
         project_dir: &Path,
     ) -> Result<Vec<PathBuf>> {
         let working_dir = WorkingDirectory::change(project_dir)?;
-        let deps = eval_script_command::<Vec<String>>(workspace, command)?;
+        let deps = eval_script_command::<Vec<String>>(session, command)?;
         drop(working_dir);
         Ok(deps
             .into_iter()
-            .map(|x| workspace.workspace_dir.join(x))
+            .map(|x| session.workspace_dir.join(x))
             .collect::<Vec<_>>())
     }
 }

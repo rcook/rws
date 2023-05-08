@@ -23,7 +23,7 @@ use super::super::prelude;
 use crate::config::Variables;
 use crate::marshal::lua_to_json;
 use crate::marshal::yaml_to_lua;
-use crate::workspace::Workspace;
+use crate::session::Session;
 use anyhow::Result;
 use joatmon::path_to_str;
 use rlua::prelude::{
@@ -38,7 +38,7 @@ pub trait Eval: for<'lua> FromLuaMulti<'lua> {}
 impl<T: for<'lua> FromLuaMulti<'lua>> Eval for T {}
 
 pub fn eval<T>(
-    workspace: &Workspace,
+    session: &Session,
     preamble: &str,
     script: &str,
     use_prelude: bool,
@@ -51,7 +51,7 @@ where
         create_variables(ctx, variables)?;
 
         if use_prelude {
-            load_prelude(ctx, workspace)?;
+            load_prelude(ctx, session)?;
         }
 
         Ok(ctx.load(&(preamble.to_string() + "\n\n" + script)).eval()?)
@@ -94,7 +94,7 @@ fn create_git(ctx: LuaContext) -> Result<LuaTable> {
     Ok(git)
 }
 
-fn load_prelude(ctx: LuaContext, workspace: &Workspace) -> Result<()> {
+fn load_prelude(ctx: LuaContext, session: &Session) -> Result<()> {
     let prelude = ctx.create_table()?;
 
     // Nested objects
@@ -102,7 +102,7 @@ fn load_prelude(ctx: LuaContext, workspace: &Workspace) -> Result<()> {
 
     prelude.set(
         "workspace_dir",
-        ctx.create_string(path_to_str(&workspace.workspace_dir))?,
+        ctx.create_string(path_to_str(&session.workspace_dir))?,
     )?;
 
     prelude.set(

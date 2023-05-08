@@ -21,8 +21,8 @@
 //
 use crate::command_info::CommandInfo;
 use crate::order::DirectoryOrder;
+use crate::session::Plan;
 use crate::util::reset_terminal;
-use crate::workspace::Plan;
 use anyhow::Result;
 use colored::Colorize;
 use joatmon::path_to_str;

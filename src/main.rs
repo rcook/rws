@@ -27,14 +27,14 @@ mod git;
 mod marshal;
 mod order;
 mod scripting;
+mod session;
 mod util;
-mod workspace;
 
 use crate::args::{Args, Command};
 use crate::command_info::CommandInfo;
 use crate::commands::{do_git, do_info, do_init, do_run};
+use crate::session::Session;
 use crate::util::reset_terminal;
-use crate::workspace::Workspace;
 use anyhow::Result;
 use clap::Parser;
 use colored::Colorize;
@@ -62,7 +62,7 @@ fn run() -> Result<()> {
     reset_terminal();
     let args = Args::parse();
     let cwd = current_dir()?;
-    let workspace = Workspace::new(
+    let session = Session::new(
         &cwd,
         args.workspace_dir.as_deref(),
         args.config_path.as_deref(),
@@ -73,21 +73,15 @@ fn run() -> Result<()> {
             order,
             command,
             args,
-        } => do_git(
-            &workspace,
-            &CommandInfo::new(command, args, fail_fast, order),
-        )?,
-        Command::Info => do_info(&workspace, true)?,
-        Command::Init => do_init(&workspace)?,
+        } => do_git(&session, &CommandInfo::new(command, args, fail_fast, order))?,
+        Command::Info => do_info(&session, true)?,
+        Command::Init => do_init(&session)?,
         Command::Run {
             fail_fast,
             order,
             command,
             args,
-        } => do_run(
-            &workspace,
-            &CommandInfo::new(command, args, fail_fast, order),
-        )?,
+        } => do_run(&session, &CommandInfo::new(command, args, fail_fast, order))?,
     }
     Ok(())
 }

@@ -21,16 +21,16 @@
 //
 use super::traits::Eval;
 use crate::config::{Command, Language};
-use crate::workspace::Workspace;
+use crate::session::Session;
 use anyhow::Result;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-pub fn eval_script_command<T>(workspace: &Workspace, command: &Command) -> Result<T>
+pub fn eval_script_command<T>(session: &Session, command: &Command) -> Result<T>
 where
     T: Debug + Eval,
 {
-    let default_language = workspace
+    let default_language = session
         .definition
         .as_ref()
         .and_then(|d| d.default_language.clone())
@@ -43,7 +43,7 @@ where
         .clone();
 
     let language_config_opt = match &language {
-        Language::Lua => workspace
+        Language::Lua => session
             .definition
             .as_ref()
             .and_then(|d| d.lua_config.clone()),
@@ -64,13 +64,13 @@ where
 
     let script = command.script.clone();
 
-    let variables = workspace
+    let variables = session
         .definition
         .as_ref()
         .and_then(|d| d.variables.clone())
         .unwrap_or(HashMap::new());
 
     match language {
-        Language::Lua => super::lua::eval(workspace, &preamble, &script, use_prelude, &variables),
+        Language::Lua => super::lua::eval(session, &preamble, &script, use_prelude, &variables),
     }
 }

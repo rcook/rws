@@ -19,9 +19,9 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-mod internal;
 mod plan;
+mod session;
 mod topo_order;
 
-pub use self::internal::Workspace;
 pub use self::plan::Plan;
+pub use self::session::Session;

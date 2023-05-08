@@ -22,13 +22,13 @@
 use super::helpers::run_helper;
 use crate::command_info::CommandInfo;
 use crate::git::GitInfo;
-use crate::workspace::{Plan, Workspace};
+use crate::session::{Plan, Session};
 use anyhow::Result;
 use std::process::Command;
 
-pub fn do_git(workspace: &Workspace, command_info: &CommandInfo) -> Result<()> {
+pub fn do_git(session: &Session, command_info: &CommandInfo) -> Result<()> {
     let git_info = GitInfo::from_environment()?;
-    run_helper(&Plan::new(workspace)?, command_info, |cmd| {
+    run_helper(&Plan::new(session)?, command_info, |cmd| {
         build_git_command(&git_info, cmd)
     })
 }

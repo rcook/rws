@@ -21,26 +21,26 @@
 //
 use super::helpers::show_project_dirs;
 use crate::git::GitInfo;
-use crate::workspace::{Plan, Workspace};
+use crate::session::{Plan, Session};
 use anyhow::Result;
 use colored::Colorize;
 use joatmon::path_to_str;
 
-pub fn do_info(workspace: &Workspace, show_env: bool) -> Result<()> {
+pub fn do_info(session: &Session, show_env: bool) -> Result<()> {
     println!(
         "Workspace directory: {}",
-        path_to_str(&workspace.workspace_dir).cyan()
+        path_to_str(&session.workspace_dir).cyan()
     );
     println!(
         "Workspace configuration file: {}",
-        workspace
+        session
             .config_path
             .as_ref()
             .map(|x| path_to_str(x).cyan())
             .unwrap_or_else(|| "(none)".red().italic())
     );
 
-    let plan = Plan::new(workspace)?;
+    let plan = Plan::new(session)?;
     show_project_dirs("alpha", &plan.project_dirs_alpha);
     match &plan.project_dirs_topo {
         Some(ds) => show_project_dirs("topo", ds),
