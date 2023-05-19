@@ -21,8 +21,8 @@
 //
 use crate::git::GitInfo;
 use crate::marshal::JsonValue;
-use anyhow::Result;
-use joatmon::{open_file, path_to_str, read_text_file};
+use anyhow::{anyhow, Result};
+use joatmon::{open_file, read_text_file};
 use percent_encoding::percent_decode_str;
 use std::fs::copy;
 use std::io::{BufRead, BufReader};
@@ -32,7 +32,7 @@ use std::process::Command;
 pub mod git {
     use crate::git::clone_recursive;
     use crate::marshal::{JsonValue, RequiredFields};
-    use anyhow::{anyhow, Result};
+    use anyhow::Result;
     use joat_git_url::GitUrl;
     use joat_path::absolute_path;
     use std::env::current_dir;
@@ -44,7 +44,7 @@ pub mod git {
         let dir_str = obj.get_required_str("dir")?;
         let branch = obj.get_required_str("branch")?;
 
-        let url = GitUrl::parse(url_str).ok_or(anyhow!("Could not parse Git URL"))?;
+        let url = url_str.parse::<GitUrl>()?;
         let base_dir = current_dir()?;
         let dir = absolute_path(base_dir, Path::new(&dir_str))?;
 
@@ -68,7 +68,11 @@ pub mod git {
 }
 
 pub fn current_dir() -> Result<String> {
-    Ok(path_to_str(&std::env::current_dir()?).to_string())
+    Ok(String::from(
+        std::env::current_dir()?
+            .to_str()
+            .ok_or_else(|| anyhow!("cannot convert path to string"))?,
+    ))
 }
 
 pub fn is_file(path: &Path) -> Result<bool> {
@@ -108,11 +112,11 @@ pub mod copy_file_if_unchanged {
 }
 
 pub fn read_file(path: String) -> Result<String> {
-    Ok(read_text_file(path)?)
+    Ok(read_text_file(Path::new(&path))?)
 }
 
 pub fn read_file_lines(path: String) -> Result<Vec<String>> {
-    let f = open_file(path)?;
+    let f = open_file(Path::new(&path))?;
     Ok(BufReader::new(f).lines().collect::<std::io::Result<_>>()?)
 }
 

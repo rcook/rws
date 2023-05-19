@@ -22,8 +22,7 @@
 use super::super::prelude;
 use crate::marshal::{lua_to_json, yaml_to_lua};
 use crate::workspace::{Session, Variables};
-use anyhow::Result;
-use joatmon::path_to_str;
+use anyhow::{anyhow, Result};
 use rlua::prelude::{
     FromLuaMulti, Lua, LuaContext, LuaExternalResult, LuaResult, LuaTable, LuaValue,
 };
@@ -99,7 +98,12 @@ fn load_prelude(ctx: LuaContext, session: &Session) -> Result<()> {
 
     prelude.set(
         "workspace_dir",
-        ctx.create_string(path_to_str(&session.workspace_dir))?,
+        ctx.create_string(session.workspace_dir.to_str().ok_or_else(|| {
+            anyhow!(
+                "could not convert workspace directory {} to string",
+                session.workspace_dir.display()
+            )
+        })?)?,
     )?;
 
     prelude.set(

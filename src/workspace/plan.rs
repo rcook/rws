@@ -24,8 +24,9 @@ use super::topo_order::compute_topo_order;
 use crate::scripting::eval_script_command;
 use crate::workspace::{Command, DependencySource, StaticDependencies};
 use anyhow::{anyhow, Result};
-use joatmon::{get_base_name, WorkingDirectory};
+use joatmon::WorkingDirectory;
 use std::collections::HashSet;
+use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -100,8 +101,15 @@ impl Plan {
         session: &Session,
         project_dir: &Path,
     ) -> Result<Vec<PathBuf>> {
-        let project_name = get_base_name(project_dir)
-            .ok_or_else(|| anyhow!("Invalid project directory {}", project_dir.display()))?;
+        let project_name = project_dir
+            .file_name()
+            .and_then(OsStr::to_str)
+            .ok_or_else(|| {
+                anyhow!(
+                    "could not get file name from project directory {}",
+                    project_dir.display()
+                )
+            })?;
 
         Ok(static_dependencies
             .get(project_name)

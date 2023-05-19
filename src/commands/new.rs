@@ -31,7 +31,7 @@ pub fn do_new(session: &Session) -> Result<()> {
         bail!("A workspace already exists at {}", config_path.display())
     }
 
-    let config_path = session.workspace_dir.join(WORKSPACE_CONFIG_FILE_NAME);
+    let config_path = session.workspace_dir.join(&*WORKSPACE_CONFIG_FILE_NAME);
     if config_path.exists() {
         bail!(
             "A workspace configuration file already exists at {}",

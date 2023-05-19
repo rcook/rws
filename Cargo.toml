@@ -8,15 +8,15 @@ name = "rws"
 version = "0.4.0"
 
 [dependencies]
-anyhow = "1.0.70"
-clap = { version = "4.2.4", features = ["derive"] }
+anyhow = "1.0.71"
+clap = { version = "4.2.7", features = ["derive"] }
 colored = "2.0.0"
-dirs = "5.0.0"
+dirs = "5.0.1"
 git2 = { path = "git2-rs" }
-joatmon = "0.0.20"
-joat-git-url = "0.0.3"
+joatmon = "0.0.27"
+joat-git-url = "0.0.4"
 joat-path = "0.0.8"
-path-absolutize = "3.0.14"
+path-absolutize = "3.1.0"
 percent-encoding = "2.2.0"
 regex = "1.8.1"
 rlua = "0.19.4"
@@ -25,10 +25,11 @@ sxd-xpath = "0.4.2"
 tempfile = "3.5.0"
 topological-sort = "0.2.2"
 remove_dir_all = "0.8.2"
-serde = { version = "1.0.162", features = ["derive"] }
+serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
 serde_yaml = "0.9.21"
 which = "4.4.0"
+lazy_static = "1.4.0"
 
 [dev-dependencies]
 rstest = "0.17.0"

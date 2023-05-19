@@ -22,10 +22,13 @@
 use super::config::Config;
 use anyhow::{anyhow, Result};
 use joatmon::{find_sentinel_file, read_yaml_file};
+use lazy_static::lazy_static;
 use std::env;
 use std::path::{Path, PathBuf};
 
-pub const WORKSPACE_CONFIG_FILE_NAME: &str = "rws-workspace.yaml";
+lazy_static! {
+    pub static ref WORKSPACE_CONFIG_FILE_NAME: PathBuf = PathBuf::from("rws-workspace.yaml");
+}
 
 /// Workspace information derived from file system and configuration file
 #[derive(Debug)]
@@ -52,7 +55,7 @@ impl Session {
                 Self::known(cwd, workspace_dir, Some(config_path))
             }
             (Some(workspace_dir), None) => {
-                let p = workspace_dir.join(WORKSPACE_CONFIG_FILE_NAME);
+                let p = workspace_dir.join(&*WORKSPACE_CONFIG_FILE_NAME);
                 Self::known(cwd, workspace_dir, if p.exists() { Some(&p) } else { None })
             }
             (None, Some(config_path)) => Self::known(
@@ -86,7 +89,7 @@ impl Session {
 
     fn find(cwd: &Path, search_dir: &Path) -> Result<Self> {
         Ok(
-            match find_sentinel_file(WORKSPACE_CONFIG_FILE_NAME, search_dir, Some(5)) {
+            match find_sentinel_file(&WORKSPACE_CONFIG_FILE_NAME, search_dir, Some(5)) {
                 Some(config_path) => {
                     let config = read_yaml_file(&config_path)?;
                     Self {
