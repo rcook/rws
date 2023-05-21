@@ -41,15 +41,14 @@ pub struct Plan {
 impl Plan {
     /// Create a plan from a workspace
     pub fn new(session: &Session) -> Result<Self> {
-        let exclude_project_dirs = HashSet::from_iter(
-            session
-                .config
-                .as_ref()
-                .and_then(|d| d.excluded_projects.as_ref())
-                .unwrap_or(&Vec::new())
-                .iter()
-                .map(|s| session.workspace_dir.join(s)),
-        );
+        let exclude_project_dirs = session
+            .config
+            .as_ref()
+            .and_then(|d| d.excluded_projects.as_ref())
+            .unwrap_or(&Vec::new())
+            .iter()
+            .map(|s| session.workspace_dir.join(s))
+            .collect::<HashSet<_>>();
 
         let project_dirs_alpha =
             Self::get_project_dirs_alpha(&session.workspace_dir, &exclude_project_dirs)?;
@@ -87,7 +86,7 @@ impl Plan {
             if !excluded_project_dirs.contains(&project_dir) && project_dir.is_dir() {
                 let git_dir = project_dir.join(".git");
                 if git_dir.exists() {
-                    project_dirs_alpha.push(project_dir)
+                    project_dirs_alpha.push(project_dir);
                 }
             }
         }
@@ -118,7 +117,7 @@ impl Plan {
                     .map(|p| session.workspace_dir.join(p))
                     .collect::<Vec<_>>()
             })
-            .unwrap_or(Vec::new()))
+            .unwrap_or_default())
     }
 
     fn get_precs_from_script_command(

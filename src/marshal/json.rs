@@ -27,6 +27,7 @@ use serde_json::{Map, Number, Value};
 use std::string::String as StdString;
 
 #[allow(unused)]
+#[allow(clippy::trivially_copy_pass_by_ref)]
 pub fn json_to_lua<'a>(ctx: &LuaContext<'a>, obj: &JsonValue) -> Result<LuaValue<'a>> {
     use serde_json::Value::*;
 
@@ -73,33 +74,48 @@ pub fn lua_to_json(value: LuaValue, sub: bool) -> Result<JsonValue> {
     Ok(match value {
         Nil => Value::Null,
         Boolean(value) => Value::Bool(value),
-        LightUserData(_value) => match sub {
-            true => Value::String(StdString::from("(LIGHT_USER_DATA)")),
-            false => bail!("cannot convert LightUserData"),
-        },
+        LightUserData(_value) => {
+            if sub {
+                Value::String(StdString::from("(LIGHT_USER_DATA)"))
+            } else {
+                bail!("cannot convert LightUserData")
+            }
+        }
         Integer(value) => Value::Number(Number::from(value)),
         Number(value) => Value::Number(
             Number::from_f64(value)
-                .ok_or(anyhow!("Cannot convert {} to JSON numeric value", value))?,
+                .ok_or_else(|| anyhow!("Cannot convert {} to JSON numeric value", value))?,
         ),
         String(value) => Value::String(StdString::from(value.to_str()?)),
         Table(table) => lua_table_to_json(table, sub)?,
-        Function(_value) => match sub {
-            true => Value::String(StdString::from("(FUNCTION)")),
-            false => bail!("cannot convert Function"),
-        },
-        Thread(_value) => match sub {
-            true => Value::String(StdString::from("(THREAD)")),
-            false => bail!("cannot convert Thread"),
-        },
-        UserData(_value) => match sub {
-            true => Value::String(StdString::from("(USER_DATA)")),
-            false => bail!("cannot convert UserData"),
-        },
-        Error(_value) => match sub {
-            true => Value::String(StdString::from("(ERROR)")),
-            false => bail!("cannot convert Error"),
-        },
+        Function(_value) => {
+            if sub {
+                Value::String(StdString::from("(FUNCTION)"))
+            } else {
+                bail!("cannot convert Function")
+            }
+        }
+        Thread(_value) => {
+            if sub {
+                Value::String(StdString::from("(THREAD)"))
+            } else {
+                bail!("cannot convert Thread")
+            }
+        }
+        UserData(_value) => {
+            if sub {
+                Value::String(StdString::from("(USER_DATA)"))
+            } else {
+                bail!("cannot convert UserData")
+            }
+        }
+        Error(_value) => {
+            if sub {
+                Value::String(StdString::from("(ERROR)"))
+            } else {
+                bail!("cannot convert Error")
+            }
+        }
     })
 }
 

@@ -30,31 +30,31 @@ pub trait RequiredFields {
 impl RequiredFields for JsonValue {
     fn get_required_bool(&self, index: &str) -> Result<bool> {
         self.get(index)
-            .ok_or(anyhow!("Required field {} missing", index))?
+            .ok_or_else(|| anyhow!("Required field {} missing", index))?
             .as_bool()
-            .ok_or(anyhow!("Required field {} is not of expected type", index))
+            .ok_or_else(|| anyhow!("Required field {} is not of expected type", index))
     }
 
     fn get_required_str(&self, index: &str) -> Result<&str> {
         self.get(index)
-            .ok_or(anyhow!("Required field {} missing", index))?
+            .ok_or_else(|| anyhow!("Required field {} missing", index))?
             .as_str()
-            .ok_or(anyhow!("Required field {} is not of expected type", index))
+            .ok_or_else(|| anyhow!("Required field {} is not of expected type", index))
     }
 }
 
 impl RequiredFields for YamlValue {
     fn get_required_bool(&self, index: &str) -> Result<bool> {
         self.get(index)
-            .ok_or(anyhow!("Required field {} missing", index))?
+            .ok_or_else(|| anyhow!("Required field {} missing", index))?
             .as_bool()
-            .ok_or(anyhow!("Required field {} is not of expected type", index))
+            .ok_or_else(|| anyhow!("Required field {} is not of expected type", index))
     }
 
     fn get_required_str(&self, index: &str) -> Result<&str> {
         self.get(index)
-            .ok_or(anyhow!("Required field {} missing", index))?
+            .ok_or_else(|| anyhow!("Required field {} missing", index))?
             .as_str()
-            .ok_or(anyhow!("Required field {} is not of expected type", index))
+            .ok_or_else(|| anyhow!("Required field {} is not of expected type", index))
     }
 }

@@ -48,19 +48,15 @@ impl SubmoduleURLRewriter {
         let re = Regex::new(r"(?P<prefix>\s*url\s*=\s*)(?P<url>.*)")?;
         for l in reader.lines() {
             let line = l?;
-            match re.captures(&line) {
-                Some(caps) => {
-                    let git_url = remote_git_url.join(&caps["url"]).ok_or_else(|| {
-                        anyhow!("Failed to resolve Git submodule URL {}", &caps["url"])
-                    })?;
-                    writeln!(writer, "{}{}", &caps["prefix"], git_url)?;
-                    writer.flush()?;
-                }
-                None => {
-                    writeln!(writer, "{}", line)?;
-                    writer.flush()?
-                }
+            if let Some(caps) = re.captures(&line) {
+                let git_url = remote_git_url.join(&caps["url"]).ok_or_else(|| {
+                    anyhow!("Failed to resolve Git submodule URL {}", &caps["url"])
+                })?;
+                writeln!(writer, "{}{}", &caps["prefix"], git_url)?;
+            } else {
+                writeln!(writer, "{line}")?;
             }
+            writer.flush()?;
         }
         Ok(rewriter)
     }

@@ -51,19 +51,16 @@ where
         Language::Lua => session.config.as_ref().and_then(|d| d.lua_config.clone()),
     };
 
-    let (preamble, use_prelude) = match language_config_opt {
-        Some(language_config) => {
-            let preamble = language_config
-                .preamble
-                .unwrap_or(String::from(DEFAULT_PREAMBLE));
-            let default_use_prelude = language_config.use_prelude.unwrap_or(DEFAULT_USE_PRELUDE);
-            let use_prelude = command.use_prelude.unwrap_or(default_use_prelude);
-            (preamble, use_prelude)
-        }
-        None => {
-            let use_prelude = command.use_prelude.unwrap_or(DEFAULT_USE_PRELUDE);
-            (String::from(DEFAULT_PREAMBLE), use_prelude)
-        }
+    let (preamble, use_prelude) = if let Some(language_config) = language_config_opt {
+        let preamble = language_config
+            .preamble
+            .unwrap_or_else(|| String::from(DEFAULT_PREAMBLE));
+        let default_use_prelude = language_config.use_prelude.unwrap_or(DEFAULT_USE_PRELUDE);
+        let use_prelude = command.use_prelude.unwrap_or(default_use_prelude);
+        (preamble, use_prelude)
+    } else {
+        let use_prelude = command.use_prelude.unwrap_or(DEFAULT_USE_PRELUDE);
+        (String::from(DEFAULT_PREAMBLE), use_prelude)
     };
 
     let script = command.script.clone();
@@ -72,7 +69,7 @@ where
         .config
         .as_ref()
         .and_then(|d| d.variables.clone())
-        .unwrap_or(default_variables());
+        .unwrap_or_else(default_variables);
 
     match language {
         Language::Lua => super::lua::eval(session, &preamble, &script, use_prelude, &variables),

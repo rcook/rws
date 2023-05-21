@@ -38,7 +38,7 @@ where
     while let Some((target, precs)) = all_precs.pop() {
         _ = topo.insert(target.clone());
         for prec in precs {
-            topo.add_dependency(prec, target.clone())
+            topo.add_dependency(prec, target.clone());
         }
     }
 
@@ -58,6 +58,7 @@ mod tests {
     use anyhow::Result;
     use std::path::{Path, PathBuf};
 
+    #[allow(clippy::unnecessary_wraps)]
     fn get_path_precs(target: &Path) -> Result<Vec<PathBuf>> {
         if target == Path::new("hello_world") {
             return Ok(vec![
@@ -75,6 +76,7 @@ mod tests {
         Ok(vec![])
     }
 
+    #[allow(clippy::unnecessary_wraps)]
     fn get_str_precs(target: &str) -> Result<Vec<String>> {
         if target == "hello_world" {
             return Ok(vec![

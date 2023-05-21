@@ -1,10 +1,13 @@
 [package]
 authors = ["Richard Cook"]
+categories = ["development-tools"]
 description = "Richard's Workspace Tool"
 edition = "2021"
-homepage = "https://github.com/rcook/rws/"
+homepage = "https://github.com/rcook/rws"
+keywords = ["general"]
 license = "MIT"
 name = "rws"
+repository = "https://github.com/rcook/rws"
 version = "0.4.0"
 
 [dependencies]

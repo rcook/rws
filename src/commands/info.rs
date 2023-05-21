@@ -37,11 +37,10 @@ pub fn do_info(session: &Session, show_env: bool) -> Result<()> {
     );
     println!(
         "Workspace configuration file: {}",
-        session
-            .config_path
-            .as_ref()
-            .map(|x| format!("{}", x.display()).cyan())
-            .unwrap_or_else(|| "(none)".red().italic())
+        session.config_path.as_ref().map_or_else(
+            || "(none)".red().italic(),
+            |x| format!("{}", x.display()).cyan()
+        )
     );
 
     let plan = Plan::new(session)?;
@@ -59,7 +58,7 @@ pub fn do_info(session: &Session, show_env: bool) -> Result<()> {
                     "Path to Git: {}",
                     format!("{}", git_info.executable_path.display()).cyan()
                 );
-                println!("Git version: {}", git_info.version.cyan())
+                println!("Git version: {}", git_info.version.cyan());
             }
             _ => println!("Path to Git: {}", "(not found)".red().italic()),
         }
@@ -76,9 +75,9 @@ fn show_project_dirs(order: &str, project_dirs: &[PathBuf]) {
             "(none)".red().italic()
         );
     } else {
-        println!("Project directories ({} order):", order);
+        println!("Project directories ({order} order):");
         for project_dir in project_dirs {
-            println!("  {}", format!("{}", project_dir.display()).cyan())
+            println!("  {}", format!("{}", project_dir.display()).cyan());
         }
     }
 }

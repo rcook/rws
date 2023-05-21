@@ -27,6 +27,7 @@ use serde_yaml::{Mapping, Number, Value};
 use std::string::String as StdString;
 
 #[allow(unused)]
+#[allow(clippy::trivially_copy_pass_by_ref)]
 pub fn yaml_to_lua<'a>(ctx: &LuaContext<'a>, obj: &YamlValue) -> Result<LuaValue<'a>> {
     use serde_yaml::Value::*;
 
@@ -59,7 +60,7 @@ pub fn yaml_to_lua<'a>(ctx: &LuaContext<'a>, obj: &YamlValue) -> Result<LuaValue
                     .iter()
                     .map(|(k, v)| {
                         k.as_str()
-                            .ok_or(anyhow!("Unsupported key type in YAML"))
+                            .ok_or_else(|| anyhow!("Unsupported key type in YAML"))
                             .and_then(|k_str| {
                                 ctx.create_string(k_str)
                                     .map_err(|e| anyhow!(e))
@@ -81,30 +82,45 @@ pub fn lua_to_yaml(value: LuaValue, sub: bool) -> Result<YamlValue> {
     Ok(match value {
         Nil => Value::Null,
         Boolean(value) => Value::Bool(value),
-        LightUserData(_value) => match sub {
-            true => Value::String(StdString::from("(LIGHT_USER_DATA)")),
-            false => bail!("cannot convert LightUserData"),
-        },
+        LightUserData(_value) => {
+            if sub {
+                Value::String(StdString::from("(LIGHT_USER_DATA)"))
+            } else {
+                bail!("cannot convert LightUserData")
+            }
+        }
         Integer(value) => Value::Number(Number::from(value)),
         Number(value) => Value::Number(Number::from(value)),
         String(value) => Value::String(StdString::from(value.to_str()?)),
         Table(table) => lua_table_to_yaml(table, sub)?,
-        Function(_value) => match sub {
-            true => Value::String(StdString::from("(FUNCTION)")),
-            false => bail!("cannot convert Function"),
-        },
-        Thread(_value) => match sub {
-            true => Value::String(StdString::from("(THREAD)")),
-            false => bail!("cannot convert Thread"),
-        },
-        UserData(_value) => match sub {
-            true => Value::String(StdString::from("(USER_DATA)")),
-            false => bail!("cannot convert UserData"),
-        },
-        Error(_value) => match sub {
-            true => Value::String(StdString::from("(ERROR)")),
-            false => bail!("cannot convert Error"),
-        },
+        Function(_value) => {
+            if sub {
+                Value::String(StdString::from("(FUNCTION)"))
+            } else {
+                bail!("cannot convert Function")
+            }
+        }
+        Thread(_value) => {
+            if sub {
+                Value::String(StdString::from("(THREAD)"))
+            } else {
+                bail!("cannot convert Thread")
+            }
+        }
+        UserData(_value) => {
+            if sub {
+                Value::String(StdString::from("(USER_DATA)"))
+            } else {
+                bail!("cannot convert UserData")
+            }
+        }
+        Error(_value) => {
+            if sub {
+                Value::String(StdString::from("(ERROR)"))
+            } else {
+                bail!("cannot convert Error")
+            }
+        }
     })
 }
 

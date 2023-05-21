@@ -29,8 +29,8 @@ pub struct XmlNamespace {
 }
 
 impl XmlNamespace {
-    pub fn new<P: Into<String>, U: Into<String>>(prefix: P, uri: U) -> XmlNamespace {
-        XmlNamespace {
+    pub fn new<P: Into<String>, U: Into<String>>(prefix: P, uri: U) -> Self {
+        Self {
             prefix: prefix.into(),
             uri: uri.into(),
         }
@@ -44,7 +44,7 @@ pub fn query_xpath_as_string(
 ) -> Result<String> {
     let mut context = Context::new();
     for namespace in namespaces {
-        context.set_namespace(&namespace.prefix, &namespace.uri)
+        context.set_namespace(&namespace.prefix, &namespace.uri);
     }
 
     let package = parser::parse(xml)?;

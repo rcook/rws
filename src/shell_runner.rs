@@ -35,7 +35,7 @@ pub enum ShellResult {
 }
 
 impl ShellResult {
-    pub fn exit_code(&self) -> i32 {
+    pub const fn exit_code(&self) -> i32 {
         match self {
             Self::Success => SUCCESS_EXIT_CODE,
             Self::Failure => FAILURE_EXIT_CODE,
@@ -84,7 +84,7 @@ impl ShellRunner {
                 println!(
                     "{}",
                     format!("Command succeeded in {}", project_dir.display()).green()
-                )
+                );
             } else {
                 failure_count += 1;
                 match exit_status.code() {
@@ -110,7 +110,7 @@ impl ShellRunner {
         if !self.fail_fast && failure_count > 0 {
             println!(
                 "{}",
-                format!("Command failed in {} project directories", failure_count).red()
+                format!("Command failed in {failure_count} project directories").red()
             );
         }
 

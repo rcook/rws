@@ -96,7 +96,7 @@ impl Session {
                         cwd: cwd.to_path_buf(),
                         workspace_dir: config_path
                             .parent()
-                            .ok_or(anyhow!("Failed to obtain workspace directory"))?
+                            .ok_or_else(|| anyhow!("Failed to obtain workspace directory"))?
                             .to_path_buf(),
                         config_path: Some(config_path),
                         config: Some(config),

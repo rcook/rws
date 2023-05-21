@@ -162,9 +162,8 @@ print("Hello from init_command")
             init_command.script,
         );
 
-        let dependency_command = match config.dependency_source {
-            Some(DependencySource::Command(command)) => command,
-            _ => panic!("Expected dependency_command"),
+        let Some(DependencySource::Command(dependency_command)) = config.dependency_source else {
+            panic!("Expected dependency_command")
         };
         assert!(dependency_command.language.is_none());
         assert!(dependency_command.use_prelude.is_none());

@@ -32,7 +32,7 @@ struct SubmoduleTracker {
 }
 
 impl SubmoduleTracker {
-    fn empty() -> Self {
+    const fn empty() -> Self {
         Self { rewriter: None }
     }
 
@@ -66,15 +66,16 @@ pub fn clone_recursive(git_url: &GitUrl, clone_dir: &Path, branch: &str) -> Resu
     // We temporarily rewrite the contents of the .gitmodules
     let submodules_path = clone_dir.join(".gitmodules");
 
-    let tracker = match submodules_path.is_file() {
-        true => SubmoduleTracker::new(&submodules_path, git_url)?,
-        false => SubmoduleTracker::empty(),
+    let tracker = if submodules_path.is_file() {
+        SubmoduleTracker::new(&submodules_path, git_url)?
+    } else {
+        SubmoduleTracker::empty()
     };
 
     for mut submodule in repo.submodules()? {
         let mut update_opts = SubmoduleUpdateOptions::new();
         update_opts.fetch(default_fetch_options());
-        submodule.update(true, Some(&mut update_opts))?
+        submodule.update(true, Some(&mut update_opts))?;
     }
 
     drop(tracker);

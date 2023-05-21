@@ -56,9 +56,10 @@ pub mod git {
             branch
         );
 
-        let repo = match recurse {
-            true => clone_recursive(&url, &dir, branch)?,
-            false => unimplemented!("Non-recursive clone not implemented"),
+        let repo = if recurse {
+            clone_recursive(&url, &dir, branch)?
+        } else {
+            unimplemented!("Non-recursive clone not implemented")
         };
 
         println!("git.clone: dir={}", repo.path().display());
@@ -75,10 +76,12 @@ pub fn current_dir() -> Result<String> {
     ))
 }
 
+#[allow(clippy::unnecessary_wraps)]
 pub fn is_file(path: &Path) -> Result<bool> {
     Ok(path.is_file())
 }
 
+#[allow(clippy::unnecessary_wraps)]
 pub fn is_dir(path: &Path) -> Result<bool> {
     Ok(path.is_dir())
 }
@@ -111,15 +114,19 @@ pub mod copy_file_if_unchanged {
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn read_file(path: String) -> Result<String> {
     Ok(read_text_file(Path::new(&path))?)
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn read_file_lines(path: String) -> Result<Vec<String>> {
     let f = open_file(Path::new(&path))?;
     Ok(BufReader::new(f).lines().collect::<std::io::Result<_>>()?)
 }
 
+#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::unnecessary_wraps)]
 pub fn trim_string(s: String) -> Result<String> {
     Ok(s.trim().to_string())
 }
@@ -129,6 +136,7 @@ pub mod xpath {
     use crate::scripting::xml::{query_xpath_as_string, XmlNamespace};
     use anyhow::{anyhow, Result};
 
+    #[allow(clippy::needless_pass_by_value)]
     pub fn main(namespace_objs_obj: &JsonValue, query: String, xml: String) -> Result<String> {
         let namespaces = decode_namespaces(namespace_objs_obj)?;
         query_xpath_as_string(&namespaces, &query, &xml)
@@ -137,13 +145,13 @@ pub mod xpath {
     fn decode_namespaces(namespace_objs_obj: &JsonValue) -> Result<Vec<XmlNamespace>> {
         let namespace_objs = namespace_objs_obj
             .as_array()
-            .ok_or(anyhow!("Must be an array"))?;
+            .ok_or_else(|| anyhow!("Must be an array"))?;
 
         let mut namespaces = Vec::new();
         for namespace_obj in namespace_objs {
             let prefix = namespace_obj.get_required_str("prefix")?;
             let uri = namespace_obj.get_required_str("uri")?;
-            namespaces.push(XmlNamespace::new(prefix, uri))
+            namespaces.push(XmlNamespace::new(prefix, uri));
         }
 
         Ok(namespaces)
@@ -163,6 +171,8 @@ pub fn git_clone(args: Vec<String>) -> Result<()> {
     Ok(())
 }
 
+#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::unnecessary_wraps)]
 pub fn percent_decode(s: String) -> Result<String> {
     Ok(percent_decode_str(&s).decode_utf8_lossy().to_string())
 }

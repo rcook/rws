@@ -30,7 +30,7 @@ pub struct GitInfo {
 }
 
 impl GitInfo {
-    pub fn from_environment() -> Result<GitInfo> {
+    pub fn from_environment() -> Result<Self> {
         let executable_path = which("git").map_err(|e| match e {
             Error::CannotFindBinaryPath => anyhow!("Cannot locate Git executable"),
             _ => anyhow!(e),
