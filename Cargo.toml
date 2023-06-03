@@ -12,16 +12,16 @@ version = "0.4.0"
 
 [dependencies]
 anyhow = "1.0.71"
-clap = { version = "4.3.0", features = ["derive"] }
+clap = { version = "4.3.1", features = ["derive"] }
 colored = "2.0.0"
 dirs = "5.0.1"
 git2 = { path = "git2-rs" }
-joatmon = "0.0.28"
+joatmon = "0.0.29"
 joat-git-url = "0.0.5"
 joat-path = "0.0.9"
 path-absolutize = "3.1.0"
 percent-encoding = "2.2.0"
-regex = "1.8.1"
+regex = "1.8.3"
 rlua = "0.19.4"
 sxd-document = "0.3.2"
 sxd-xpath = "0.4.2"
